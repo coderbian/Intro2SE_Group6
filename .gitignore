@@ -1,0 +1,49 @@
+# Common ignores for the repository
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs / editors
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+env/
+venv/
+ENV/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+
+# Logs and runtime files
+*.log
+*.pid
+*.seed
+*.pid.lock
+.env
+.env.local
+.env.*.local
+
+# Temporary/system files
+*~
+# Do not ignore zip files by default (repo may contain templates), so avoid *.zip here
+
+# Keep .gitkeep placeholders tracked so empty directories are preserved
+!.gitkeep
+
+# End of file
