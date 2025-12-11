@@ -1,0 +1,5 @@
+/* Entry stylesheet for the Vite React app. */
+/* Reuse the project's global Tailwind + theme rules. */
+@import "../styles/globals.css";
+
+/* You can add app-specific rules below if needed. */
