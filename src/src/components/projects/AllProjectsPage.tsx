@@ -33,13 +33,13 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
   )
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="mb-2">Khám phá dự án</h1>
-        <p className="text-gray-600">Xem tất cả các dự án hiện có và tham gia vào những dự án bạn quan tâm</p>
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Khám phá dự án</h1>
+        <p className="text-gray-600 text-sm">Xem tất cả các dự án hiện có và tham gia vào những dự án bạn quan tâm</p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
           <Input
