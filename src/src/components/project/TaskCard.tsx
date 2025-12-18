@@ -85,15 +85,18 @@ export function TaskCard({ task, project, allTasks, onClick, showStoryPoints, on
   }
 
   return (
-    <div className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
-      <div className="flex items-start gap-2 mb-2">
-        <div className={`w-2 h-2 rounded-full mt-1.5 ${getPriorityColor(task.priority)}`} />
+    <div className="bg-white border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group hover:border-blue-300" onClick={onClick}>
+      {/* Header với priority và title */}
+      <div className="flex items-start gap-3 mb-3">
+        <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${getPriorityColor(task.priority)}`} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm mb-1 break-words">{task.title}</p>
+          <h4 className="text-sm font-medium mb-1.5 break-words leading-relaxed group-hover:text-blue-600 transition-colors">
+            {task.title}
+          </h4>
           {task.labels.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex flex-wrap gap-1.5 mb-2">
               {task.labels.map((label, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs">
+                <Badge key={idx} variant="outline" className="text-xs px-2 py-0.5">
                   {label}
                 </Badge>
               ))}
@@ -102,60 +105,67 @@ export function TaskCard({ task, project, allTasks, onClick, showStoryPoints, on
         </div>
       </div>
 
-      {task.description && <p className="text-xs text-gray-600 mb-2 line-clamp-2">{task.description}</p>}
+      {/* Description */}
+      {task.description && (
+        <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed px-1">
+          {task.description}
+        </p>
+      )}
 
-      <div className="flex items-center justify-between text-xs mb-2">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
+      {/* Badges và metadata */}
+      <div className="flex items-center justify-between text-xs mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="text-xs px-2.5 py-0.5">
             {getPriorityLabel(task.priority)}
           </Badge>
           {showStoryPoints && task.storyPoints && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs px-2.5 py-0.5">
               {task.storyPoints} pts
             </Badge>
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-gray-500">
+        <div className="flex items-center gap-3 text-gray-500">
           {subtasks.length > 0 && (
-            <div className="flex items-center gap-1">
-              <CheckSquare className="w-3 h-3" />
-              <span>
+            <div className="flex items-center gap-1.5">
+              <CheckSquare className="w-3.5 h-3.5" />
+              <span className="font-medium">
                 {completedSubtasks}/{subtasks.length}
               </span>
             </div>
           )}
           {task.comments.length > 0 && (
-            <div className="flex items-center gap-1">
-              <MessageSquare className="w-3 h-3" />
-              <span>{task.comments.length}</span>
+            <div className="flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span className="font-medium">{task.comments.length}</span>
             </div>
           )}
           {task.attachments.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Paperclip className="w-3 h-3" />
-              <span>{task.attachments.length}</span>
+            <div className="flex items-center gap-1.5">
+              <Paperclip className="w-3.5 h-3.5" />
+              <span className="font-medium">{task.attachments.length}</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-2 pt-2 border-t gap-2">
-        <span className="text-gray-500 truncate text-xs">
+      {/* Footer với assignees và deadline */}
+      <div className="flex items-center justify-between pt-3 border-t gap-3">
+        <span className="text-gray-600 truncate text-xs flex-1 min-w-0 font-medium">
           {assigneeNames.length > 0 ? assigneeNames.join(", ") : "Chưa phân công"}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {task.deadline && (
-            <div className={`flex items-center gap-1 text-xs ${isOverdue ? "text-red-600" : "text-gray-600"}`}>
-              <Clock className="w-3 h-3" />
-              <span>{formatDate(task.deadline)}</span>
+            <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded ${isOverdue ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-700"}`}>
+              <Clock className="w-3.5 h-3.5" />
+              <span className="font-medium">{formatDate(task.deadline)}</span>
             </div>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-6 px-1.5" title="Update status">
+              <Button variant="ghost" size="sm" className="h-7 px-2.5 hover:bg-gray-100" title="Cập nhật trạng thái">
                 <span className="text-xs font-medium">{getStatusLabel(task.status)}</span>
-                <ChevronRight className="w-3 h-3 ml-1" />
+                <ChevronRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
