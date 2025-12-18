@@ -1,6 +1,6 @@
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Plus, FolderKanban, CheckCircle2, Clock, AlertCircle, TrendingUp, Calendar } from 'lucide-react';
+import { Plus, FolderKanban, CheckCircle2, Clock, AlertCircle, TrendingUp, Calendar, CheckSquare, Users, LayoutDashboard } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import type { User, Project, Task } from '../../App';
@@ -71,84 +71,111 @@ export function DashboardPage({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2">Xin chào, {user.name}!</h1>
-        <p className="text-gray-600">Đây là tổng quan về các dự án và nhiệm vụ của bạn</p>
+    <div className="container mx-auto px-4 lg:px-6 py-6">
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-md">
+            <LayoutDashboard className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Xin chào, {user.name}!
+            </h1>
+            <p className="text-gray-600 text-sm">Đây là tổng quan về các dự án và nhiệm vụ của bạn</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <Card>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="border border-blue-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Tổng dự án</CardTitle>
+            <CardTitle className="text-xs text-blue-700 font-semibold uppercase tracking-wide">Tổng dự án</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-3xl">{projects.length}</div>
-              <FolderKanban className="w-8 h-8 text-blue-600" />
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {projects.length}
+              </div>
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-md">
+                <FolderKanban className="w-6 h-6 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border border-green-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Hoàn thành</CardTitle>
+            <CardTitle className="text-xs text-green-700 font-semibold uppercase tracking-wide">Hoàn thành</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl">{completedTasks}</div>
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                {completedTasks}
+              </div>
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2.5 rounded-xl shadow-md">
+                <CheckCircle2 className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-green-700 font-medium">
               {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}% tổng nhiệm vụ
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border border-yellow-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-yellow-50 to-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Đang thực hiện</CardTitle>
+            <CardTitle className="text-xs text-yellow-700 font-semibold uppercase tracking-wide">Đang thực hiện</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-3xl">{inProgressTasks}</div>
-              <Clock className="w-8 h-8 text-yellow-600" />
+              <div className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                {inProgressTasks}
+              </div>
+              <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-2.5 rounded-xl shadow-md">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border border-red-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-red-50 to-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Trễ hạn</CardTitle>
+            <CardTitle className="text-xs text-red-700 font-semibold uppercase tracking-wide">Trễ hạn</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-3xl">{overdueTasks}</div>
-              <AlertCircle className="w-8 h-8 text-red-600" />
+              <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                {overdueTasks}
+              </div>
+              <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2.5 rounded-xl shadow-md">
+                <AlertCircle className="w-6 h-6 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Projects List */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
+        <div className="lg:col-span-2 space-y-4">
+          <Card className="border shadow-md">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Dự án của tôi</CardTitle>
-                  <CardDescription>Danh sách các dự án bạn đang tham gia</CardDescription>
+                  <CardTitle className="text-lg font-bold text-gray-900">Dự án của tôi</CardTitle>
+                  <CardDescription className="text-sm mt-0.5">Danh sách các dự án bạn đang tham gia</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               {projects.length === 0 ? (
-                <div className="text-center py-12">
-                  <FolderKanban className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">Chưa có dự án nào</p>
-                  <p className="text-sm text-gray-500">
+                <div className="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-dashed border-blue-300">
+                  <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+                    <FolderKanban className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <p className="text-gray-700 font-semibold text-base mb-1">Chưa có dự án nào</p>
+                  <p className="text-xs text-gray-600">
                     Tạo dự án mới để bắt đầu quản lý công việc
                   </p>
                 </div>
@@ -162,42 +189,44 @@ export function DashboardPage({
                     return (
                       <div
                         key={project.id}
-                        className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                        className="border rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-white to-blue-50/30"
                         onClick={() => onSelectProject(project.id)}
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="text-base">{project.name}</h3>
-                              <Badge variant="outline" className="text-xs">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <h3 className="text-base font-bold text-gray-900">{project.name}</h3>
+                              <Badge variant="outline" className="text-xs px-2 py-0.5 font-medium">
                                 {project.template === 'kanban' ? 'Kanban' : 'Scrum'}
                               </Badge>
                             </div>
                             {project.description && (
-                              <p className="text-sm text-gray-600">{project.description}</p>
+                              <p className="text-sm text-gray-600 line-clamp-2">{project.description}</p>
                             )}
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Tiến độ</span>
-                            <span>{progress}%</span>
+                          <div className="flex items-center justify-between text-xs font-medium">
+                            <span className="text-gray-700">Tiến độ</span>
+                            <span className="text-blue-600 text-sm">{progress}%</span>
                           </div>
-                          <Progress value={progress} className="h-2" />
+                          <Progress value={progress} className="h-2 bg-gray-200" />
                         </div>
 
-                        <div className="flex items-center justify-between mt-3 text-sm">
+                        <div className="flex items-center justify-between mt-3 text-xs">
                           <div className="flex items-center gap-4">
-                            <span className="text-gray-600">
-                              {projectTaskCount} nhiệm vụ
-                            </span>
-                            <span className="text-gray-600">
-                              {project.members.length} thành viên
-                            </span>
+                            <div className="flex items-center gap-1.5 text-gray-700 font-medium">
+                              <CheckSquare className="w-4 h-4" />
+                              <span>{projectTaskCount} nhiệm vụ</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-gray-700 font-medium">
+                              <Users className="w-4 h-4" />
+                              <span>{project.members.length} thành viên</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 text-gray-600">
-                            <Calendar className="w-4 h-4" />
+                          <div className="flex items-center gap-1.5 text-gray-700 font-medium px-2 py-1 bg-blue-50 rounded-md">
+                            <Calendar className="w-4 h-4 text-blue-600" />
                             <span>
                               {daysLeft > 0
                                 ? `Còn ${daysLeft} ngày`
@@ -217,33 +246,35 @@ export function DashboardPage({
         </div>
 
         {/* My Tasks */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Nhiệm vụ của tôi</CardTitle>
-              <CardDescription>Nhiệm vụ đang thực hiện</CardDescription>
+        <div className="space-y-4">
+          <Card className="border shadow-md">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+              <CardTitle className="text-lg font-bold text-gray-900">Nhiệm vụ của tôi</CardTitle>
+              <CardDescription className="text-sm">Nhiệm vụ đang thực hiện</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               {myInProgressTasks.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle2 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600">Không có nhiệm vụ nào</p>
+                <div className="text-center py-10 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-dashed border-green-300">
+                  <div className="bg-white w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+                    <CheckCircle2 className="w-7 h-7 text-green-500" />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700">Không có nhiệm vụ nào</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {myInProgressTasks.slice(0, 5).map((task) => {
                     const project = projects.find(p => p.id === task.projectId);
                     
                     return (
-                      <div key={task.id} className="border rounded-lg p-3">
+                      <div key={task.id} className="border rounded-lg p-3 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-gray-50">
                         <div className="flex items-start gap-2 mb-2">
                           <div className="flex-1">
-                            <p className="text-sm mb-1">{task.title}</p>
+                            <p className="text-sm font-medium mb-1.5">{task.title}</p>
                             {project && (
                               <p className="text-xs text-gray-500">{project.name}</p>
                             )}
                           </div>
-                          <Badge variant={getPriorityColor(task.priority)} className="text-xs">
+                          <Badge variant={getPriorityColor(task.priority)} className="text-xs px-2 py-0.5">
                             {getPriorityLabel(task.priority)}
                           </Badge>
                         </div>
@@ -262,30 +293,35 @@ export function DashboardPage({
           </Card>
 
           {/* Quick Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Thống kê nhanh</CardTitle>
+          <Card className="border shadow-md">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b">
+              <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-1.5 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-white" />
+                </div>
+                Thống kê nhanh
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Nhiệm vụ của tôi</span>
-                <span className="text-sm">{myTasks.length}</span>
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex items-center justify-between p-2.5 bg-gradient-to-r from-blue-50 to-white rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Nhiệm vụ của tôi</span>
+                <span className="text-base font-bold text-blue-600">{myTasks.length}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Đã hoàn thành</span>
-                <span className="text-sm text-green-600">
+              <div className="flex items-center justify-between p-2.5 bg-gradient-to-r from-green-50 to-white rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Đã hoàn thành</span>
+                <span className="text-base font-bold text-green-600">
                   {myTasks.filter(t => t.status === 'done').length}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Đang làm</span>
-                <span className="text-sm text-yellow-600">
+              <div className="flex items-center justify-between p-2.5 bg-gradient-to-r from-yellow-50 to-white rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Đang làm</span>
+                <span className="text-base font-bold text-yellow-600">
                   {myInProgressTasks.length}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Tỷ lệ hoàn thành</span>
-                <span className="text-sm">
+              <div className="flex items-center justify-between p-2.5 bg-gradient-to-r from-purple-50 to-white rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Tỷ lệ hoàn thành</span>
+                <span className="text-base font-bold text-purple-600">
                   {myTasks.length > 0
                     ? Math.round((myTasks.filter(t => t.status === 'done').length / myTasks.length) * 100)
                     : 0}%
