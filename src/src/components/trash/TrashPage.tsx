@@ -50,13 +50,13 @@ export function TrashPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Trash2 className="w-6 h-6" />
-          <h1>Thùng rác</h1>
+          <Trash2 className="w-5 h-5 text-red-600" />
+          <h1 className="text-2xl font-bold">Thùng rác</h1>
         </div>
-        <p className="text-gray-600">Quản lý các dự án và nhiệm vụ đã xóa. Chúng sẽ bị xóa vĩnh viễn sau 30 ngày.</p>
+        <p className="text-gray-600 text-sm">Quản lý các dự án và nhiệm vụ đã xóa. Chúng sẽ bị xóa vĩnh viễn sau 30 ngày.</p>
       </div>
 
       {deletedProjects.length === 0 && deletedTasks.length === 0 && (
