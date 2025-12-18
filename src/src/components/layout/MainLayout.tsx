@@ -92,7 +92,7 @@ export function MainLayout({
     scrum: "Tiếp cận Agile với Sprint. Lý tưởng cho các dự án lặp lại với những khúc nước ngắn.",
   }
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const unreadCount = (notifications || []).filter((n) => !n.read).length
 
   const handleCreateProject = () => {
     if (newProject.name && newProject.deadline) {
@@ -120,64 +120,81 @@ export function MainLayout({
   const deletedItemsCount = projects.filter((p) => p.deletedAt).length
 
   return (
-    <div className={`min-h-screen ${settings.theme === "dark" ? "dark bg-slate-950" : "bg-gray-50"} flex`}>
+    <div className={`min-h-screen ${settings.theme === "dark" ? "dark bg-slate-950" : "bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50"} flex`}>
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
         className={`${
-          isSidebarOpen ? "" : "hidden"
-        } ${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200"} border-r transition-all duration-300 overflow-hidden flex flex-col fixed left-0 top-0 bottom-0 z-40 w-64`}
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } ${settings.theme === "dark" ? "bg-gradient-to-b from-slate-900 to-slate-950 border-slate-800" : "bg-white border-gray-200 shadow-xl"} border-r transition-transform duration-300 ease-in-out overflow-hidden flex flex-col fixed left-0 top-0 bottom-0 z-40 w-64`}
       >
         {/* Sticky header */}
         <div
-          className={`p-4 ${settings.theme === "dark" ? "border-slate-800" : "border-gray-200"} border-b sticky top-0 bg-inherit z-10`}
+          className={`px-4 h-[52px] ${settings.theme === "dark" ? "border-slate-800" : "border-gray-200"} border-b sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 z-10 shadow-md flex items-center`}
         >
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-2 rounded-lg">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg shadow-md">
               <LayoutDashboard className="w-5 h-5 text-white" />
             </div>
-            <span className={`text-xl font-bold ${settings.theme === "dark" ? "text-white" : "text-gray-900"}`}>
-              Planora
-            </span>
+            <div>
+              <span className="text-xl font-bold text-white drop-shadow-md">
+                Planora
+              </span>
+              <p className="text-xs text-blue-100 font-medium">Project Management</p>
+            </div>
           </div>
         </div>
 
         {/* Scrollable projects section */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <Button
-            variant={currentPage === "dashboard" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={() => onNavigate("dashboard")}
-          >
-            <LayoutDashboard className="w-4 h-4 mr-2" />
-            Tổng quan
-          </Button>
+          <div className="space-y-1.5">
+            <Button
+              variant={currentPage === "dashboard" ? "default" : "ghost"}
+              className={`w-full justify-start h-9 text-sm font-semibold ${
+                currentPage === "dashboard"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                  : "hover:bg-blue-50"
+              }`}
+              onClick={() => onNavigate("dashboard")}
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2.5" />
+              Tổng quan
+            </Button>
 
-          <Button
-            variant={currentPage === "projects" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={() => onNavigate("projects")}
-          >
-            <Globe className="w-4 h-4 mr-2" />
-            Khám phá dự án
-          </Button>
+            <Button
+              variant={currentPage === "projects" ? "default" : "ghost"}
+              className={`w-full justify-start h-9 text-sm font-semibold ${
+                currentPage === "projects"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                  : "hover:bg-blue-50"
+              }`}
+              onClick={() => onNavigate("projects")}
+            >
+              <Globe className="w-4 h-4 mr-2.5" />
+              Khám phá dự án
+            </Button>
 
-          <Button
-            variant={currentPage === "member-requests" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={() => onNavigate("member-requests")}
-          >
-            <Users className="w-4 h-4 mr-2" />
-            Yêu cầu tham gia
-          </Button>
+            <Button
+              variant={currentPage === "member-requests" ? "default" : "ghost"}
+              className={`w-full justify-start h-9 text-sm font-semibold ${
+                currentPage === "member-requests"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                  : "hover:bg-blue-50"
+              }`}
+              onClick={() => onNavigate("member-requests")}
+            >
+              <Users className="w-4 h-4 mr-2.5" />
+              Yêu cầu tham gia
+            </Button>
+          </div>
 
           <div className="pt-4">
-            <div className="flex items-center justify-between mb-2 px-2">
-              <span className={`text-sm ${settings.theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Dự án</span>
+            <div className="flex items-center justify-between mb-3 px-2">
+              <span className={`text-xs font-semibold uppercase tracking-wide ${settings.theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>Dự án của bạn</span>
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    <Plus className="w-4 h-4" />
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-blue-100 rounded-full">
+                    <Plus className="w-4 h-4 text-blue-600" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md !bg-white dark:!bg-gray-900" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
@@ -252,20 +269,25 @@ export function MainLayout({
             <div className="space-y-1">
               {activeProjects.length === 0 ? (
                 <div
-                  className={`text-sm px-2 py-4 text-center ${settings.theme === "dark" ? "text-gray-500" : "text-gray-400"}`}
+                  className={`text-xs px-3 py-6 text-center rounded-lg border-2 border-dashed ${settings.theme === "dark" ? "text-gray-500 border-gray-700" : "text-gray-400 border-gray-200"}`}
                 >
-                  Chưa có dự án nào
+                  <FolderKanban className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <p className="font-medium">Chưa có dự án nào</p>
                 </div>
               ) : (
                 activeProjects.map((project) => (
                   <Button
                     key={project.id}
-                    variant={selectedProjectId === project.id ? "secondary" : "ghost"}
-                    className="w-full justify-start text-sm"
+                    variant={selectedProjectId === project.id ? "default" : "ghost"}
+                    className={`w-full justify-start text-sm h-9 ${
+                      selectedProjectId === project.id
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                        : "hover:bg-blue-50"
+                    }`}
                     onClick={() => onSelectProject(project.id)}
                   >
-                    <FolderKanban className="w-4 h-4 mr-2" />
-                    <span className="truncate">{project.name}</span>
+                    <FolderKanban className="w-4 h-4 mr-2.5 flex-shrink-0" />
+                    <span className="truncate font-medium">{project.name}</span>
                   </Button>
                 ))
               )}
@@ -275,17 +297,21 @@ export function MainLayout({
 
         {/* Sticky bottom sections */}
         <div
-          className={`${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200"} border-t space-y-2 p-4 sticky bottom-16 z-10`}
+          className={`${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200"} border-t space-y-1.5 p-4 sticky bottom-14 z-10`}
         >
           <Button
-            variant={currentPage === "trash" ? "secondary" : "ghost"}
-            className="w-full justify-start text-sm"
+            variant={currentPage === "trash" ? "default" : "ghost"}
+            className={`w-full justify-start text-sm h-9 ${
+              currentPage === "trash"
+                ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md"
+                : "hover:bg-red-50 text-gray-700"
+            }`}
             onClick={() => onNavigate("trash")}
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            <span className="flex-1 text-left">Thùng rác</span>
+            <Trash2 className="w-4 h-4 mr-2.5" />
+            <span className="flex-1 text-left font-medium">Thùng rác</span>
             {deletedItemsCount > 0 && (
-              <span className="text-xs bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="text-xs bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-sm">
                 {deletedItemsCount}
               </span>
             )}
@@ -294,18 +320,20 @@ export function MainLayout({
 
         {/* Sticky account section */}
         <div
-          className={`p-4 ${settings.theme === "dark" ? "border-slate-800 bg-slate-800" : "border-gray-200 bg-gray-50"} border-t sticky bottom-0 z-10`}
+          className={`p-4 ${settings.theme === "dark" ? "border-slate-800 bg-gradient-to-r from-slate-800 to-slate-900" : "border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50"} border-t sticky bottom-0 z-10 shadow-md`}
         >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start">
-                <Avatar className="w-8 h-8 mr-2">
+              <Button variant="ghost" className="w-full justify-start hover:bg-white/50 h-12 px-2.5">
+                <Avatar className="w-8 h-8 mr-2.5 ring-2 ring-blue-500 ring-offset-1">
                   <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold text-sm">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left overflow-hidden">
-                  <div className="text-sm truncate">{user.name}</div>
-                  <div className={`text-xs ${settings.theme === "dark" ? "text-gray-400" : "text-gray-500"} truncate`}>
+                  <div className="text-sm font-semibold truncate">{user.name}</div>
+                  <div className={`text-xs ${settings.theme === "dark" ? "text-gray-400" : "text-gray-600"} truncate`}>
                     {user.email}
                   </div>
                 </div>
@@ -335,23 +363,48 @@ export function MainLayout({
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
         {/* Sticky Top Bar */}
         <header
-          className={`${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200"} border-b px-4 py-3 flex items-center gap-4 sticky top-0 z-30`}
+          className={`${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white/80 backdrop-blur-lg border-gray-200"} border-b px-4 h-[52px] flex items-center gap-4 sticky top-0 z-30 shadow-sm`}
         >
-          <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="hover:bg-blue-50 rounded-lg p-1.5"
+            title={isSidebarOpen ? "Đóng sidebar" : "Mở sidebar"}
+          >
+            <Menu className="w-5 h-5" />
           </Button>
-          <div className="flex-1" />
+          
+          <div className="flex-1">
+            {currentPage === "dashboard" && (
+              <h2 className="text-lg font-bold text-gray-800">Bảng điều khiển</h2>
+            )}
+            {currentPage === "projects" && (
+              <h2 className="text-lg font-bold text-gray-800">Khám phá dự án</h2>
+            )}
+            {currentPage === "project" && selectedProjectId && (
+              <h2 className="text-lg font-bold text-gray-800">
+                {projects.find(p => p.id === selectedProjectId)?.name}
+              </h2>
+            )}
+          </div>
 
-          <Button variant="ghost" size="sm" onClick={() => setIsSettingsModalOpen(true)} title="Settings">
-            <Settings className="w-5 h-5" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsSettingsModalOpen(true)} 
+            title="Cài đặt"
+            className="hover:bg-blue-50 rounded-lg p-1.5"
+          >
+            <Settings className="w-4 h-4" />
           </Button>
 
           <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative" title="Notifications">
-                <Bell className="w-5 h-5" />
+              <Button variant="ghost" size="sm" className="relative hover:bg-blue-50 rounded-lg p-1.5" title="Thông báo">
+                <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-red-600 rounded-full text-white text-xs flex items-center justify-center font-bold shadow-md">
                     {unreadCount}
                   </span>
                 )}
@@ -359,7 +412,7 @@ export function MainLayout({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-96 p-0">
               <NotificationList
-                notifications={notifications}
+                notifications={notifications || []}
                 onMarkAsRead={onMarkNotificationAsRead}
                 onMarkAllAsRead={onMarkAllNotificationsAsRead}
                 onDelete={onDeleteNotification}
@@ -372,14 +425,14 @@ export function MainLayout({
             variant="outline"
             size="sm"
             onClick={onLogout}
-            className="text-red-600 hover:text-red-700 bg-transparent"
+            className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border-red-200 font-medium px-3 h-8 text-sm"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Đăng xuất
           </Button>
         </header>
 
-        <main className={`flex-1 overflow-auto ${settings.theme === "dark" ? "bg-slate-950" : "bg-gray-50"}`}>
+        <main className={`flex-1 overflow-auto ${settings.theme === "dark" ? "bg-slate-950" : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"}`}>
           {children}
         </main>
       </div>
