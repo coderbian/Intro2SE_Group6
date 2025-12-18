@@ -124,36 +124,42 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tạo {isScrum ? 'User Story' : 'nhiệm vụ'} mới</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+        <DialogHeader className="pb-4 border-b">
+          <DialogTitle className="text-2xl font-semibold">
+            Tạo {isScrum ? 'User Story' : 'nhiệm vụ'} mới
+          </DialogTitle>
+          <DialogDescription className="text-base mt-2">
             Nhập thông tin chi tiết cho {isScrum ? 'user story' : 'nhiệm vụ'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Tên {isScrum ? 'User Story' : 'nhiệm vụ'} *</Label>
+        <div className="flex-1 overflow-y-auto py-4 space-y-6">
+          <div className="space-y-3">
+            <Label htmlFor="title" className="text-base font-semibold">
+              Tên {isScrum ? 'User Story' : 'nhiệm vụ'} *
+            </Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={isScrum ? 'Là [ai], tôi muốn [gì]...' : 'Nhập tên nhiệm vụ'}
+              className="h-11 text-base"
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="description">Mô tả</Label>
+              <Label htmlFor="description" className="text-base font-semibold">Mô tả</Label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleEnhanceDescription}
                 disabled={isEnhancing || !formData.description}
+                className="gap-2"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
+                <Sparkles className="w-4 h-4" />
                 {isEnhancing ? 'Đang xử lý...' : 'AI Cải thiện văn phong'}
               </Button>
             </div>
@@ -162,18 +168,19 @@ export function CreateTaskDialog({
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Mô tả chi tiết về nhiệm vụ"
-              rows={5}
+              rows={6}
+              className="resize-none text-base"
             />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="priority">Mức độ ưu tiên</Label>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <Label htmlFor="priority" className="text-base font-semibold">Mức độ ưu tiên</Label>
               <Select
                 value={formData.priority}
                 onValueChange={(value) => setFormData({ ...formData, priority: value as Task['priority'] })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -186,13 +193,13 @@ export function CreateTaskDialog({
             </div>
 
             {isScrum && (
-              <div className="space-y-2">
-                <Label htmlFor="storyPoints">Story Points</Label>
+              <div className="space-y-3">
+                <Label htmlFor="storyPoints" className="text-base font-semibold">Story Points</Label>
                 <Select
                   value={formData.storyPoints.toString()}
                   onValueChange={(value) => setFormData({ ...formData, storyPoints: parseInt(value) })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -209,17 +216,18 @@ export function CreateTaskDialog({
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="deadline">Deadline</Label>
+              <Label htmlFor="deadline" className="text-base font-semibold">Deadline</Label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleEstimateTime}
                 disabled={isEstimating || !formData.description}
+                className="gap-2"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
+                <Sparkles className="w-4 h-4" />
                 {isEstimating ? 'Đang ước tính...' : 'AI Ước tính thời gian'}
               </Button>
             </div>
@@ -228,17 +236,18 @@ export function CreateTaskDialog({
               type="date"
               value={formData.deadline}
               onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+              className="h-11"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Người thực hiện</Label>
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Người thực hiện</Label>
+            <div className="flex flex-wrap gap-2.5 p-4 bg-gray-50 rounded-lg border min-h-[60px]">
               {project.members.map((member) => (
                 <Badge
                   key={member.userId}
                   variant={formData.assignees.includes(member.userId) ? 'default' : 'outline'}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:scale-105 transition-transform px-3 py-1.5 text-sm"
                   onClick={() => toggleAssignee(member.userId)}
                 >
                   {member.name}
@@ -247,8 +256,8 @@ export function CreateTaskDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="newLabel">Nhãn</Label>
+          <div className="space-y-3">
+            <Label htmlFor="newLabel" className="text-base font-semibold">Nhãn</Label>
             <div className="flex gap-2">
               <Input
                 id="newLabel"
@@ -256,16 +265,19 @@ export function CreateTaskDialog({
                 onChange={(e) => setNewLabel(e.target.value)}
                 placeholder="Thêm nhãn (VD: Frontend, Backend)"
                 onKeyPress={(e) => e.key === 'Enter' && handleAddLabel()}
+                className="flex-1 h-11"
               />
-              <Button type="button" onClick={handleAddLabel}>Thêm</Button>
+              <Button type="button" onClick={handleAddLabel} className="px-6">
+                Thêm
+              </Button>
             </div>
             {formData.labels.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg border">
                 {formData.labels.map((label) => (
-                  <Badge key={label} variant="secondary">
+                  <Badge key={label} variant="secondary" className="px-3 py-1.5 text-sm">
                     {label}
                     <X
-                      className="w-3 h-3 ml-1 cursor-pointer"
+                      className="w-3.5 h-3.5 ml-2 cursor-pointer hover:text-red-600"
                       onClick={() => handleRemoveLabel(label)}
                     />
                   </Badge>
@@ -275,9 +287,13 @@ export function CreateTaskDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Hủy</Button>
-          <Button onClick={handleSubmit}>Tạo nhiệm vụ</Button>
+        <DialogFooter className="pt-4 border-t gap-2">
+          <Button variant="outline" onClick={onClose} className="px-6">
+            Hủy
+          </Button>
+          <Button onClick={handleSubmit} className="px-6">
+            Tạo nhiệm vụ
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
