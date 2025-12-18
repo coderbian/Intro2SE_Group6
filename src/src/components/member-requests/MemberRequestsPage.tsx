@@ -29,19 +29,19 @@ export function MemberRequestsPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Users className="w-6 h-6" />
-          <h1>Yêu cầu tham gia</h1>
+          <Users className="w-5 h-5 text-blue-600" />
+          <h1 className="text-2xl font-bold">Yêu cầu tham gia</h1>
         </div>
-        <p className="text-gray-600">Quản lý các yêu cầu tham gia dự án từ thành viên</p>
+        <p className="text-gray-600 text-sm">Quản lý các yêu cầu tham gia dự án từ thành viên</p>
       </div>
 
       {/* Pending Requests */}
       {pendingRequests.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">Yêu cầu chưa xử lý ({pendingRequests.length})</h2>
+        <div className="mb-6">
+          <h2 className="text-base font-semibold mb-3">Yêu cầu chưa xử lý ({pendingRequests.length})</h2>
           <div className="grid gap-4">
             {pendingRequests.map((request) => (
               <Card key={request.id}>
