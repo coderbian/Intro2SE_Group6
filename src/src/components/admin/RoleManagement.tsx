@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { LayoutDashboard, Users, Shield, Settings, Database, LogOut, Plus, Edit, User, ShieldCheck } from 'lucide-react'
@@ -16,19 +16,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { SettingsModal } from "../src/components/settings/SettingsModal"
+import { SettingsModal } from "../settings/SettingsModal"
 
 interface RoleManagementProps {
-  adminEmail?: string // added adminEmail prop
+  adminEmail?: string
   onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => void
-  onLogout?: () => void // Added onLogout prop
+  onLogout?: () => void
 }
 
 const roles = [
   {
     id: 1,
     name: "Admin",
-    description: "Có toàn quyền truy cập và quản lý hệ thống",
+    description: "CÃ³ toÃ n quyá»n truy cáº­p vÃ  quáº£n lÃ½ há»‡ thá»‘ng",
     permissions: {
       projects: {
         createProject: true,
@@ -54,7 +54,7 @@ const roles = [
   {
     id: 2,
     name: "Project Manager",
-    description: "Quản lý dự án và phân công nhiệm vụ cho thành viên",
+    description: "Quáº£n lÃ½ dá»± Ã¡n vÃ  phÃ¢n cÃ´ng nhiá»‡m vá»¥ cho thÃ nh viÃªn",
     permissions: {
       projects: {
         createProject: true,
@@ -80,7 +80,7 @@ const roles = [
   {
     id: 3,
     name: "Team Member",
-    description: "Thành viên trong nhóm, có thể xem và cập nhật nhiệm vụ",
+    description: "ThÃ nh viÃªn trong nhÃ³m, cÃ³ thá»ƒ xem vÃ  cáº­p nháº­t nhiá»‡m vá»¥",
     permissions: {
       projects: {
         createProject: false,
@@ -107,31 +107,31 @@ const roles = [
 
 const permissionGroups = [
   {
-    title: "Quản lý Dự án",
+    title: "Quáº£n lÃ½ Dá»± Ã¡n",
     permissions: [
-      { key: "projects.createProject", label: "Tạo dự án mới" },
-      { key: "projects.editProject", label: "Chỉnh sửa dự án" },
-      { key: "projects.deleteProject", label: "Xóa dự án" },
-      { key: "projects.manageMembers", label: "Thêm/Xóa thành viên" },
-      { key: "projects.viewReports", label: "Xem báo cáo" },
+      { key: "projects.createProject", label: "Táº¡o dá»± Ã¡n má»›i" },
+      { key: "projects.editProject", label: "Chá»‰nh sá»­a dá»± Ã¡n" },
+      { key: "projects.deleteProject", label: "XÃ³a dá»± Ã¡n" },
+      { key: "projects.manageMembers", label: "ThÃªm/XÃ³a thÃ nh viÃªn" },
+      { key: "projects.viewReports", label: "Xem bÃ¡o cÃ¡o" },
     ],
   },
   {
-    title: "Quản lý Nhiệm vụ",
+    title: "Quáº£n lÃ½ Nhiá»‡m vá»¥",
     permissions: [
-      { key: "tasks.createTask", label: "Tạo nhiệm vụ mới" },
-      { key: "tasks.editTask", label: "Chỉnh sửa nhiệm vụ" },
-      { key: "tasks.deleteTask", label: "Xóa nhiệm vụ" },
-      { key: "tasks.assignTask", label: "Giao nhiệm vụ" },
-      { key: "tasks.useAI", label: "Sử dụng tính năng AI (Ước tính & Cải thiện)" },
+      { key: "tasks.createTask", label: "Táº¡o nhiá»‡m vá»¥ má»›i" },
+      { key: "tasks.editTask", label: "Chá»‰nh sá»­a nhiá»‡m vá»¥" },
+      { key: "tasks.deleteTask", label: "XÃ³a nhiá»‡m vá»¥" },
+      { key: "tasks.assignTask", label: "Giao nhiá»‡m vá»¥" },
+      { key: "tasks.useAI", label: "Sá»­ dá»¥ng tÃ­nh nÄƒng AI (Æ¯á»›c tÃ­nh & Cáº£i thiá»‡n)" },
     ],
   },
   {
-    title: "Quản lý Hệ thống (Admin)",
+    title: "Quáº£n lÃ½ Há»‡ thá»‘ng (Admin)",
     permissions: [
-      { key: "system.accessUserManagement", label: "Truy cập trang Quản lý người dùng" },
-      { key: "system.accessRoleManagement", label: "Truy cập trang Quản lý vai trò" },
-      { key: "system.accessSystemConfig", label: "Truy cập trang Cấu hình hệ thống" },
+      { key: "system.accessUserManagement", label: "Truy cáº­p trang Quáº£n lÃ½ ngÆ°á»i dÃ¹ng" },
+      { key: "system.accessRoleManagement", label: "Truy cáº­p trang Quáº£n lÃ½ vai trÃ²" },
+      { key: "system.accessSystemConfig", label: "Truy cáº­p trang Cáº¥u hÃ¬nh há»‡ thá»‘ng" },
     ],
   },
 ]
@@ -201,7 +201,7 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>Giám sát hệ thống</span>
+                <span>GiÃ¡m sÃ¡t há»‡ thá»‘ng</span>
               </button>
             </li>
             <li>
@@ -210,7 +210,7 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Users className="h-4 w-4" />
-                <span>Quản lý người dùng</span>
+                <span>Quáº£n lÃ½ ngÆ°á»i dÃ¹ng</span>
               </button>
             </li>
             <li>
@@ -219,7 +219,7 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
               >
                 <Shield className="h-4 w-4" />
-                <span>Quản lý vai trò</span>
+                <span>Quáº£n lÃ½ vai trÃ²</span>
               </button>
             </li>
             <li>
@@ -228,7 +228,7 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Settings className="h-4 w-4" />
-                <span>Cấu hình hệ thống</span>
+                <span>Cáº¥u hÃ¬nh há»‡ thá»‘ng</span>
               </button>
             </li>
             <li>
@@ -261,12 +261,12 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => setIsSettingsModalOpen(true)}>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Cài đặt</span>
+                <span>CÃ i Ä‘áº·t</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onLogout} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Đăng xuất</span>
+                <span>ÄÄƒng xuáº¥t</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -284,13 +284,13 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
               </div>
               <div className="flex-1">
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Quản lý vai trò và phân quyền
+                  Quáº£n lÃ½ vai trÃ² vÃ  phÃ¢n quyá»n
                 </h1>
-                <p className="text-gray-600 text-sm">Cấu hình quyền truy cập cho từng vai trò trong hệ thống</p>
+                <p className="text-gray-600 text-sm">Cáº¥u hÃ¬nh quyá»n truy cáº­p cho tá»«ng vai trÃ² trong há»‡ thá»‘ng</p>
               </div>
               <Button className="gap-2 shadow-md">
                 <Plus className="h-4 w-4" />
-                Tạo vai trò mới
+                Táº¡o vai trÃ² má»›i
               </Button>
             </div>
           </div>
@@ -312,7 +312,7 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
                     onClick={() => handleEditPermissions(role)}
                   >
                     <Edit className="h-4 w-4" />
-                    Chỉnh sửa quyền
+                    Chá»‰nh sá»­a quyá»n
                   </Button>
                 </CardContent>
               </Card>
@@ -326,7 +326,7 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="text-2xl text-gray-900 dark:text-white">
-              Chi tiết quyền cho vai trò: {selectedRole?.name}
+              Chi tiáº¿t quyá»n cho vai trÃ²: {selectedRole?.name}
             </DialogTitle>
           </DialogHeader>
           
@@ -362,10 +362,10 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button variant="outline" onClick={() => setSelectedRole(null)}>
-              Hủy
+              Há»§y
             </Button>
             <Button onClick={() => setSelectedRole(null)}>
-              Lưu thay đổi
+              LÆ°u thay Ä‘á»•i
             </Button>
           </div>
         </DialogContent>

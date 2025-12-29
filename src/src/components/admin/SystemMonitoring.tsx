@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { LayoutDashboard, Users, Shield, Settings, Database, LogOut, Activity, AlertCircle, Cpu, HardDrive, User, ShieldCheck } from 'lucide-react'
@@ -24,10 +24,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { SettingsModal } from "../src/components/settings/SettingsModal"
+import { SettingsModal } from "../settings/SettingsModal"
 
 interface SystemMonitoringProps {
-  adminEmail?: string // added adminEmail prop
+  adminEmail?: string
   onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => void
   onLogout?: () => void
 }
@@ -53,37 +53,37 @@ const activityLogs = [
   {
     id: 1,
     time: "14:32:15",
-    user: "Nguyễn Văn An",
-    action: "Tạo dự án mới",
+    user: "Nguyá»…n VÄƒn An",
+    action: "Táº¡o dá»± Ã¡n má»›i",
     details: "Website Redesign 2024",
   },
   {
     id: 2,
     time: "14:28:42",
-    user: "Trần Thị Bích",
-    action: "Cập nhật nhiệm vụ",
-    details: "Task #234 - Hoàn thành UI Dashboard",
+    user: "Tráº§n Thá»‹ BÃ­ch",
+    action: "Cáº­p nháº­t nhiá»‡m vá»¥",
+    details: "Task #234 - HoÃ n thÃ nh UI Dashboard",
   },
   {
     id: 3,
     time: "14:15:20",
-    user: "Lê Minh Cường",
-    action: "Thêm thành viên",
-    details: "Thêm Phạm Thu Dung vào dự án Mobile App",
+    user: "LÃª Minh CÆ°á»ng",
+    action: "ThÃªm thÃ nh viÃªn",
+    details: "ThÃªm Pháº¡m Thu Dung vÃ o dá»± Ã¡n Mobile App",
   },
   {
     id: 4,
     time: "13:58:07",
-    user: "Hoàng Văn Em",
-    action: "Đăng nhập",
+    user: "HoÃ ng VÄƒn Em",
+    action: "ÄÄƒng nháº­p",
     details: "IP: 192.168.1.105",
   },
   {
     id: 5,
     time: "13:45:33",
     user: "Admin System",
-    action: "Backup dữ liệu",
-    details: "Backup tự động hàng ngày",
+    action: "Backup dá»¯ liá»‡u",
+    details: "Backup tá»± Ä‘á»™ng hÃ ng ngÃ y",
   },
 ]
 
@@ -122,7 +122,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>Giám sát hệ thống</span>
+                <span>GiÃ¡m sÃ¡t há»‡ thá»‘ng</span>
               </button>
             </li>
             <li>
@@ -131,7 +131,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Users className="h-4 w-4" />
-                <span>Quản lý người dùng</span>
+                <span>Quáº£n lÃ½ ngÆ°á»i dÃ¹ng</span>
               </button>
             </li>
             <li>
@@ -140,7 +140,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Shield className="h-4 w-4" />
-                <span>Quản lý vai trò</span>
+                <span>Quáº£n lÃ½ vai trÃ²</span>
               </button>
             </li>
             <li>
@@ -149,7 +149,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Settings className="h-4 w-4" />
-                <span>Cấu hình hệ thống</span>
+                <span>Cáº¥u hÃ¬nh há»‡ thá»‘ng</span>
               </button>
             </li>
             <li>
@@ -182,12 +182,12 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => setIsSettingsModalOpen(true)}>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Cài đặt</span>
+                <span>CÃ i Ä‘áº·t</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onLogout} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Đăng xuất</span>
+                <span>ÄÄƒng xuáº¥t</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -205,9 +205,9 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Xin chào, {adminUsername}!
+                  Xin chÃ o, {adminUsername}!
                 </h1>
-                <p className="text-gray-600 text-sm">Đây là tổng quan về hệ thống và hoạt động quản trị</p>
+                <p className="text-gray-600 text-sm">ÄÃ¢y lÃ  tá»•ng quan vá» há»‡ thá»‘ng vÃ  hoáº¡t Ä‘á»™ng quáº£n trá»‹</p>
               </div>
             </div>
           </div>
@@ -217,7 +217,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             <Card className="border border-blue-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-white">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs text-blue-700 font-semibold uppercase tracking-wide">
-                  Tổng số người dùng
+                  Tá»•ng sá»‘ ngÆ°á»i dÃ¹ng
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -230,7 +230,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                   </div>
                 </div>
                 <p className="text-xs text-blue-700 font-medium mt-2">
-                  +12% so với tháng trước
+                  +12% so vá»›i thÃ¡ng trÆ°á»›c
                 </p>
               </CardContent>
             </Card>
@@ -238,7 +238,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             <Card className="border border-green-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-white">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs text-green-700 font-semibold uppercase tracking-wide">
-                  Tổng số dự án
+                  Tá»•ng sá»‘ dá»± Ã¡n
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -251,7 +251,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                   </div>
                 </div>
                 <p className="text-xs text-green-700 font-medium mt-2">
-                  +3 dự án mới tuần này
+                  +3 dá»± Ã¡n má»›i tuáº§n nÃ y
                 </p>
               </CardContent>
             </Card>
@@ -259,7 +259,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             <Card className="border border-yellow-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-yellow-50 to-white">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs text-yellow-700 font-semibold uppercase tracking-wide">
-                  Dự án đang hoạt động
+                  Dá»± Ã¡n Ä‘ang hoáº¡t Ä‘á»™ng
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -272,7 +272,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                   </div>
                 </div>
                 <p className="text-xs text-yellow-700 font-medium mt-2">
-                  75% tỷ lệ hoạt động
+                  75% tá»· lá»‡ hoáº¡t Ä‘á»™ng
                 </p>
               </CardContent>
             </Card>
@@ -280,7 +280,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             <Card className="border border-red-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-red-50 to-white">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs text-red-700 font-semibold uppercase tracking-wide">
-                  Lỗi hệ thống (24h)
+                  Lá»—i há»‡ thá»‘ng (24h)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -293,7 +293,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                   </div>
                 </div>
                 <p className="text-xs text-red-700 font-medium mt-2">
-                  -2 so với hôm qua
+                  -2 so vá»›i hÃ´m qua
                 </p>
               </CardContent>
             </Card>
@@ -304,8 +304,8 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             {/* Performance Chart */}
             <Card className="border shadow-md">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                <CardTitle className="text-lg font-bold text-gray-900">Hiệu năng hệ thống (CPU/RAM)</CardTitle>
-                <CardDescription className="text-sm mt-0.5">Sử dụng tài nguyên theo thời gian</CardDescription>
+                <CardTitle className="text-lg font-bold text-gray-900">Hiá»‡u nÄƒng há»‡ thá»‘ng (CPU/RAM)</CardTitle>
+                <CardDescription className="text-sm mt-0.5">Sá»­ dá»¥ng tÃ i nguyÃªn theo thá»i gian</CardDescription>
               </CardHeader>
               <CardContent className="pt-4 pb-4 px-2">
                 <ChartContainer
@@ -351,8 +351,8 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             {/* Role Distribution Chart */}
             <Card className="border shadow-md">
               <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
-                <CardTitle className="text-lg font-bold text-gray-900">Phân bố vai trò</CardTitle>
-                <CardDescription className="text-sm">Người dùng theo vai trò</CardDescription>
+                <CardTitle className="text-lg font-bold text-gray-900">PhÃ¢n bá»‘ vai trÃ²</CardTitle>
+                <CardDescription className="text-sm">NgÆ°á»i dÃ¹ng theo vai trÃ²</CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
                   <ChartContainer
@@ -407,17 +407,17 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
           {/* Activity Log Table */}
           <Card className="border shadow-md">
             <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b">
-              <CardTitle className="text-lg font-bold text-gray-900">Nhật ký hoạt động (Activity Log)</CardTitle>
-              <CardDescription className="text-sm">Các hoạt động gần đây trong hệ thống</CardDescription>
+              <CardTitle className="text-lg font-bold text-gray-900">Nháº­t kÃ½ hoáº¡t Ä‘á»™ng (Activity Log)</CardTitle>
+              <CardDescription className="text-sm">CÃ¡c hoáº¡t Ä‘á»™ng gáº§n Ä‘Ã¢y trong há»‡ thá»‘ng</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px]">Thời gian</TableHead>
-                    <TableHead className="w-[200px]">Người dùng</TableHead>
-                    <TableHead className="w-[180px]">Hành động</TableHead>
-                    <TableHead>Chi tiết</TableHead>
+                    <TableHead className="w-[120px]">Thá»i gian</TableHead>
+                    <TableHead className="w-[200px]">NgÆ°á»i dÃ¹ng</TableHead>
+                    <TableHead className="w-[180px]">HÃ nh Ä‘á»™ng</TableHead>
+                    <TableHead>Chi tiáº¿t</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

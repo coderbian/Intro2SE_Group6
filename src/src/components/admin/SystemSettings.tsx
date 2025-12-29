@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { Settings, Users, Shield, Database, LogOut, LayoutDashboard, Mail, HardDrive, User, ShieldCheck } from 'lucide-react'
@@ -17,9 +17,9 @@ import {
 
 interface SystemSettingsProps {
   onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => void
-  onExitAdmin?: () => void // Added onExitAdmin prop
-  adminEmail?: string // Added adminEmail prop
-  onLogout?: () => void // Added onLogout prop
+  onExitAdmin?: () => void
+  adminEmail?: string
+  onLogout?: () => void
 }
 
 export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }: SystemSettingsProps) {
@@ -40,11 +40,11 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
   })
 
   const handleSendTestEmail = () => {
-    alert("Đang gửi email kiểm tra...")
+    alert("Äang gá»­i email kiá»ƒm tra...")
   }
 
   const handleSaveChanges = () => {
-    alert("Đã lưu thay đổi thành công!")
+    alert("ÄÃ£ lÆ°u thay Ä‘á»•i thÃ nh cÃ´ng!")
   }
 
   const adminUsername = adminEmail ? adminEmail.split('@')[0] : 'admin'
@@ -66,7 +66,7 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>Giám sát hệ thống</span>
+                <span>GiÃ¡m sÃ¡t há»‡ thá»‘ng</span>
               </button>
             </li>
             <li>
@@ -75,7 +75,7 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Users className="h-4 w-4" />
-                <span>Quản lý người dùng</span>
+                <span>Quáº£n lÃ½ ngÆ°á»i dÃ¹ng</span>
               </button>
             </li>
             <li>
@@ -84,7 +84,7 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Shield className="h-4 w-4" />
-                <span>Quản lý vai trò</span>
+                <span>Quáº£n lÃ½ vai trÃ²</span>
               </button>
             </li>
             <li>
@@ -93,7 +93,7 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
               >
                 <Settings className="h-4 w-4" />
-                <span>Cấu hình hệ thống</span>
+                <span>Cáº¥u hÃ¬nh há»‡ thá»‘ng</span>
               </button>
             </li>
             <li>
@@ -125,12 +125,12 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Cài đặt</span>
+                <span>CÃ i Ä‘áº·t</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={onLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Đăng xuất</span>
+                <span>ÄÄƒng xuáº¥t</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -148,9 +148,9 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Cấu hình hệ thống
+                  Cáº¥u hÃ¬nh há»‡ thá»‘ng
                 </h1>
-                <p className="text-gray-600 text-sm">Thiết lập và cấu hình các tham số hệ thống</p>
+                <p className="text-gray-600 text-sm">Thiáº¿t láº­p vÃ  cáº¥u hÃ¬nh cÃ¡c tham sá»‘ há»‡ thá»‘ng</p>
               </div>
             </div>
           </div>
@@ -161,10 +161,10 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
                 <CardTitle className="flex items-center gap-2 text-gray-900">
                   <Mail className="w-5 h-5" />
-                  Cài đặt Email (SMTP/SendGrid)
+                  CÃ i Ä‘áº·t Email (SMTP/SendGrid)
                 </CardTitle>
                 <CardDescription>
-                  Cấu hình máy chủ email để gửi thông báo và email hệ thống
+                  Cáº¥u hÃ¬nh mÃ¡y chá»§ email Ä‘á»ƒ gá»­i thÃ´ng bÃ¡o vÃ  email há»‡ thá»‘ng
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
@@ -200,18 +200,18 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mật khẩu</Label>
+                  <Label htmlFor="password">Máº­t kháº©u</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     value={emailSettings.password}
                     onChange={(e) => setEmailSettings({ ...emailSettings, password: e.target.value })}
                   />
                 </div>
                 
                 <Button variant="outline" onClick={handleSendTestEmail}>
-                  Gửi email kiểm tra
+                  Gá»­i email kiá»ƒm tra
                 </Button>
               </CardContent>
             </Card>
@@ -221,15 +221,15 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
               <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
                 <CardTitle className="flex items-center gap-2 text-gray-900">
                   <HardDrive className="w-5 h-5" />
-                  Cài đặt giới hạn
+                  CÃ i Ä‘áº·t giá»›i háº¡n
                 </CardTitle>
                 <CardDescription>
-                  Thiết lập các giới hạn cho hệ thống
+                  Thiáº¿t láº­p cÃ¡c giá»›i háº¡n cho há»‡ thá»‘ng
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="maxFileSize">Kích thước file upload tối đa (MB)</Label>
+                  <Label htmlFor="maxFileSize">KÃ­ch thÆ°á»›c file upload tá»‘i Ä‘a (MB)</Label>
                   <Input
                     id="maxFileSize"
                     type="number"
@@ -241,7 +241,7 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="maxProjects">Số dự án tối đa mỗi Project Manager</Label>
+                  <Label htmlFor="maxProjects">Sá»‘ dá»± Ã¡n tá»‘i Ä‘a má»—i Project Manager</Label>
                   <Input
                     id="maxProjects"
                     type="number"
@@ -258,7 +258,7 @@ export function SystemSettings({ onNavigate, onExitAdmin, adminEmail, onLogout }
           {/* Fixed Save Button */}
           <div className="fixed bottom-8 right-8">
             <Button size="lg" onClick={handleSaveChanges} className="shadow-lg">
-              Lưu thay đổi
+              LÆ°u thay Ä‘á»•i
             </Button>
           </div>
         </div>

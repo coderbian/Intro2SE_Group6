@@ -2,11 +2,7 @@
 
 import { useState } from "react"
 import App from "@/src/App"
-import { AdminDashboard } from "@/components/admin-dashboard"
-import { RoleManagement } from "@/components/role-management"
-import { SystemMonitoring } from "@/components/system-monitoring"
-import { SystemSettings } from "@/components/system-settings"
-import { BackupRestore } from "@/components/backup-restore"
+import { AdminDashboard, RoleManagement, SystemMonitoring, SystemSettings, BackupRestore } from "@/src/components/admin"
 import { toast } from "sonner"
 
 export default function Page() {
