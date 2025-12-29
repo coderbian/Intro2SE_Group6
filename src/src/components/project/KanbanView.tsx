@@ -163,6 +163,7 @@ export function KanbanView({
         <CreateTaskDialog
           project={project}
           initialStatus={createColumnStatus}
+          mode="task"
           currentUserId={user.id}
           onClose={() => setIsCreateDialogOpen(false)}
           onCreateTask={(task) => {

@@ -74,6 +74,7 @@ export interface TaskProposal {
 export interface Task {
   id: string
   projectId: string
+  type: "user-story" | "task"
   title: string
   description: string
   priority: "low" | "medium" | "high" | "urgent"
@@ -452,7 +453,33 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
   }
 
   const handleUpdateTask = (taskId: string, updates: Partial<Task>) => {
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, ...updates } : t)))
+    setTasks((prevTasks) => {
+      const updatedTasks = prevTasks.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
+
+      // Auto-update User Story status if a Task is updated
+      const updatedTask = updatedTasks.find(t => t.id === taskId)
+      if (updatedTask?.parentTaskId && updatedTask.type === 'task') {
+        const siblingTasks = updatedTasks.filter(t => t.parentTaskId === updatedTask.parentTaskId)
+        const allDone = siblingTasks.every(t => t.status === 'done')
+        const anyInProgress = siblingTasks.some(t => t.status === 'in-progress' || t.status === 'done')
+
+        // Find and update parent User Story
+        return updatedTasks.map(t => {
+          if (t.id === updatedTask.parentTaskId) {
+            if (allDone && siblingTasks.length > 0) {
+              return { ...t, status: 'done' as const }
+            } else if (anyInProgress) {
+              return { ...t, status: 'in-progress' as const }
+            } else {
+              return { ...t, status: 'todo' as const }
+            }
+          }
+          return t
+        })
+      }
+
+      return updatedTasks
+    })
   }
 
   const handleDeleteTask = (taskId: string) => {
@@ -710,6 +737,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     const newTask: Task = {
       id: Date.now().toString(),
       projectId: proposal.projectId,
+      type: "user-story",
       title: proposal.title,
       description: proposal.description,
       priority: proposal.priority,

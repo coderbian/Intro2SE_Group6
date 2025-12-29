@@ -55,19 +55,31 @@ export function ScrumView({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createColumnStatus, setCreateColumnStatus] = useState<Task['status']>('todo');
+  const [createMode, setCreateMode] = useState<"user-story" | "task">("user-story");
+  const [createParentId, setCreateParentId] = useState<string | undefined>(undefined);
   const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false);
   const [selectedBacklogTasks, setSelectedBacklogTasks] = useState<string[]>([]);
   const [sprintName, setSprintName] = useState('');
   const [sprintGoal, setSprintGoal] = useState('');
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
 
-  // Filter out subtasks
-  const mainTasks = tasks.filter(t => !t.parentTaskId);
+  // Phân loại tasks
+  const userStories = tasks.filter(t => t.type === 'user-story' || (!t.type && !t.parentTaskId));
+  const sprintUserStories = userStories.filter(t => t.sprintId === currentSprint?.id);
+  const backlogUserStories = userStories.filter(t => t.status === 'backlog' && !t.sprintId);
 
-  // Calculate sprint statistics
-  const sprintTasks = mainTasks.filter(t => t.status !== 'backlog');
-  const totalPoints = sprintTasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-  const completedPoints = mainTasks.filter(t => t.status === 'done').reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+  // Backward compatible - mainTasks = user stories (không có parent)
+  const mainTasks = userStories;
+
+  // Tasks trong Sprint (bao gồm cả subtasks của User Stories trong Sprint)
+  const sprintTasks = tasks.filter(t =>
+    (t.type === 'task' && t.parentTaskId && sprintUserStories.some(us => us.id === t.parentTaskId)) ||
+    (t.sprintId === currentSprint?.id && t.type === 'task')
+  );
+
+  // Calculate sprint statistics from User Stories
+  const totalPoints = sprintUserStories.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+  const completedPoints = sprintUserStories.filter(t => t.status === 'done').reduce((sum, t) => sum + (t.storyPoints || 0), 0);
   const sprintProgress = totalPoints > 0 ? (completedPoints / totalPoints) * 100 : 0;
 
   const getDaysUntilDeadline = () => {
@@ -75,8 +87,10 @@ export function ScrumView({
     return days;
   };
 
-  const handleOpenCreate = (status: Task['status']) => {
+  const handleOpenCreate = (status: Task['status'], mode: "user-story" | "task" = "user-story", parentId?: string) => {
     setCreateColumnStatus(status);
+    setCreateMode(mode);
+    setCreateParentId(parentId);
     setIsCreateDialogOpen(true);
   };
 
@@ -195,7 +209,7 @@ export function ScrumView({
               <TabsTrigger value="board" className="text-base">Bảng Sprint</TabsTrigger>
               <TabsTrigger value="backlog" className="text-base">
                 Backlog <Badge variant="secondary" className="ml-2">
-                  {mainTasks.filter(t => t.status === 'backlog').length}
+                  {backlogUserStories.length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="history" className="text-base">
@@ -219,15 +233,16 @@ export function ScrumView({
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900 text-base">{column.title}</h3>
                       <Badge variant="secondary" className="bg-white/80 text-gray-700 font-semibold px-2.5 py-1">
-                        {mainTasks.filter(task => task.status === column.id).length}
+                        {sprintTasks.filter(task => task.status === column.id).length}
                       </Badge>
                     </div>
                   </div>
-                  <div className="p-4 min-h-[500px] space-y-3 overflow-y-auto">
-                    {mainTasks
+                  <div className="p-4 min-h-[300px] space-y-3 overflow-y-auto">
+                    {sprintTasks
                       .filter(task => task.status === column.id)
                       .map((task) => {
                         const canDrag = canEditTask(user.id, task, project);
+                        const parentStory = userStories.find(us => us.id === task.parentTaskId);
                         return (
                           <div
                             key={task.id}
@@ -235,23 +250,26 @@ export function ScrumView({
                             onDragStart={() => canDrag && handleDragStart(task)}
                             className={canDrag ? "cursor-move" : "cursor-not-allowed opacity-75"}
                           >
-                            <TaskCard
-                              task={task}
-                              project={project}
-                              allTasks={tasks}
-                              user={user}
-                              onClick={() => setSelectedTask(task)}
-                              showStoryPoints
-                              onUpdateTask={onUpdateTask}
-                            />
+                            <div className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className="font-medium text-gray-900 text-sm">{task.title}</h4>
+                              </div>
+                              {parentStory && (
+                                <p className="text-xs text-purple-600 mb-2">📋 {parentStory.title}</p>
+                              )}
+                              {task.description && (
+                                <p className="text-xs text-gray-500 line-clamp-2">{task.description}</p>
+                              )}
+                            </div>
                           </div>
                         )
                       }
                       )}
 
-                    {mainTasks.filter(task => task.status === column.id).length === 0 && (
+                    {sprintTasks.filter(task => task.status === column.id).length === 0 && (
                       <div className="text-center py-12 text-gray-400">
-                        <p className="text-sm font-medium">Chưa có nhiệm vụ</p>
+                        <p className="text-sm font-medium">Chưa có task</p>
+                        <p className="text-xs mt-1">Thêm task từ User Stories bên dưới</p>
                       </div>
                     )}
 
@@ -269,6 +287,74 @@ export function ScrumView({
                 </div>
               ))}
             </div>
+
+            {/* User Stories trong Sprint với Progress */}
+            {currentSprint && sprintUserStories.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span>📋</span> User Stories trong Sprint
+                </h3>
+                <div className="grid gap-4">
+                  {sprintUserStories.map((story) => {
+                    const storyTasks = tasks.filter(t => t.parentTaskId === story.id);
+                    const doneTasks = storyTasks.filter(t => t.status === 'done').length;
+                    const progress = storyTasks.length > 0 ? (doneTasks / storyTasks.length) * 100 : 0;
+
+                    return (
+                      <div key={story.id} className="bg-white border-2 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <h4 className="font-semibold text-gray-900">{story.title}</h4>
+                            {story.storyPoints && (
+                              <Badge variant="outline" className="text-purple-600 border-purple-300">
+                                {story.storyPoints} pts
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className={`${story.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                              {story.status === 'done' ? '✅ Hoàn thành' : `${doneTasks}/${storyTasks.length} tasks`}
+                            </Badge>
+                            {isManager && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenCreate('todo', 'task', story.id)}
+                                className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Thêm Task
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {storyTasks.length > 0 && (
+                          <div className="mt-3">
+                            <Progress value={progress} className="h-2" />
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                              {storyTasks.map(task => (
+                                <Badge
+                                  key={task.id}
+                                  variant="outline"
+                                  className={`text-xs ${task.status === 'done' ? 'bg-green-50 text-green-700' : task.status === 'in-progress' ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-50 text-gray-600'}`}
+                                  onClick={() => setSelectedTask(task)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  {task.title}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {storyTasks.length === 0 && (
+                          <p className="text-sm text-gray-500 italic mt-2">Chưa có task. Click "Thêm Task" để tạo.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="backlog" className="m-0 p-8">
@@ -414,6 +500,8 @@ export function ScrumView({
           project={project}
           initialStatus={createColumnStatus}
           isScrum
+          mode={createMode}
+          parentTaskId={createParentId}
           currentUserId={user.id}
           onClose={() => setIsCreateDialogOpen(false)}
           onCreateTask={(task) => {

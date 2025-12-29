@@ -14,6 +14,8 @@ interface CreateTaskDialogProps {
   project: Project;
   initialStatus: Task['status'];
   isScrum?: boolean;
+  mode?: "user-story" | "task";
+  parentTaskId?: string;
   currentUserId?: string;
   onClose: () => void;
   onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
@@ -23,6 +25,8 @@ export function CreateTaskDialog({
   project,
   initialStatus,
   isScrum,
+  mode = "user-story",
+  parentTaskId,
   currentUserId,
   onClose,
   onCreateTask,
@@ -41,14 +45,17 @@ export function CreateTaskDialog({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
 
+  const isUserStory = mode === "user-story";
+
   const handleSubmit = () => {
     if (!formData.title.trim()) {
-      toast.error('Vui lòng nhập tên nhiệm vụ');
+      toast.error(isUserStory ? 'Vui lòng nhập tên User Story' : 'Vui lòng nhập tên Task');
       return;
     }
 
     onCreateTask({
       projectId: project.id,
+      type: mode,
       title: formData.title,
       description: formData.description,
       priority: formData.priority,
@@ -56,7 +63,8 @@ export function CreateTaskDialog({
       assignees: formData.assignees,
       deadline: formData.deadline || undefined,
       labels: formData.labels,
-      storyPoints: isScrum ? formData.storyPoints : undefined,
+      storyPoints: isUserStory && isScrum ? formData.storyPoints : undefined,
+      parentTaskId: parentTaskId,
       createdBy: currentUserId || project.ownerId,
     });
   };
@@ -129,17 +137,17 @@ export function CreateTaskDialog({
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="text-2xl font-semibold">
-            Tạo {isScrum ? 'User Story' : 'nhiệm vụ'} mới
+            Tạo {isUserStory ? 'User Story' : 'Task'} mới
           </DialogTitle>
           <DialogDescription className="text-base mt-2">
-            Nhập thông tin chi tiết cho {isScrum ? 'user story' : 'nhiệm vụ'}
+            Nhập thông tin chi tiết cho {isUserStory ? 'user story' : 'task'}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto py-4 space-y-6">
           <div className="space-y-3">
             <Label htmlFor="title" className="text-base font-semibold">
-              Tên {isScrum ? 'User Story' : 'nhiệm vụ'} *
+              Tên {isUserStory ? 'User Story' : 'Task'} *
             </Label>
             <Input
               id="title"
@@ -194,12 +202,12 @@ export function CreateTaskDialog({
               </Select>
             </div>
 
-            {isScrum && (
+            {isScrum && isUserStory && (
               <div className="space-y-3">
                 <Label htmlFor="storyPoints" className="text-base font-semibold">Story Points</Label>
                 <Select
                   value={formData.storyPoints.toString()}
-                  onValueChange={(value) => setFormData({ ...formData, storyPoints: parseInt(value) })}
+                  onValueChange={(value: string) => setFormData({ ...formData, storyPoints: parseInt(value) })}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue />
