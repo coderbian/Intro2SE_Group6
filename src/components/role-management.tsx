@@ -142,14 +142,15 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
   const [editedPermissions, setEditedPermissions] = useState<any>(null)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [settings, setSettings] = useState({
-    theme: 'light',
-    language: 'vi',
+    theme: 'light' as 'light' | 'dark',
+    language: 'vi' as 'vi' | 'en',
     notifications: {
       taskAssigned: true,
       taskCompleted: true,
       projectUpdates: true,
       emailNotifications: true,
     },
+    linkedAccounts: {},
   })
 
   const handleEditPermissions = (role: typeof roles[0]) => {
@@ -187,55 +188,55 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-border">
-          <h1 className="text-xl font-bold text-primary">Planora</h1>
+        <div className="h-[52px] flex items-center px-4 border-b border-border">
+          <h1 className="text-lg font-bold text-primary">Planora Admin</h1>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6">
+        <nav className="flex-1 py-4">
           <ul className="space-y-1 px-3">
             <li>
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <LayoutDashboard className="h-5 w-5" />
+                <LayoutDashboard className="h-4 w-4" />
                 <span>Giám sát hệ thống</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('users')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Users className="h-5 w-5" />
+                <Users className="h-4 w-4" />
                 <span>Quản lý người dùng</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('roles')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
               >
-                <Shield className="h-5 w-5" />
+                <Shield className="h-4 w-4" />
                 <span>Quản lý vai trò</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('settings')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Settings className="h-5 w-5" />
+                <Settings className="h-4 w-4" />
                 <span>Cấu hình hệ thống</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('backup')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Database className="h-5 w-5" />
+                <Database className="h-4 w-4" />
                 <span>Backup/Restore</span>
               </button>
             </li>
@@ -246,14 +247,14 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
         <div className="p-3 border-t border-border">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors">
-                <Avatar className="h-8 w-8">
+              <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+                <Avatar className="h-7 w-7">
                   <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
-                  <AvatarFallback>{adminAvatarFallback}</AvatarFallback> {/* use dynamic avatar fallback */}
+                  <AvatarFallback className="text-xs">{adminAvatarFallback}</AvatarFallback> {/* use dynamic avatar fallback */}
                 </Avatar>
                 <div className="flex-1 text-left">
-                  <div className="text-sm font-medium text-foreground">{adminUsername}</div> {/* display dynamic username */}
-                  <div className="text-xs text-muted-foreground">{adminEmail}</div> {/* display dynamic email */}
+                  <div className="text-xs font-medium text-foreground">{adminUsername}</div> {/* display dynamic username */}
+                  <div className="text-[11px] text-muted-foreground">{adminEmail}</div> {/* display dynamic email */}
                 </div>
               </button>
             </DropdownMenuTrigger>
@@ -274,27 +275,37 @@ export function RoleManagement({ adminEmail, onNavigate, onLogout }: RoleManagem
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-8">
+        <div className="container mx-auto px-4 lg:px-6 py-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-foreground">Quản lý vai trò và phân quyền</h2>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Tạo vai trò mới
-            </Button>
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-md">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Quản lý vai trò và phân quyền
+                </h1>
+                <p className="text-gray-600 text-sm">Cấu hình quyền truy cập cho từng vai trò trong hệ thống</p>
+              </div>
+              <Button className="gap-2 shadow-md">
+                <Plus className="h-4 w-4" />
+                Tạo vai trò mới
+              </Button>
+            </div>
           </div>
 
           {/* Role Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {roles.map((role) => (
-              <Card key={role.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-xl">{role.name}</CardTitle>
+              <Card key={role.id} className="border shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-blue-50/30">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <CardTitle className="text-xl text-gray-900">{role.name}</CardTitle>
                   <CardDescription className="text-sm">
                     {role.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                   <Button 
                     variant="outline" 
                     className="w-full gap-2"

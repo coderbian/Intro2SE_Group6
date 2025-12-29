@@ -90,14 +90,15 @@ const activityLogs = [
 export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMonitoringProps) {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [settings, setSettings] = useState({
-    theme: 'light',
-    language: 'vi',
+    theme: 'light' as 'light' | 'dark',
+    language: 'vi' as 'vi' | 'en',
     notifications: {
       taskAssigned: true,
       taskCompleted: true,
       projectUpdates: true,
       emailNotifications: true,
     },
+    linkedAccounts: {},
   })
 
   const adminUsername = adminEmail ? adminEmail.split('@')[0] : 'Admin'
@@ -108,55 +109,55 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-border">
-          <h1 className="text-xl font-bold text-primary">Planora</h1>
+        <div className="h-[52px] flex items-center px-4 border-b border-border">
+          <h1 className="text-lg font-bold text-primary">Planora Admin</h1>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6">
+        <nav className="flex-1 py-4">
           <ul className="space-y-1 px-3">
             <li>
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
               >
-                <LayoutDashboard className="h-5 w-5" />
+                <LayoutDashboard className="h-4 w-4" />
                 <span>Giám sát hệ thống</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('users')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Users className="h-5 w-5" />
+                <Users className="h-4 w-4" />
                 <span>Quản lý người dùng</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('roles')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Shield className="h-5 w-5" />
+                <Shield className="h-4 w-4" />
                 <span>Quản lý vai trò</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('settings')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Settings className="h-5 w-5" />
+                <Settings className="h-4 w-4" />
                 <span>Cấu hình hệ thống</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => onNavigate('backup')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Database className="h-5 w-5" />
+                <Database className="h-4 w-4" />
                 <span>Backup/Restore</span>
               </button>
             </li>
@@ -167,14 +168,14 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
         <div className="p-3 border-t border-border">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors">
-                <Avatar className="h-8 w-8">
+              <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+                <Avatar className="h-7 w-7">
                   <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
-                  <AvatarFallback>{adminAvatarFallback}</AvatarFallback> {/* use dynamic avatar fallback */}
+                  <AvatarFallback className="text-xs">{adminAvatarFallback}</AvatarFallback> {/* use dynamic avatar fallback */}
                 </Avatar>
                 <div className="flex-1 text-left">
-                  <div className="text-sm font-medium text-foreground">{adminUsername}</div> {/* display dynamic username */}
-                  <div className="text-xs text-muted-foreground">{adminEmail}</div> {/* display dynamic email */}
+                  <div className="text-xs font-medium text-foreground">{adminUsername}</div> {/* display dynamic username */}
+                  <div className="text-[11px] text-muted-foreground">{adminEmail}</div> {/* display dynamic email */}
                 </div>
               </button>
             </DropdownMenuTrigger>
@@ -195,69 +196,103 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-8">
+        <div className="container mx-auto px-4 lg:px-6 py-6">
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-foreground">Tổng quan hệ thống</h2>
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-md">
+                <LayoutDashboard className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Xin chào, {adminUsername}!
+                </h1>
+                <p className="text-gray-600 text-sm">Đây là tổng quan về hệ thống và hoạt động quản trị</p>
+              </div>
+            </div>
           </div>
 
           {/* Stat Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card className="border border-blue-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xs text-blue-700 font-semibold uppercase tracking-wide">
                   Tổng số người dùng
                 </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">60</div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    60
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-md">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-xs text-blue-700 font-medium mt-2">
                   +12% so với tháng trước
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="border border-green-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xs text-green-700 font-semibold uppercase tracking-wide">
                   Tổng số dự án
                 </CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">24</div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    24
+                  </div>
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2.5 rounded-xl shadow-md">
+                    <Activity className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-xs text-green-700 font-medium mt-2">
                   +3 dự án mới tuần này
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="border border-yellow-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-yellow-50 to-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xs text-yellow-700 font-semibold uppercase tracking-wide">
                   Dự án đang hoạt động
                 </CardTitle>
-                <Cpu className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">18</div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                    18
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-2.5 rounded-xl shadow-md">
+                    <Cpu className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-xs text-yellow-700 font-medium mt-2">
                   75% tỷ lệ hoạt động
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="border border-red-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-red-50 to-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xs text-red-700 font-semibold uppercase tracking-wide">
                   Lỗi hệ thống (24h)
                 </CardTitle>
-                <AlertCircle className="h-4 w-4 text-destructive" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">3</div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                    3
+                  </div>
+                  <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2.5 rounded-xl shadow-md">
+                    <AlertCircle className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-xs text-red-700 font-medium mt-2">
                   -2 so với hôm qua
                 </p>
               </CardContent>
@@ -265,14 +300,14 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Performance Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Hiệu năng hệ thống (CPU/RAM)</CardTitle>
-                <CardDescription>Sử dụng tài nguyên theo thời gian</CardDescription>
+            <Card className="border shadow-md">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                <CardTitle className="text-lg font-bold text-gray-900">Hiệu năng hệ thống (CPU/RAM)</CardTitle>
+                <CardDescription className="text-sm mt-0.5">Sử dụng tài nguyên theo thời gian</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4 pb-4 px-2">
                 <ChartContainer
                   config={{
                     cpu: {
@@ -284,94 +319,98 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                       color: "hsl(var(--chart-2))",
                     },
                   }}
-                  className="h-[300px]"
+                  className="h-[280px] w-full"
                 >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={performanceData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="time" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="cpu" 
-                        stroke="hsl(var(--chart-1))" 
-                        strokeWidth={2}
-                        name="CPU %" 
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="ram" 
-                        stroke="hsl(var(--chart-2))" 
-                        strokeWidth={2}
-                        name="RAM %" 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={performanceData} margin={{ top: 10, right: 30, left: -15, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="time" className="text-xs" />
+                        <YAxis className="text-xs" />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="cpu" 
+                          stroke="hsl(var(--chart-1))" 
+                          strokeWidth={2}
+                          name="CPU %" 
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="ram" 
+                          stroke="hsl(var(--chart-2))" 
+                          strokeWidth={2}
+                          name="RAM %" 
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
 
             {/* Role Distribution Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Phân bố vai trò người dùng</CardTitle>
-                <CardDescription>Số lượng người dùng theo vai trò</CardDescription>
+            <Card className="border shadow-md">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+                <CardTitle className="text-lg font-bold text-gray-900">Phân bố vai trò</CardTitle>
+                <CardDescription className="text-sm">Người dùng theo vai trò</CardDescription>
               </CardHeader>
-              <CardContent>
-                <ChartContainer
-                  config={{
-                    admin: {
-                      label: "Admin",
-                      color: "#3b82f6",
-                    },
-                    projectManager: {
-                      label: "Project Manager",
-                      color: "#8b5cf6",
-                    },
-                    developer: {
-                      label: "Developer",
-                      color: "#10b981",
-                    },
-                    designer: {
-                      label: "Designer",
-                      color: "#f59e0b",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={roleDistributionData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={(entry) => `${entry.name}: ${entry.value}`}
-                      >
-                        {roleDistributionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+              <CardContent className="pt-4">
+                  <ChartContainer
+                    config={{
+                      admin: {
+                        label: "Admin",
+                        color: "#3b82f6",
+                      },
+                      projectManager: {
+                        label: "Project Manager",
+                        color: "#8b5cf6",
+                      },
+                      developer: {
+                        label: "Developer",
+                        color: "#10b981",
+                      },
+                      designer: {
+                        label: "Designer",
+                        color: "#f59e0b",
+                      },
+                    }}
+                    className="h-[280px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={roleDistributionData}
+                          cx="50%"
+                          cy="45%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {roleDistributionData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          formatter={(value, entry: any) => `${entry.payload.name}: ${entry.payload.value}`}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
           </div>
 
           {/* Activity Log Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Nhật ký hoạt động (Activity Log)</CardTitle>
-              <CardDescription>Các hoạt động gần đây trong hệ thống</CardDescription>
+          <Card className="border shadow-md">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b">
+              <CardTitle className="text-lg font-bold text-gray-900">Nhật ký hoạt động (Activity Log)</CardTitle>
+              <CardDescription className="text-sm">Các hoạt động gần đây trong hệ thống</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <Table>
                 <TableHeader>
                   <TableRow>
