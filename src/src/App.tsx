@@ -14,11 +14,7 @@ import { toast } from "sonner"
 import { TrashPage } from "./components/trash/TrashPage"
 import { AllProjectsPage } from "./components/projects/AllProjectsPage"
 import { MemberRequestsPage } from "./components/member-requests/MemberRequestsPage"
-import { AdminDashboard } from "../components/admin-dashboard"
-import { RoleManagement } from "../components/role-management"
-import { SystemMonitoring } from "../components/system-monitoring"
-import { SystemSettings } from "../components/system-settings"
-import { BackupRestore } from "../components/backup-restore"
+import { AdminDashboard, RoleManagement, SystemMonitoring, SystemSettings, BackupRestore } from "./components/admin"
 
 type Page =
   | "login"
