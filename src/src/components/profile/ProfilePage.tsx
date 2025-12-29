@@ -68,13 +68,13 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="mb-2">Thông tin cá nhân</h1>
-        <p className="text-gray-600">Quản lý thông tin tài khoản của bạn</p>
+    <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Thông tin cá nhân</h1>
+        <p className="text-gray-600 text-sm">Quản lý thông tin tài khoản của bạn</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Profile Card */}
         <Card>
           <CardHeader>

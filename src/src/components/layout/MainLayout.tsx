@@ -78,6 +78,7 @@ export function MainLayout({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [newProject, setNewProject] = useState({
     name: "",
@@ -322,9 +323,9 @@ export function MainLayout({
         <div
           className={`p-4 ${settings.theme === "dark" ? "border-slate-800 bg-gradient-to-r from-slate-800 to-slate-900" : "border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50"} border-t sticky bottom-0 z-10 shadow-md`}
         >
-          <DropdownMenu>
+          <DropdownMenu open={isAccountOpen} onOpenChange={setIsAccountOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start hover:bg-white/50 h-12 px-2.5">
+              <button className="w-full text-left hover:bg-white/70 hover:shadow-md transition-all h-12 px-2.5 cursor-pointer rounded-md flex items-center">
                 <Avatar className="w-8 h-8 mr-2.5 ring-2 ring-blue-500 ring-offset-1">
                   <AvatarImage src={user.avatar || "/placeholder.svg"} />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold text-sm">
@@ -337,20 +338,20 @@ export function MainLayout({
                     {user.email}
                   </div>
                 </div>
-                <ChevronDown className="w-4 h-4" />
-              </Button>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => onNavigate("profile")}>
+              <DropdownMenuItem onClick={() => onNavigate("profile")} className="cursor-pointer">
                 <User className="w-4 h-4 mr-2" />
                 Thông tin cá nhân
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsSettingsModalOpen(true)}>
+              <DropdownMenuItem onClick={() => setIsSettingsModalOpen(true)} className="cursor-pointer">
                 <Settings className="w-4 h-4 mr-2" />
                 Cài đặt
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onLogout} className="text-red-600">
+              <DropdownMenuItem onClick={onLogout} className="text-red-600 cursor-pointer">
                 <LogOut className="w-4 h-4 mr-2" />
                 Đăng xuất
               </DropdownMenuItem>
@@ -401,14 +402,14 @@ export function MainLayout({
 
           <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative hover:bg-blue-50 rounded-lg p-1.5" title="Thông báo">
+              <button className="relative hover:bg-blue-50 rounded-lg p-1.5 cursor-pointer transition-colors" title="Thông báo">
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-red-600 rounded-full text-white text-xs flex items-center justify-center font-bold shadow-md">
                     {unreadCount}
                   </span>
                 )}
-              </Button>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-96 p-0">
               <NotificationList
