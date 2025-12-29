@@ -83,6 +83,7 @@ export interface Task {
   labels: string[]
   storyPoints?: number
   parentTaskId?: string
+  sprintId?: string
   createdBy: string
   createdAt: string
   comments: Comment[]
@@ -157,22 +158,32 @@ export interface JoinRequest {
   createdAt: string
 }
 
+export interface Sprint {
+  id: string
+  name: string
+  goal: string
+  projectId: string
+  startDate: string
+  endDate?: string
+  status: "active" | "completed"
+}
+
 export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   console.log("App: mounted, onEnterAdmin provided:", { hasHandler: !!onEnterAdmin })
   const adminLoginHandler = (email: string, password: string) => {
     console.log("App: adminLoginHandler called", { email })
-    
+
     // Validate admin credentials
     if (!email.includes("@gmail.com")) {
       toast.error("Email admin phải có đuôi @gmail.com")
       return
     }
-    
+
     if (password.length < 6) {
       toast.error("Mật khẩu phải có ít nhất 6 ký tự")
       return
     }
-    
+
     // Call prop handler if provided
     if (onEnterAdmin) {
       try {
@@ -187,17 +198,17 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     // Call global window handler if available
     if (typeof window !== "undefined" && (window as any).__onEnterAdmin) {
       console.log("App: calling fallback window.__onEnterAdmin")
-      ;(window as any).__onEnterAdmin(email, password)
+        ; (window as any).__onEnterAdmin(email, password)
       return
     }
 
     // Default: show admin dashboard
     console.log("App: showing admin dashboard")
     toast.success("Đăng nhập admin thành công")
-    
+
     // Store admin session
     localStorage.setItem("planora_admin", JSON.stringify({ email, loginAt: new Date().toISOString() }))
-    
+
     // Set admin state and show admin page
     setAdminEmail(email)
     setCurrentPage("admin")
@@ -223,13 +234,14 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [invitations, setInvitations] = useState<ProjectInvitation[]>([])
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
+  const [sprints, setSprints] = useState<Sprint[]>([])
   const [adminEmail, setAdminEmail] = useState<string | null>(null)
   const [adminPage, setAdminPage] = useState<AdminPage>("monitoring")
   const eventListenerAttached = useRef(false)
 
   useEffect(() => {
     localStorage.clear()
-    
+
     setIsLoading(false)
   }, [])
 
@@ -458,6 +470,51 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     toast.success("Nhiệm vụ đã được xóa vĩnh viễn")
   }
 
+  const handleCreateSprint = (projectId: string, name: string, goal: string, taskIds: string[]) => {
+    const newSprint: Sprint = {
+      id: Date.now().toString(),
+      name: name || `Sprint ${sprints.filter(s => s.projectId === projectId).length + 1}`,
+      goal,
+      projectId,
+      startDate: new Date().toISOString(),
+      status: "active",
+    }
+
+    setSprints([...sprints, newSprint])
+
+    // Update tasks with sprint ID and move to todo
+    setTasks(tasks.map((t) =>
+      taskIds.includes(t.id)
+        ? { ...t, sprintId: newSprint.id, status: "todo" as const }
+        : t
+    ))
+
+    toast.success(`Đã tạo ${newSprint.name}!`)
+  }
+
+  const handleEndSprint = (sprintId: string) => {
+    // Mark sprint as completed
+    setSprints(sprints.map((s) =>
+      s.id === sprintId
+        ? { ...s, status: "completed" as const, endDate: new Date().toISOString() }
+        : s
+    ))
+
+    // Move incomplete tasks back to backlog and clear sprintId
+    setTasks(tasks.map((t) => {
+      if (t.sprintId === sprintId && t.status !== "done") {
+        // Task not completed - move back to backlog
+        return { ...t, sprintId: undefined, status: "backlog" as const }
+      } else if (t.sprintId === sprintId && t.status === "done") {
+        // Task completed - just clear sprintId so it doesn't show in next sprint
+        return { ...t, sprintId: undefined }
+      }
+      return t
+    }))
+
+    toast.success("Sprint đã kết thúc! Các task chưa hoàn thành đã được chuyển về Backlog.")
+  }
+
   const handleSendInvitation = (projectId: string, email: string) => {
     const project = projects.find((p) => p.id === projectId)
     if (!project) return
@@ -576,17 +633,17 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
       prevTasks.map((task) =>
         task.id === taskId
           ? {
-              ...task,
-              comments: [
-                ...task.comments,
-                {
-                  ...comment,
-                  id: Date.now().toString(),
-                  taskId,
-                  createdAt: new Date().toISOString(),
-                },
-              ],
-            }
+            ...task,
+            comments: [
+              ...task.comments,
+              {
+                ...comment,
+                id: Date.now().toString(),
+                taskId,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          }
           : task,
       ),
     )
@@ -597,17 +654,17 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
       prevTasks.map((task) =>
         task.id === taskId
           ? {
-              ...task,
-              attachments: [
-                ...task.attachments,
-                {
-                  ...attachment,
-                  id: Date.now().toString(),
-                  taskId,
-                  uploadedAt: new Date().toISOString(),
-                },
-              ],
-            }
+            ...task,
+            attachments: [
+              ...task.attachments,
+              {
+                ...attachment,
+                id: Date.now().toString(),
+                taskId,
+                uploadedAt: new Date().toISOString(),
+              },
+            ],
+          }
           : task,
       ),
     )
@@ -855,7 +912,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
         {currentPage === "profile" && <ProfilePage user={user} onUpdateUser={handleUpdateUser} />}
 
         {currentPage === "settings" && (
-      <SettingsPage settings={settings} onUpdateSettings={handleUpdateSettings} onNavigate={navigate} />
+          <SettingsPage settings={settings} onUpdateSettings={handleUpdateSettings} onNavigate={navigate} />
         )}
 
         {currentPage === "trash" && (
@@ -891,7 +948,8 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
             user={user}
             project={projects.find((p) => p.id === selectedProjectId)!}
             tasks={tasks.filter((t) => t.projectId === selectedProjectId)}
-            
+            sprints={sprints.filter((s) => s.projectId === selectedProjectId)}
+            currentSprint={sprints.find((s) => s.projectId === selectedProjectId && s.status === "active")}
             onUpdateProject={handleUpdateProject}
             onDeleteProject={handleDeleteProject}
             onCreateTask={handleCreateTask}
@@ -899,7 +957,8 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
             onDeleteTask={handleDeleteTask}
             onAddComment={onAddCommentAdapter}
             onAddAttachment={onAddAttachmentAdapter}
-            
+            onCreateSprint={handleCreateSprint}
+            onEndSprint={handleEndSprint}
           />
         )}
       </MainLayout>

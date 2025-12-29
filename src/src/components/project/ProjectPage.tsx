@@ -9,12 +9,14 @@ import { ScrumView } from "./ScrumView"
 import { ProjectSettings } from "./ProjectSettings"
 import { ProjectMembers } from "./ProjectMembers"
 import { Alert, AlertDescription } from "../ui/alert"
-import type { User, Project, Task } from "../../App"
+import type { User, Project, Task, Sprint } from "../../App"
 
 interface ProjectPageProps {
   user: User
   project: Project
   tasks: Task[]
+  sprints?: Sprint[]
+  currentSprint?: Sprint
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void
   onDeleteProject: (projectId: string) => void
   onCreateTask: (task: Omit<Task, "id" | "createdAt" | "comments" | "attachments">) => void
@@ -22,12 +24,16 @@ interface ProjectPageProps {
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void
+  onCreateSprint?: (projectId: string, name: string, goal: string, taskIds: string[]) => void
+  onEndSprint?: (sprintId: string) => void
 }
 
 export function ProjectPage({
   user,
   project,
   tasks,
+  sprints,
+  currentSprint,
   onUpdateProject,
   onDeleteProject,
   onCreateTask,
@@ -35,6 +41,8 @@ export function ProjectPage({
   onDeleteTask,
   onAddComment,
   onAddAttachment,
+  onCreateSprint,
+  onEndSprint,
 }: ProjectPageProps) {
   const [activeTab, setActiveTab] = useState("board")
 
@@ -137,11 +145,15 @@ export function ProjectPage({
                 project={project}
                 tasks={tasks}
                 isManager={isManager}
+                sprints={sprints}
+                currentSprint={currentSprint}
                 onCreateTask={onCreateTask}
                 onUpdateTask={onUpdateTask}
                 onDeleteTask={onDeleteTask}
                 onAddComment={onAddComment}
                 onAddAttachment={onAddAttachment}
+                onCreateSprint={onCreateSprint}
+                onEndSprint={onEndSprint}
               />
             )}
           </TabsContent>

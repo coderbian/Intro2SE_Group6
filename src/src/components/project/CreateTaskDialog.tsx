@@ -14,6 +14,7 @@ interface CreateTaskDialogProps {
   project: Project;
   initialStatus: Task['status'];
   isScrum?: boolean;
+  currentUserId?: string;
   onClose: () => void;
   onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
 }
@@ -22,6 +23,7 @@ export function CreateTaskDialog({
   project,
   initialStatus,
   isScrum,
+  currentUserId,
   onClose,
   onCreateTask,
 }: CreateTaskDialogProps) {
@@ -55,17 +57,17 @@ export function CreateTaskDialog({
       deadline: formData.deadline || undefined,
       labels: formData.labels,
       storyPoints: isScrum ? formData.storyPoints : undefined,
-      createdBy: project.ownerId, // This should be current user
+      createdBy: currentUserId || project.ownerId,
     });
   };
 
   const handleEnhanceDescription = () => {
     setIsEnhancing(true);
-    
+
     // Mock AI enhancement
     setTimeout(() => {
       const enhanced = `### Mô tả chi tiết\n\n${formData.description}\n\n### Yêu cầu\n- Phân tích và hiểu rõ yêu cầu nghiệp vụ\n- Thiết kế giải pháp phù hợp\n- Implement và test kỹ lưỡng\n\n### Tiêu chí hoàn thành\n- Code được review và approve\n- Test cases pass 100%\n- Documentation đầy đủ`;
-      
+
       setFormData({ ...formData, description: enhanced });
       setIsEnhancing(false);
       toast.success('Đã cải thiện mô tả bằng AI!');
@@ -74,18 +76,18 @@ export function CreateTaskDialog({
 
   const handleEstimateTime = () => {
     setIsEstimating(true);
-    
+
     // Mock AI time estimation
     setTimeout(() => {
       const days = Math.floor(Math.random() * 10) + 3;
       const suggestedDeadline = new Date();
       suggestedDeadline.setDate(suggestedDeadline.getDate() + days);
-      
+
       setFormData({
         ...formData,
         deadline: suggestedDeadline.toISOString().split('T')[0],
       });
-      
+
       setIsEstimating(false);
       toast.success(`AI đề xuất: ${days} ngày để hoàn thành`);
     }, 1500);

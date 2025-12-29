@@ -4,18 +4,21 @@ import { Badge } from "../ui/badge"
 import { Clock, MessageSquare, Paperclip, CheckSquare, ChevronRight } from "lucide-react"
 import { Button } from "../ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import type { Project, Task } from "../../App"
+import type { Project, Task, User } from "../../App"
+import { canEditTask } from "../../utils/permissions"
 
 interface TaskCardProps {
   task: Task
   project: Project
   allTasks: Task[]
+  user?: User
   onClick: () => void
   showStoryPoints?: boolean
   onUpdateTask?: (taskId: string, updates: Partial<Task>) => void
 }
 
-export function TaskCard({ task, project, allTasks, onClick, showStoryPoints, onUpdateTask }: TaskCardProps) {
+export function TaskCard({ task, project, allTasks, user, onClick, showStoryPoints, onUpdateTask }: TaskCardProps) {
+  const canEdit = user ? canEditTask(user.id, task, project) : true
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
@@ -161,20 +164,24 @@ export function TaskCard({ task, project, allTasks, onClick, showStoryPoints, on
               <span className="font-medium">{formatDate(task.deadline)}</span>
             </div>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-7 px-2.5 hover:bg-gray-100" title="Cập nhật trạng thái">
-                <span className="text-xs font-medium">{getStatusLabel(task.status)}</span>
-                <ChevronRight className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={() => handleStatusChange("backlog")}>Backlog</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange("todo")}>Cần làm</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange("in-progress")}>Đang làm</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange("done")}>Hoàn thành</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {canEdit ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                <Button variant="ghost" size="sm" className="h-7 px-2.5 hover:bg-gray-100" title="Cập nhật trạng thái">
+                  <span className="text-xs font-medium">{getStatusLabel(task.status)}</span>
+                  <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                <DropdownMenuItem onClick={() => handleStatusChange("backlog")}>Backlog</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("todo")}>Cần làm</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("in-progress")}>Đang làm</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("done")}>Hoàn thành</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <span className="text-xs font-medium text-gray-500 px-2">{getStatusLabel(task.status)}</span>
+          )}
         </div>
       </div>
     </div>

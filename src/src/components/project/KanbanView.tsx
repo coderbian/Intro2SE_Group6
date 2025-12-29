@@ -108,6 +108,7 @@ export function KanbanView({
                       task={task}
                       project={project}
                       allTasks={tasks}
+                      user={user}
                       onClick={() => setSelectedTask(task)}
                       onUpdateTask={onUpdateTask}
                     />
@@ -162,6 +163,7 @@ export function KanbanView({
         <CreateTaskDialog
           project={project}
           initialStatus={createColumnStatus}
+          currentUserId={user.id}
           onClose={() => setIsCreateDialogOpen(false)}
           onCreateTask={(task) => {
             onCreateTask(task)
