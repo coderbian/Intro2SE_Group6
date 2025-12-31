@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
 import { LoginPage } from "./components/auth/LoginPage"
 import { RegisterPage } from "./components/auth/RegisterPage"
