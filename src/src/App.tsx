@@ -1012,7 +1012,8 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
             sprints={sprints.filter((s) => s.projectId === selectedProjectId)}
             currentSprint={sprints.find((s) => s.projectId === selectedProjectId && s.status === "active")}
             onUpdateProject={handleUpdateProject}
-            onDeleteProject={handleDeleteProject}
+            onDeleteProject={handlePermanentlyDeleteProject}
+            onMoveToTrash={handleDeleteProject}
             onCreateTask={handleCreateTask}
             onUpdateTask={handleUpdateTask}
             onDeleteTask={handleDeleteTask}

@@ -6,19 +6,21 @@ import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { AlertCircle, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { Project } from '../../App';
 
 interface ProjectSettingsProps {
   project: Project;
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   onDeleteProject: (projectId: string) => void;
+  onMoveToTrash?: (projectId: string) => void;
 }
 
 export function ProjectSettings({
   project,
   onUpdateProject,
   onDeleteProject,
+  onMoveToTrash,
 }: ProjectSettingsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProject, setEditedProject] = useState({
@@ -26,7 +28,6 @@ export function ProjectSettings({
     description: project.description,
     deadline: project.deadline,
   });
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   const handleSave = () => {
     if (!editedProject.name.trim()) {
@@ -53,14 +54,10 @@ export function ProjectSettings({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
-    if (deleteConfirmation !== project.name) {
-      toast.error('Tên dự án không khớp!');
-      return;
+  const handleMoveToTrash = () => {
+    if (onMoveToTrash) {
+      onMoveToTrash(project.id);
     }
-
-    onDeleteProject(project.id);
-    toast.success('Đã xóa dự án!');
   };
 
   return (
@@ -164,37 +161,23 @@ export function ProjectSettings({
         <CardHeader>
           <CardTitle className="text-red-600">Vùng nguy hiểm</CardTitle>
           <CardDescription>
-            Hành động không thể hoàn tác
+            Hành động cần cân nhắc kỹ
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Xóa dự án sẽ xóa vĩnh viễn tất cả dữ liệu bao gồm nhiệm vụ, bình luận và tài liệu đính kèm.
-              Hành động này không thể hoàn tác.
+              Chuyển dự án vào thùng rác sẽ ẩn dự án khỏi danh sách. Bạn có thể khôi phục hoặc xóa vĩnh viễn trong Thùng rác.
             </AlertDescription>
           </Alert>
 
-          <div className="space-y-2">
-            <Label htmlFor="deleteConfirm">
-              Nhập tên dự án "<strong>{project.name}</strong>" để xác nhận xóa
-            </Label>
-            <Input
-              id="deleteConfirm"
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-              placeholder={project.name}
-            />
-          </div>
-
           <Button
             variant="destructive"
-            onClick={handleDelete}
-            disabled={deleteConfirmation !== project.name}
+            onClick={handleMoveToTrash}
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Xóa dự án vĩnh viễn
+            Chuyển vào thùng rác
           </Button>
         </CardContent>
       </Card>

@@ -19,6 +19,7 @@ interface ProjectPageProps {
   currentSprint?: Sprint
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void
   onDeleteProject: (projectId: string) => void
+  onMoveToTrash?: (projectId: string) => void
   onCreateTask: (task: Omit<Task, "id" | "createdAt" | "comments" | "attachments">) => void
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void
   onDeleteTask: (taskId: string) => void
@@ -36,6 +37,7 @@ export function ProjectPage({
   currentSprint,
   onUpdateProject,
   onDeleteProject,
+  onMoveToTrash,
   onCreateTask,
   onUpdateTask,
   onDeleteTask,
@@ -164,7 +166,7 @@ export function ProjectPage({
 
           {isManager && (
             <TabsContent value="settings" className="m-0">
-              <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} />
+              <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} onMoveToTrash={onMoveToTrash} />
             </TabsContent>
           )}
         </div>
