@@ -1,7 +1,7 @@
 "use client"
 
 import { Badge } from "../ui/badge"
-import { Clock, MessageSquare, Paperclip, CheckSquare, ChevronRight } from "lucide-react"
+import { Clock, MessageSquare, Paperclip, CheckSquare, ChevronRight, FileText, Layers } from "lucide-react"
 import { Button } from "../ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import type { Project, Task, User } from "../../App"
@@ -87,8 +87,27 @@ export function TaskCard({ task, project, allTasks, user, onClick, showStoryPoin
     }
   }
 
+  const isUserStory = task.type === 'user-story' || (!task.type && !task.parentTaskId);
+  const isStandaloneTask = task.type === 'task' && !task.parentTaskId;
+
   return (
-    <div className="bg-white border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group hover:border-blue-300" onClick={onClick}>
+    <div className={`bg-white border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group hover:border-blue-300 ${isStandaloneTask ? 'border-l-4 border-l-orange-400' : ''}`} onClick={onClick}>
+      {/* Type indicator */}
+      <div className="flex items-center gap-2 mb-2">
+        {isUserStory && (
+          <Badge variant="outline" className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 border-purple-200">
+            <FileText className="w-3 h-3 mr-1" />
+            User Story
+          </Badge>
+        )}
+        {isStandaloneTask && (
+          <Badge variant="outline" className="text-xs px-2 py-0.5 bg-orange-50 text-orange-700 border-orange-200">
+            <Layers className="w-3 h-3 mr-1" />
+            Task
+          </Badge>
+        )}
+      </div>
+      
       {/* Header với priority và title */}
       <div className="flex items-start gap-3 mb-3">
         <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${getPriorityColor(task.priority)}`} />

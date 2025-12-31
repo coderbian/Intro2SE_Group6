@@ -434,7 +434,22 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
       attachments: [],
     }
 
-    setTasks([...tasks, newTask])
+    setTasks((prevTasks) => {
+      const updatedTasks = [...prevTasks, newTask]
+
+      // Nếu task mới thuộc một User Story, cập nhật lại trạng thái User Story
+      if (newTask.parentTaskId && newTask.type === 'task') {
+        const parentStory = updatedTasks.find(t => t.id === newTask.parentTaskId)
+        // Nếu User Story đang "done" mà có task mới chưa done → chuyển về "in-progress"
+        if (parentStory && parentStory.status === 'done' && newTask.status !== 'done') {
+          return updatedTasks.map(t =>
+            t.id === newTask.parentTaskId ? { ...t, status: 'in-progress' as const } : t
+          )
+        }
+      }
+
+      return updatedTasks
+    })
 
     if (task.assignees.length > 0 && user) {
       task.assignees.forEach((assigneeId) => {

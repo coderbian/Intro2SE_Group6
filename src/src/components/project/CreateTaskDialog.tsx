@@ -16,6 +16,7 @@ interface CreateTaskDialogProps {
   isScrum?: boolean;
   mode?: "user-story" | "task";
   parentTaskId?: string;
+  sprintId?: string;
   currentUserId?: string;
   onClose: () => void;
   onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
@@ -27,6 +28,7 @@ export function CreateTaskDialog({
   isScrum,
   mode = "user-story",
   parentTaskId,
+  sprintId,
   currentUserId,
   onClose,
   onCreateTask,
@@ -65,6 +67,7 @@ export function CreateTaskDialog({
       labels: formData.labels,
       storyPoints: isUserStory && isScrum ? formData.storyPoints : undefined,
       parentTaskId: parentTaskId,
+      sprintId: sprintId,
       createdBy: currentUserId || project.ownerId,
     });
   };

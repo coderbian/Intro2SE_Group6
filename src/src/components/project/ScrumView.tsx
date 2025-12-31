@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { Plus, Calendar, TrendingUp, ArrowRight, Sparkles, StopCircle } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, ArrowRight, Sparkles, StopCircle, FileText, Layers } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Label } from '../ui/label';
@@ -68,13 +68,23 @@ export function ScrumView({
   const sprintUserStories = userStories.filter(t => t.sprintId === currentSprint?.id);
   const backlogUserStories = userStories.filter(t => t.status === 'backlog' && !t.sprintId);
 
+  // Standalone tasks (tasks độc lập không thuộc user story nào)
+  const standaloneTasks = tasks.filter(t => t.type === 'task' && !t.parentTaskId);
+  const backlogStandaloneTasks = standaloneTasks.filter(t => t.status === 'backlog' && !t.sprintId);
+  const sprintStandaloneTasks = standaloneTasks.filter(t => t.sprintId === currentSprint?.id);
+
+  // Backlog items = User Stories + Standalone Tasks
+  const backlogItems = [...backlogUserStories, ...backlogStandaloneTasks];
+
   // Backward compatible - mainTasks = user stories (không có parent)
   const mainTasks = userStories;
 
-  // Tasks trong Sprint (bao gồm cả subtasks của User Stories trong Sprint)
+  // Tasks trong Sprint Board:
+  // 1. Sub-tasks của User Stories trong Sprint
+  // 2. Standalone tasks được đưa vào Sprint
   const sprintTasks = tasks.filter(t =>
     (t.type === 'task' && t.parentTaskId && sprintUserStories.some(us => us.id === t.parentTaskId)) ||
-    (t.sprintId === currentSprint?.id && t.type === 'task')
+    (t.type === 'task' && !t.parentTaskId && t.sprintId === currentSprint?.id)
   );
 
   // Calculate sprint statistics from User Stories
@@ -243,19 +253,29 @@ export function ScrumView({
                       .map((task) => {
                         const canDrag = canEditTask(user.id, task, project);
                         const parentStory = userStories.find(us => us.id === task.parentTaskId);
+                        const isStandaloneTask = !task.parentTaskId;
                         return (
                           <div
                             key={task.id}
                             draggable={canDrag}
                             onDragStart={() => canDrag && handleDragStart(task)}
-                            className={canDrag ? "cursor-move" : "cursor-not-allowed opacity-75"}
+                            onClick={() => setSelectedTask(task)}
+                            className={`cursor-pointer ${canDrag ? "cursor-move" : ""}`}
                           >
-                            <div className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
+                            <div className={`bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow ${isStandaloneTask ? 'border-l-4 border-l-orange-400' : ''}`}>
                               <div className="flex items-start justify-between mb-2">
-                                <h4 className="font-medium text-gray-900 text-sm">{task.title}</h4>
+                                <div className="flex items-center gap-2">
+                                  {isStandaloneTask && (
+                                    <Layers className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                                  )}
+                                  <h4 className="font-medium text-gray-900 text-sm">{task.title}</h4>
+                                </div>
                               </div>
                               {parentStory && (
                                 <p className="text-xs text-purple-600 mb-2">📋 {parentStory.title}</p>
+                              )}
+                              {isStandaloneTask && (
+                                <p className="text-xs text-orange-500 mb-2">Task độc lập</p>
                               )}
                               {task.description && (
                                 <p className="text-xs text-gray-500 line-clamp-2">{task.description}</p>
@@ -271,17 +291,6 @@ export function ScrumView({
                         <p className="text-sm font-medium">Chưa có task</p>
                         <p className="text-xs mt-1">Thêm task từ User Stories bên dưới</p>
                       </div>
-                    )}
-
-                    {isManager && (
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-2 border-dashed hover:border-blue-300 transition-all mt-3 py-6"
-                        onClick={() => handleOpenCreate(column.id as Task['status'])}
-                      >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Thêm nhiệm vụ
-                      </Button>
                     )}
                   </div>
                 </div>
@@ -378,28 +387,32 @@ export function ScrumView({
                       </Button>
                     )}
                     {isManager && (
-                      <Button onClick={() => handleOpenCreate('backlog')} className="gap-2 px-6">
-                        <Plus className="w-4 h-4" />
-                        Tạo User Story
-                      </Button>
+                      <>
+                        <Button onClick={() => handleOpenCreate('backlog', 'user-story')} className="gap-2 px-6">
+                          <FileText className="w-4 h-4" />
+                          Tạo User Story
+                        </Button>
+                        <Button onClick={() => handleOpenCreate('backlog', 'task')} variant="outline" className="gap-2 px-6">
+                          <Layers className="w-4 h-4" />
+                          Tạo Task
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                {mainTasks.filter(t => t.status === 'backlog').length === 0 ? (
+                {backlogItems.length === 0 ? (
                   <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
                     <div className="mb-3">
                       <Plus className="w-16 h-16 mx-auto text-gray-400" />
                     </div>
-                    <p className="text-lg font-medium mb-2">Chưa có user story nào trong backlog</p>
-                    <p className="text-sm">Tạo user story mới để bắt đầu</p>
+                    <p className="text-lg font-medium mb-2">Backlog trống</p>
+                    <p className="text-sm">Tạo User Story hoặc Task để bắt đầu</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {mainTasks
-                      .filter(task => task.status === 'backlog')
-                      .map((task) => (
+                    {backlogItems.map((task) => (
                         <div
                           key={task.id}
                           className={`relative ${selectedBacklogTasks.includes(task.id) ? 'ring-2 ring-purple-500 rounded-lg' : ''}`}
@@ -502,6 +515,7 @@ export function ScrumView({
           isScrum
           mode={createMode}
           parentTaskId={createParentId}
+          sprintId={currentSprint?.id}
           currentUserId={user.id}
           onClose={() => setIsCreateDialogOpen(false)}
           onCreateTask={(task) => {
@@ -549,19 +563,27 @@ export function ScrumView({
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
                 <ArrowRight className="w-4 h-4" />
-                User Stories được chọn ({selectedBacklogTasks.length})
+                Các items được chọn ({selectedBacklogTasks.length})
               </h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {selectedBacklogTasks.map(taskId => {
-                  const task = mainTasks.find(t => t.id === taskId);
+                  const task = backlogItems.find(t => t.id === taskId);
+                  const isUserStory = task?.type === 'user-story' || (!task?.type && !task?.parentTaskId);
                   return task ? (
-                    <div key={taskId} className="text-sm bg-white p-2 rounded border">
-                      <span className="font-medium">{task.title}</span>
-                      {task.storyPoints && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {task.storyPoints} điểm
-                        </Badge>
-                      )}
+                    <div key={taskId} className={`text-sm bg-white p-2 rounded border ${!isUserStory ? 'border-l-4 border-l-orange-400' : ''}`}>
+                      <div className="flex items-center gap-2">
+                        {isUserStory ? (
+                          <FileText className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
+                        ) : (
+                          <Layers className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                        )}
+                        <span className="font-medium">{task.title}</span>
+                        {task.storyPoints && (
+                          <Badge variant="secondary" className="ml-auto text-xs">
+                            {task.storyPoints} điểm
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ) : null;
                 })}
@@ -571,7 +593,7 @@ export function ScrumView({
                   <span className="font-semibold text-purple-900">Tổng Story Points:</span>
                   <span className="font-bold text-purple-600">
                     {selectedBacklogTasks.reduce((sum, taskId) => {
-                      const task = mainTasks.find(t => t.id === taskId);
+                      const task = backlogItems.find(t => t.id === taskId);
                       return sum + (task?.storyPoints || 0);
                     }, 0)} điểm
                   </span>
