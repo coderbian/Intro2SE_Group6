@@ -7,14 +7,15 @@ import { Alert, AlertDescription } from "../ui/alert"
 import { Trash2, RotateCcw, AlertTriangle } from "lucide-react"
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog"
-import { toast } from "sonner@2.0.3"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import { toast } from "sonner"
 import type { Project, Task } from "../../App"
 
 interface TrashPageProps {
@@ -34,19 +35,38 @@ export function TrashPage({
   onRestoreTask,
   onPermanentlyDeleteTask,
 }: TrashPageProps) {
-  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "project" | "task"; id: string } | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "project" | "task"; id: string; name: string } | null>(null)
+  const [confirmInput, setConfirmInput] = useState("")
 
   const deletedProjects = projects.filter((p) => p.deletedAt)
   const deletedTasks = tasks.filter((t) => t.deletedAt)
 
-  const handlePermanentDelete = (type: "project" | "task", id: string) => {
-    if (type === "project") {
-      onPermanentlyDeleteProject(id)
+  const handlePermanentDelete = () => {
+    if (!deleteConfirm) return
+    
+    if (deleteConfirm.type === "project" && confirmInput !== deleteConfirm.name) {
+      toast.error("Tên dự án không khớp!")
+      return
+    }
+    
+    if (deleteConfirm.type === "project") {
+      onPermanentlyDeleteProject(deleteConfirm.id)
     } else {
-      onPermanentlyDeleteTask(id)
+      onPermanentlyDeleteTask(deleteConfirm.id)
     }
     setDeleteConfirm(null)
+    setConfirmInput("")
     toast.success("Đã xóa vĩnh viễn")
+  }
+
+  const handleOpenDeleteDialog = (type: "project" | "task", id: string, name: string) => {
+    setDeleteConfirm({ type, id, name })
+    setConfirmInput("")
+  }
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteConfirm(null)
+    setConfirmInput("")
   }
 
   return (
@@ -96,7 +116,7 @@ export function TrashPage({
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => setDeleteConfirm({ type: "project", id: project.id })}
+                        onClick={() => handleOpenDeleteDialog("project", project.id, project.name)}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Xóa vĩnh viễn
@@ -151,7 +171,7 @@ export function TrashPage({
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => setDeleteConfirm({ type: "task", id: task.id })}
+                        onClick={() => handleOpenDeleteDialog("task", task.id, task.title)}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Xóa vĩnh viễn
@@ -172,21 +192,39 @@ export function TrashPage({
         </AlertDescription>
       </Alert>
 
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+      <AlertDialog open={!!deleteConfirm} onOpenChange={handleCloseDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa vĩnh viễn?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể được hoàn tác. Vật phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.
+              Hành động này không thể được hoàn tác. {deleteConfirm?.type === "project" ? "Dự án" : "Nhiệm vụ"} sẽ bị xóa vĩnh viễn khỏi hệ thống.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogAction
-            onClick={() => deleteConfirm && handlePermanentDelete(deleteConfirm.type, deleteConfirm.id)}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            Xóa vĩnh viễn
-          </AlertDialogAction>
-          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          
+          {deleteConfirm?.type === "project" && (
+            <div className="space-y-2 py-4">
+              <Label htmlFor="confirmName">
+                Nhập tên dự án "<strong>{deleteConfirm.name}</strong>" để xác nhận xóa
+              </Label>
+              <Input
+                id="confirmName"
+                value={confirmInput}
+                onChange={(e) => setConfirmInput(e.target.value)}
+                placeholder={deleteConfirm.name}
+              />
+            </div>
+          )}
+          
+          <div className="flex justify-end gap-2">
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handlePermanentDelete}
+              disabled={deleteConfirm?.type === "project" && confirmInput !== deleteConfirm?.name}
+            >
+              Xóa vĩnh viễn
+            </Button>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>
