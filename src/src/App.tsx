@@ -542,15 +542,33 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
         : s
     ))
 
+    // Lấy danh sách User Stories trong sprint này
+    const sprintUserStoryIds = tasks
+      .filter(t => t.sprintId === sprintId && (t.type === 'user-story' || (!t.type && !t.parentTaskId)))
+      .map(t => t.id)
+
     // Move incomplete tasks back to backlog and clear sprintId
     setTasks(tasks.map((t) => {
-      if (t.sprintId === sprintId && t.status !== "done") {
-        // Task not completed - move back to backlog
-        return { ...t, sprintId: undefined, status: "backlog" as const }
-      } else if (t.sprintId === sprintId && t.status === "done") {
-        // Task completed - just clear sprintId so it doesn't show in next sprint
-        return { ...t, sprintId: undefined }
+      // Xử lý User Stories và Standalone Tasks trong Sprint
+      if (t.sprintId === sprintId) {
+        if (t.status !== "done") {
+          // Task not completed - move back to backlog
+          return { ...t, sprintId: undefined, status: "backlog" as const }
+        } else {
+          // Task completed - just clear sprintId so it doesn't show in next sprint
+          return { ...t, sprintId: undefined }
+        }
       }
+
+      // Xử lý sub-tasks của User Stories trong Sprint
+      if (t.parentTaskId && sprintUserStoryIds.includes(t.parentTaskId) && t.type === 'task') {
+        if (t.status !== "done") {
+          // Sub-task chưa hoàn thành - reset về todo để sẵn sàng cho sprint sau
+          return { ...t, status: "todo" as const }
+        }
+        // Sub-task đã done - giữ nguyên
+      }
+
       return t
     }))
 
