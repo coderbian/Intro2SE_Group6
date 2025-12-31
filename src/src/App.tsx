@@ -967,7 +967,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
         onEnterAdmin={onEnterAdmin}
       >
         {currentPage === "dashboard" && (
-          <DashboardPage user={user} projects={projects} tasks={tasks} onSelectProject={handleSelectProject} />
+          <DashboardPage user={user} projects={projects.filter(p => !p.deletedAt)} tasks={tasks} onSelectProject={handleSelectProject} />
         )}
 
         {currentPage === "profile" && <ProfilePage user={user} onUpdateUser={handleUpdateUser} />}
