@@ -250,10 +250,11 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     if (eventListenerAttached.current || !user) return
 
     const handleCreateProject = (e: CustomEvent) => {
+      const newProjectId = Date.now().toString()
       setProjects((prev) => {
         const newProject: Project = {
           ...(e as any).detail,
-          id: Date.now().toString(),
+          id: newProjectId,
           ownerId: user.id,
           createdAt: new Date().toISOString(),
           members: [
@@ -268,6 +269,9 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
         }
         return [...prev, newProject]
       })
+      // Chuyển đến màn hình dự án mới tạo
+      setSelectedProjectId(newProjectId)
+      setCurrentPage("project")
     }
 
     window.addEventListener("createProject" as any, handleCreateProject as any)
