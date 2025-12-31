@@ -51,3 +51,5 @@ pnpm dev
 Notes:
 - Run these commands from the `src` directory (where `package.json` lives).
 - Keep `pnpm-lock.yaml` to reproduce exact dependency versions.
+
+Something for test protect main branch
