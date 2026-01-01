@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Lock, Mail, Github, Facebook } from "lucide-react"
-import type { Settings } from "../../App"
+import type { Settings } from "../../types"
 
 interface SettingsPageProps {
   settings?: Settings

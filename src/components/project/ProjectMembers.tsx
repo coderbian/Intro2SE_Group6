@@ -16,8 +16,8 @@ import {
   DialogTrigger,
 } from "../ui/dialog"
 import { UserPlus, Trash2, Crown } from 'lucide-react'
-import { toast } from "sonner@2.0.3"
-import type { User, Project } from "../../App"
+import { toast } from "sonner"
+import type { User, Project } from "../../types"
 
 interface ProjectMembersProps {
   user: User

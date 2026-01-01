@@ -9,7 +9,7 @@ import { Plus, CheckSquare } from "lucide-react"
 import { TaskDialog } from "./TaskDialog"
 import { CreateTaskDialog } from "./CreateTaskDialog"
 import { TaskCard } from "./TaskCard"
-import type { User, Project, Task } from "../../App"
+import type { User, Project, Task } from "../../types"
 import { canEditTask } from "../../utils/permissions"
 
 interface KanbanViewProps {

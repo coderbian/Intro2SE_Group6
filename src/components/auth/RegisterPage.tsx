@@ -5,7 +5,7 @@ import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { LayoutDashboard, Mail } from 'lucide-react';
 import { Separator } from '../ui/separator';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface RegisterPageProps {
   onRegister: (data: { email: string; password: string; name: string; phone?: string }) => void;
@@ -26,33 +26,33 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name) {
       newErrors.name = 'Tên không được để trống';
     }
-    
+
     if (!formData.email) {
       newErrors.email = 'Email không được để trống';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
     }
-    
+
     if (formData.phone && !/^[0-9]{10}$/.test(formData.phone)) {
       newErrors.phone = 'Số điện thoại không hợp lệ (10 chữ số)';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Mật khẩu không được để trống';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
-    
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -159,7 +159,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
               <Mail className="w-4 h-4 mr-2" />
               Đăng ký với Google
             </Button>
-            
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator />

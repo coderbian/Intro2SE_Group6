@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { AlertCircle, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { toast } from 'sonner';
-import type { Project } from '../../App';
+import type { Project } from '../../types';
 
 interface ProjectSettingsProps {
   project: Project;

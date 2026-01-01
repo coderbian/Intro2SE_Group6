@@ -9,7 +9,7 @@ import { ScrumView } from "./ScrumView"
 import { ProjectSettings } from "./ProjectSettings"
 import { ProjectMembers } from "./ProjectMembers"
 import { Alert, AlertDescription } from "../ui/alert"
-import type { User, Project, Task, Sprint } from "../../App"
+import type { User, Project, Task, Sprint } from "../../types"
 
 interface ProjectPageProps {
   user: User
