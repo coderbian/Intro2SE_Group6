@@ -1,6 +1,7 @@
 "use client"
 
-import { type ReactNode, useState, useRef } from "react"
+import { type ReactNode, useState, useRef, useEffect } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Button } from "../ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { LayoutDashboard, FolderKanban, User, LogOut, Plus, ChevronDown, Menu, X, Settings, Bell, Trash2, Globe, Users, ShieldCheck } from 'lucide-react'
@@ -25,14 +26,13 @@ import { Label } from "../ui/label"
 import { Textarea } from "../ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Alert, AlertDescription } from "../ui/alert"
-import type { User as UserType, Project, Notification, ProjectInvitation, JoinRequest } from "../../App"
+import type { User as UserType, Project, Notification, ProjectInvitation, JoinRequest } from "../../types"
 import { SettingsModal } from "../settings/SettingsModal"
 import { NotificationList } from "../notifications/NotificationList"
 
 interface MainLayoutProps {
   user: UserType
   projects: Project[]
-  currentPage: string
   selectedProjectId: string | null
   settings: any
   notifications: Notification[]
@@ -44,7 +44,6 @@ interface MainLayoutProps {
   onCreateJoinRequest: (projectId: string) => void
   onApproveJoinRequest: (requestId: string) => void
   onRejectJoinRequest: (requestId: string) => void
-  onNavigate: (page: string) => void
   onSelectProject: (projectId: string) => void
   onLogout: () => void
   onUpdateSettings: (settings: any) => void
@@ -62,11 +61,9 @@ interface MainLayoutProps {
 export function MainLayout({
   user,
   projects,
-  currentPage,
   selectedProjectId,
   settings,
   notifications,
-  onNavigate,
   onSelectProject,
   onLogout,
   onUpdateSettings,
@@ -75,6 +72,9 @@ export function MainLayout({
   onDeleteNotification,
   children,
 }: MainLayoutProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const currentPath = location.pathname
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
@@ -87,6 +87,17 @@ export function MainLayout({
     template: "kanban" as "kanban" | "scrum",
   })
   const sidebarRef = useRef<HTMLDivElement>(null)
+
+  // Listen for project created events and navigate to project page
+  useEffect(() => {
+    const handleProjectCreated = (e: CustomEvent<{ projectId: string }>) => {
+      navigate(`/project/${e.detail.projectId}`)
+    }
+    window.addEventListener('projectCreated', handleProjectCreated as EventListener)
+    return () => {
+      window.removeEventListener('projectCreated', handleProjectCreated as EventListener)
+    }
+  }, [navigate])
 
   const templateDescriptions = {
     kanban: "Quản lý công việc trực quan với bảng Kanban. Tốt để theo dõi tiến độ một cách linh hoạt.",
@@ -125,9 +136,8 @@ export function MainLayout({
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${settings.theme === "dark" ? "bg-gradient-to-b from-slate-900 to-slate-950 border-slate-800" : "bg-white border-gray-200 shadow-xl"} border-r transition-transform duration-300 ease-in-out overflow-hidden flex flex-col fixed left-0 top-0 bottom-0 z-40 w-64`}
+        className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } ${settings.theme === "dark" ? "bg-gradient-to-b from-slate-900 to-slate-950 border-slate-800" : "bg-white border-gray-200 shadow-xl"} border-r transition-transform duration-300 ease-in-out overflow-hidden flex flex-col fixed left-0 top-0 bottom-0 z-40 w-64`}
       >
         {/* Sticky header */}
         <div
@@ -150,39 +160,36 @@ export function MainLayout({
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <div className="space-y-1.5">
             <Button
-              variant={currentPage === "dashboard" ? "default" : "ghost"}
-              className={`w-full justify-start h-9 text-sm font-semibold ${
-                currentPage === "dashboard"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
-                  : "hover:bg-blue-50"
-              }`}
-              onClick={() => onNavigate("dashboard")}
+              variant={currentPath === "/dashboard" ? "default" : "ghost"}
+              className={`w-full justify-start h-9 text-sm font-semibold ${currentPath === "/dashboard"
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                : "hover:bg-blue-50"
+                }`}
+              onClick={() => navigate("/dashboard")}
             >
               <LayoutDashboard className="w-4 h-4 mr-2.5" />
               Tổng quan
             </Button>
 
             <Button
-              variant={currentPage === "projects" ? "default" : "ghost"}
-              className={`w-full justify-start h-9 text-sm font-semibold ${
-                currentPage === "projects"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
-                  : "hover:bg-blue-50"
-              }`}
-              onClick={() => onNavigate("projects")}
+              variant={currentPath === "/projects" ? "default" : "ghost"}
+              className={`w-full justify-start h-9 text-sm font-semibold ${currentPath === "/projects"
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                : "hover:bg-blue-50"
+                }`}
+              onClick={() => navigate("/projects")}
             >
               <Globe className="w-4 h-4 mr-2.5" />
               Khám phá dự án
             </Button>
 
             <Button
-              variant={currentPage === "member-requests" ? "default" : "ghost"}
-              className={`w-full justify-start h-9 text-sm font-semibold ${
-                currentPage === "member-requests"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
-                  : "hover:bg-blue-50"
-              }`}
-              onClick={() => onNavigate("member-requests")}
+              variant={currentPath === "/member-requests" ? "default" : "ghost"}
+              className={`w-full justify-start h-9 text-sm font-semibold ${currentPath === "/member-requests"
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                : "hover:bg-blue-50"
+                }`}
+              onClick={() => navigate("/member-requests")}
             >
               <Users className="w-4 h-4 mr-2.5" />
               Yêu cầu tham gia
@@ -280,11 +287,10 @@ export function MainLayout({
                   <Button
                     key={project.id}
                     variant={selectedProjectId === project.id ? "default" : "ghost"}
-                    className={`w-full justify-start text-sm h-9 ${
-                      selectedProjectId === project.id
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
-                        : "hover:bg-blue-50"
-                    }`}
+                    className={`w-full justify-start text-sm h-9 ${selectedProjectId === project.id
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                      : "hover:bg-blue-50"
+                      }`}
                     onClick={() => onSelectProject(project.id)}
                   >
                     <FolderKanban className="w-4 h-4 mr-2.5 flex-shrink-0" />
@@ -301,13 +307,12 @@ export function MainLayout({
           className={`${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200"} border-t space-y-1.5 p-4 sticky bottom-14 z-10`}
         >
           <Button
-            variant={currentPage === "trash" ? "default" : "ghost"}
-            className={`w-full justify-start text-sm h-9 ${
-              currentPage === "trash"
-                ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md"
-                : "hover:bg-red-50 text-gray-700"
-            }`}
-            onClick={() => onNavigate("trash")}
+            variant={currentPath === "/trash" ? "default" : "ghost"}
+            className={`w-full justify-start text-sm h-9 ${currentPath === "/trash"
+              ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md"
+              : "hover:bg-red-50 text-gray-700"
+              }`}
+            onClick={() => navigate("/trash")}
           >
             <Trash2 className="w-4 h-4 mr-2.5" />
             <span className="flex-1 text-left font-medium">Thùng rác</span>
@@ -342,7 +347,7 @@ export function MainLayout({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => onNavigate("profile")} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
                 <User className="w-4 h-4 mr-2" />
                 Thông tin cá nhân
               </DropdownMenuItem>
@@ -366,34 +371,34 @@ export function MainLayout({
         <header
           className={`${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white/80 backdrop-blur-lg border-gray-200"} border-b px-4 h-[52px] flex items-center gap-4 sticky top-0 z-30 shadow-sm`}
         >
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="hover:bg-blue-50 rounded-lg p-1.5"
             title={isSidebarOpen ? "Đóng sidebar" : "Mở sidebar"}
           >
             <Menu className="w-5 h-5" />
           </Button>
-          
+
           <div className="flex-1">
-            {currentPage === "dashboard" && (
+            {currentPath === "/dashboard" && (
               <h2 className="text-lg font-bold text-gray-800">Bảng điều khiển</h2>
             )}
-            {currentPage === "projects" && (
+            {currentPath === "/projects" && (
               <h2 className="text-lg font-bold text-gray-800">Khám phá dự án</h2>
             )}
-            {currentPage === "project" && selectedProjectId && (
+            {currentPath.startsWith("/project/") && selectedProjectId && (
               <h2 className="text-lg font-bold text-gray-800">
                 {projects.find(p => p.id === selectedProjectId)?.name}
               </h2>
             )}
           </div>
 
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsSettingsModalOpen(true)} 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSettingsModalOpen(true)}
             title="Cài đặt"
             className="hover:bg-blue-50 rounded-lg p-1.5"
           >

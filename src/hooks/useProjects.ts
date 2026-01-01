@@ -93,6 +93,8 @@ export function useProjects({ user, onAddNotification }: UseProjectsProps) {
         return [...prev, newProject];
       });
       setSelectedProjectId(newProjectId);
+      // Dispatch event to notify that project was created
+      window.dispatchEvent(new CustomEvent('projectCreated', { detail: { projectId: newProjectId } }));
       return newProjectId;
     };
 
@@ -150,7 +152,7 @@ export function useProjects({ user, onAddNotification }: UseProjectsProps) {
     };
 
     setInvitations([...invitations, invitation]);
-    
+
     if (onAddNotification) {
       onAddNotification({
         userId: '',

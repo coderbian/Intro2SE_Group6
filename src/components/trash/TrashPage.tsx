@@ -16,7 +16,7 @@ import {
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { toast } from "sonner"
-import type { Project, Task } from "../../App"
+import type { Project, Task } from "../../types"
 
 interface TrashPageProps {
   projects: Project[]
@@ -43,12 +43,12 @@ export function TrashPage({
 
   const handlePermanentDelete = () => {
     if (!deleteConfirm) return
-    
+
     if (deleteConfirm.type === "project" && confirmInput !== deleteConfirm.name) {
       toast.error("Tên dự án không khớp!")
       return
     }
-    
+
     if (deleteConfirm.type === "project") {
       onPermanentlyDeleteProject(deleteConfirm.id)
     } else {
@@ -144,15 +144,14 @@ export function TrashPage({
                       <CardDescription>{task.description}</CardDescription>
                     </div>
                     <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        task.priority === "urgent"
+                      className={`text-xs px-2 py-1 rounded ${task.priority === "urgent"
                           ? "bg-red-100 text-red-700"
                           : task.priority === "high"
                             ? "bg-orange-100 text-orange-700"
                             : task.priority === "medium"
                               ? "bg-yellow-100 text-yellow-700"
                               : "bg-green-100 text-green-700"
-                      }`}
+                        }`}
                     >
                       {task.priority}
                     </span>
@@ -200,7 +199,7 @@ export function TrashPage({
               Hành động này không thể được hoàn tác. {deleteConfirm?.type === "project" ? "Dự án" : "Nhiệm vụ"} sẽ bị xóa vĩnh viễn khỏi hệ thống.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
+
           {deleteConfirm?.type === "project" && (
             <div className="space-y-2 py-4">
               <Label htmlFor="confirmName">
@@ -214,7 +213,7 @@ export function TrashPage({
               />
             </div>
           )}
-          
+
           <div className="flex justify-end gap-2">
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <Button

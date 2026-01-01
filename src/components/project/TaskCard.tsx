@@ -4,7 +4,7 @@ import { Badge } from "../ui/badge"
 import { Clock, MessageSquare, Paperclip, CheckSquare, ChevronRight, FileText, Layers } from "lucide-react"
 import { Button } from "../ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import type { Project, Task, User } from "../../App"
+import type { Project, Task, User } from "../../types"
 import { canEditTask } from "../../utils/permissions"
 
 interface TaskCardProps {
@@ -107,7 +107,7 @@ export function TaskCard({ task, project, allTasks, user, onClick, showStoryPoin
           </Badge>
         )}
       </div>
-      
+
       {/* Header với priority và title */}
       <div className="flex items-start gap-3 mb-3">
         <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${getPriorityColor(task.priority)}`} />

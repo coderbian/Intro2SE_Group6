@@ -7,8 +7,8 @@ import { Badge } from "../ui/badge"
 import { Input } from "../ui/input"
 import { Search, FolderKanban, Users, Calendar, LogIn } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import { toast } from "sonner@2.0.3"
-import type { Project, User } from "../../App"
+import { toast } from "sonner"
+import type { Project, User } from "../../types"
 
 interface AllProjectsPageProps {
   user: User
@@ -91,7 +91,7 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
                   </div>
                   <Button
                     className="w-full"
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                       e.stopPropagation()
                       onCreateJoinRequest(project.id)
                       toast.success("Đã gửi yêu cầu tham gia dự án")

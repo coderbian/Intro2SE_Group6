@@ -6,8 +6,8 @@ import { Label } from "../ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Switch } from "../ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog"
-import { toast } from "sonner@2.0.3"
-import type { Settings } from "../../App"
+import { toast } from "sonner"
+import type { Settings } from "../../types"
 
 interface SettingsModalProps {
   open: boolean
@@ -51,9 +51,9 @@ export function SettingsModal({ open, onOpenChange, settings, onUpdateSettings }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
+      <DialogContent
         className="max-w-md max-h-[90vh] overflow-y-auto"
-        style={{ 
+        style={{
           backgroundColor: settings.theme === 'dark' ? '#1f2937' : '#ffffff',
           color: settings.theme === 'dark' ? '#f9fafb' : '#111827'
         }}
@@ -102,9 +102,9 @@ export function SettingsModal({ open, onOpenChange, settings, onUpdateSettings }
               </Label>
             </div>
             <Select value={settings.language} onValueChange={(val) => handleLanguageChange(val as "vi" | "en")}>
-              <SelectTrigger 
+              <SelectTrigger
                 className="w-full"
-                style={{ 
+                style={{
                   backgroundColor: settings.theme === 'dark' ? '#374151' : '#ffffff',
                   color: settings.theme === 'dark' ? '#f9fafb' : '#111827',
                   borderColor: settings.theme === 'dark' ? '#4b5563' : '#d1d5db'

@@ -15,9 +15,9 @@ import {
 
 interface BackupRestoreProps {
   onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => void
-  onExitAdmin?: () => void
-  adminEmail?: string
-  onLogout?: () => void
+  onExitAdmin?: () => void // Added onExitAdmin prop
+  adminEmail?: string // Added adminEmail prop
+  onLogout?: () => void // Added onLogout prop
 }
 
 export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }: BackupRestoreProps) {
@@ -79,7 +79,7 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>GiÃ¡m sÃ¡t há»‡ thá»‘ng</span>
+                <span>Giám sát hệ thống</span>
               </button>
             </li>
             <li>
@@ -88,7 +88,7 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Users className="h-4 w-4" />
-                <span>Quáº£n lÃ½ ngÆ°á»i dÃ¹ng</span>
+                <span>Quản lý người dùng</span>
               </button>
             </li>
             <li>
@@ -97,7 +97,7 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Shield className="h-4 w-4" />
-                <span>Quáº£n lÃ½ vai trÃ²</span>
+                <span>Quản lý vai trò</span>
               </button>
             </li>
             <li>
@@ -106,7 +106,7 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Settings className="h-4 w-4" />
-                <span>Cáº¥u hÃ¬nh há»‡ thá»‘ng</span>
+                <span>Cấu hình hệ thống</span>
               </button>
             </li>
             <li>
@@ -138,12 +138,12 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>CÃ i Ä‘áº·t</span>
+                <span>Cài đặt</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={onLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>ÄÄƒng xuáº¥t</span>
+                <span>Đăng xuất</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -161,9 +161,9 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Sao lÆ°u vÃ  Phá»¥c há»“i dá»¯ liá»‡u
+                  Sao lưu và Phục hồi dữ liệu
                 </h1>
-                <p className="text-gray-600 text-sm">Quáº£n lÃ½ sao lÆ°u vÃ  khÃ´i phá»¥c dá»¯ liá»‡u há»‡ thá»‘ng</p>
+                <p className="text-gray-600 text-sm">Quản lý sao lưu và khôi phục dữ liệu hệ thống</p>
               </div>
             </div>
           </div>
@@ -172,12 +172,12 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
             {/* Create Backup Card */}
             <Card className="border shadow-md bg-gradient-to-br from-white to-blue-50/30">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                <CardTitle className="text-lg font-semibold text-gray-900">Táº¡o báº£n sao lÆ°u</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">Tạo bản sao lưu</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5 pt-4">
                 <div className="p-3 bg-muted rounded-lg border border-border">
                   <p className="text-xs text-muted-foreground">
-                    Láº§n sao lÆ°u cuá»‘i cÃ¹ng: <span className="font-medium text-foreground">15/11/2025 - 10:30 AM</span>
+                    Lần sao lưu cuối cùng: <span className="font-medium text-foreground">15/11/2025 - 10:30 AM</span>
                   </p>
                 </div>
                 <Button 
@@ -186,7 +186,7 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                   size="default"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Táº¡o báº£n sao lÆ°u ngay
+                  Tạo bản sao lưu ngay
                 </Button>
               </CardContent>
             </Card>
@@ -194,7 +194,7 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
             {/* Restore from Backup Card */}
             <Card className="border shadow-md bg-gradient-to-br from-white to-green-50/30">
               <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
-                <CardTitle className="text-lg font-semibold text-gray-900">Phá»¥c há»“i tá»« báº£n sao lÆ°u</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">Phục hồi từ bản sao lưu</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
                 <div
@@ -232,9 +232,9 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                     ) : (
                       <>
                         <p className="text-xs font-medium text-foreground">
-                          KÃ©o vÃ  tháº£ file vÃ o Ä‘Ã¢y hoáº·c nháº¥p Ä‘á»ƒ chá»n
+                          Kéo và thả file vào đây hoặc nhấp để chọn
                         </p>
-                        <p className="text-[11px] text-muted-foreground">Chá»‰ cháº¥p nháº­n file .zip</p>
+                        <p className="text-[11px] text-muted-foreground">Chỉ chấp nhận file .zip</p>
                       </>
                     )}
                   </div>
@@ -249,7 +249,7 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                   >
                     <span>
                       <Upload className="w-3.5 h-3.5 mr-2" />
-                      Táº£i lÃªn file (.zip)
+                      Tải lên file (.zip)
                     </span>
                   </Button>
                 </label>
@@ -259,12 +259,12 @@ export function BackupRestore({ onNavigate, onExitAdmin, adminEmail, onLogout }:
                     onClick={handleRestore}
                     className="w-full h-9"
                   >
-                    Phá»¥c há»“i dá»¯ liá»‡u
+                    Phục hồi dữ liệu
                   </Button>
                 )}
 
                 <p className="text-[11px] text-muted-foreground text-center">
-                  Chá»‰ cháº¥p nháº­n cÃ¡c file sao lÆ°u há»£p lá»‡ do há»‡ thá»‘ng táº¡o ra.
+                  Chỉ chấp nhận các file sao lưu hợp lệ do hệ thống tạo ra.
                 </p>
               </CardContent>
             </Card>

@@ -4,7 +4,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { LayoutDashboard, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface ForgotPasswordPageProps {
   onBack: () => void;
@@ -22,19 +22,19 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   const handleSendCode = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-    
+
     if (!email) {
       newErrors.email = 'Email không được để trống';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = 'Email không hợp lệ';
     }
-    
+
     if (!captcha) {
       newErrors.captcha = 'Vui lòng nhập mã captcha';
     }
-    
+
     setErrors(newErrors);
-    
+
     if (Object.keys(newErrors).length === 0) {
       toast.success('Mã xác thực đã được gửi đến email của bạn!');
       setStep('verify');
@@ -52,21 +52,21 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-    
+
     if (!newPassword) {
       newErrors.newPassword = 'Mật khẩu không được để trống';
     } else if (newPassword.length < 6) {
       newErrors.newPassword = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
-    
+
     if (!confirmPassword) {
       newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     } else if (newPassword !== confirmPassword) {
       newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
-    
+
     setErrors(newErrors);
-    
+
     if (Object.keys(newErrors).length === 0) {
       toast.success('Đổi mật khẩu thành công!');
       setTimeout(() => onBack(), 1500);

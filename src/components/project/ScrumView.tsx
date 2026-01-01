@@ -12,7 +12,7 @@ import { Textarea } from '../ui/textarea';
 import { TaskDialog } from './TaskDialog';
 import { CreateTaskDialog } from './CreateTaskDialog';
 import { TaskCard } from './TaskCard';
-import type { User, Project, Task, Sprint } from '../../App';
+import type { User, Project, Task, Sprint } from '../../types';
 import { canEditTask } from '../../utils/permissions';
 
 interface ScrumViewProps {
@@ -413,33 +413,33 @@ export function ScrumView({
                 ) : (
                   <div className="space-y-4">
                     {backlogItems.map((task) => (
-                        <div
-                          key={task.id}
-                          className={`relative ${selectedBacklogTasks.includes(task.id) ? 'ring-2 ring-purple-500 rounded-lg' : ''}`}
-                          onClick={() => isManager && toggleBacklogTaskSelection(task.id)}
-                        >
-                          {isManager && (
-                            <div className="absolute top-3 right-3 z-10">
-                              <input
-                                type="checkbox"
-                                checked={selectedBacklogTasks.includes(task.id)}
-                                onChange={() => toggleBacklogTaskSelection(task.id)}
-                                className="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                          )}
-                          <TaskCard
-                            task={task}
-                            project={project}
-                            allTasks={tasks}
-                            user={user}
-                            onClick={() => !isManager && setSelectedTask(task)}
-                            showStoryPoints
-                            onUpdateTask={onUpdateTask}
-                          />
-                        </div>
-                      ))}
+                      <div
+                        key={task.id}
+                        className={`relative ${selectedBacklogTasks.includes(task.id) ? 'ring-2 ring-purple-500 rounded-lg' : ''}`}
+                        onClick={() => isManager && toggleBacklogTaskSelection(task.id)}
+                      >
+                        {isManager && (
+                          <div className="absolute top-3 right-3 z-10">
+                            <input
+                              type="checkbox"
+                              checked={selectedBacklogTasks.includes(task.id)}
+                              onChange={() => toggleBacklogTaskSelection(task.id)}
+                              className="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        )}
+                        <TaskCard
+                          task={task}
+                          project={project}
+                          allTasks={tasks}
+                          user={user}
+                          onClick={() => !isManager && setSelectedTask(task)}
+                          showStoryPoints
+                          onUpdateTask={onUpdateTask}
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

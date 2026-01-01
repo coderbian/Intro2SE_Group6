@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils"
 import { SettingsModal } from "../settings/SettingsModal"
 
 interface AdminDashboardProps {
-  adminEmail?: string
+  adminEmail?: string // added adminEmail prop
   onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => void
   onLogout?: () => void
 }
@@ -57,7 +57,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
   const mockUsers = [
     {
       id: 1,
-      name: "Nguyá»…n VÄƒn A",
+      name: "Nguyễn Văn A",
       email: "nguyenvana@example.com",
       avatar: "/placeholder.svg?height=40&width=40",
       role: "Admin",
@@ -67,7 +67,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
     },
     {
       id: 2,
-      name: "Tráº§n Thá»‹ B",
+      name: "Trần Thị B",
       email: "tranthib@example.com",
       avatar: "/placeholder.svg?height=40&width=40",
       role: "Manager",
@@ -77,7 +77,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
     },
     {
       id: 3,
-      name: "LÃª VÄƒn C",
+      name: "Lê Văn C",
       email: "levanc@example.com",
       avatar: "/placeholder.svg?height=40&width=40",
       role: "Member",
@@ -87,7 +87,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
     },
     {
       id: 4,
-      name: "Pháº¡m Thá»‹ D",
+      name: "Phạm Thị D",
       email: "phamthid@example.com",
       avatar: "/placeholder.svg?height=40&width=40",
       role: "Member",
@@ -123,7 +123,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>GiÃ¡m sÃ¡t há»‡ thá»‘ng</span>
+                <span>Giám sát hệ thống</span>
               </button>
             </li>
             <li>
@@ -132,7 +132,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-primary dark:text-white border border-gray-300 dark:border-gray-700"
               >
                 <Users className="h-4 w-4" />
-                <span>Quáº£n lÃ½ ngÆ°á»i dÃ¹ng</span>
+                <span>Quản lý người dùng</span>
               </button>
             </li>
             <li>
@@ -141,7 +141,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Shield className="h-4 w-4" />
-                <span>Quáº£n lÃ½ vai trÃ²</span>
+                <span>Quản lý vai trò</span>
               </button>
             </li>
             <li>
@@ -150,7 +150,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Settings className="h-4 w-4" />
-                <span>Cáº¥u hÃ¬nh há»‡ thá»‘ng</span>
+                <span>Cấu hình hệ thống</span>
               </button>
             </li>
             <li>
@@ -183,12 +183,12 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => setIsSettingsModalOpen(true)}>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>CÃ i Ä‘áº·t</span>
+                <span>Cài đặt</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onLogout} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>ÄÄƒng xuáº¥t</span>
+                <span>Đăng xuất</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -206,9 +206,9 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Quáº£n lÃ½ ngÆ°á»i dÃ¹ng
+                  Quản lý người dùng
                 </h1>
-                <p className="text-gray-600 text-sm">Quáº£n lÃ½ tÃ i khoáº£n vÃ  quyá»n truy cáº­p ngÆ°á»i dÃ¹ng</p>
+                <p className="text-gray-600 text-sm">Quản lý tài khoản và quyền truy cập người dùng</p>
               </div>
             </div>
           </div>
@@ -217,7 +217,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card className="border border-blue-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-white">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-blue-700 font-semibold uppercase tracking-wide">Tá»•ng ngÆ°á»i dÃ¹ng</CardTitle>
+                <CardTitle className="text-xs text-blue-700 font-semibold uppercase tracking-wide">Tổng người dùng</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
@@ -233,7 +233,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
 
             <Card className="border border-green-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-white">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-green-700 font-semibold uppercase tracking-wide">Äang hoáº¡t Ä‘á»™ng</CardTitle>
+                <CardTitle className="text-xs text-green-700 font-semibold uppercase tracking-wide">Đang hoạt động</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
@@ -249,7 +249,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
 
             <Card className="border border-purple-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-white">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-purple-700 font-semibold uppercase tracking-wide">Quáº£n trá»‹ viÃªn</CardTitle>
+                <CardTitle className="text-xs text-purple-700 font-semibold uppercase tracking-wide">Quản trị viên</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
@@ -265,7 +265,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
 
             <Card className="border border-orange-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 to-white">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-orange-700 font-semibold uppercase tracking-wide">ThÃ nh viÃªn má»›i</CardTitle>
+                <CardTitle className="text-xs text-orange-700 font-semibold uppercase tracking-wide">Thành viên mới</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
@@ -277,7 +277,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                   </div>
                 </div>
                 <p className="text-xs text-orange-700 font-medium mt-2">
-                  Tuáº§n nÃ y
+                  Tuần này
                 </p>
               </CardContent>
             </Card>
@@ -288,12 +288,12 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
             <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-900">Danh sÃ¡ch ngÆ°á»i dÃ¹ng</CardTitle>
-                  <CardDescription className="text-sm mt-0.5">Quáº£n lÃ½ thÃ´ng tin vÃ  quyá»n truy cáº­p</CardDescription>
+                  <CardTitle className="text-lg font-bold text-gray-900">Danh sách người dùng</CardTitle>
+                  <CardDescription className="text-sm mt-0.5">Quản lý thông tin và quyền truy cập</CardDescription>
                 </div>
                 <Button className="gap-2 h-9 text-sm shadow-md">
                   <UserPlus className="h-4 w-4" />
-                  ThÃªm ngÆ°á»i dÃ¹ng má»›i
+                  Thêm người dùng mới
                 </Button>
               </div>
             </CardHeader>
@@ -302,11 +302,11 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[250px] min-w-[200px]">Há» vÃ  tÃªn</TableHead>
-                      <TableHead className="min-w-[120px]">Vai trÃ²</TableHead>
-                      <TableHead className="min-w-[110px]">NgÃ y tham gia</TableHead>
-                      <TableHead className="min-w-[110px]">Tráº¡ng thÃ¡i</TableHead>
-                      <TableHead className="text-right min-w-[130px]">HÃ nh Ä‘á»™ng</TableHead>
+                      <TableHead className="w-[250px] min-w-[200px]">Họ và tên</TableHead>
+                      <TableHead className="min-w-[120px]">Vai trò</TableHead>
+                      <TableHead className="min-w-[110px]">Ngày tham gia</TableHead>
+                      <TableHead className="min-w-[110px]">Trạng thái</TableHead>
+                      <TableHead className="text-right min-w-[130px]">Hành động</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -335,7 +335,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                           variant={user.status === "active" ? "default" : "destructive"}
                           className={user.status === "active" ? "bg-green-500 hover:bg-green-600" : ""}
                         >
-                          {user.status === "active" ? "Hoáº¡t Ä‘á»™ng" : "Bá»‹ khÃ³a"}
+                          {user.status === "active" ? "Hoạt động" : "Bị khóa"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -344,7 +344,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            title="Äáº·t láº¡i máº­t kháº©u"
+                            title="Đặt lại mật khẩu"
                             onClick={() => setResetPasswordUser({ id: user.id, name: user.name, email: user.email })}
                           >
                             <KeyRound className="h-3.5 w-3.5" />
@@ -353,7 +353,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            title="Chá»‰nh sá»­a vai trÃ²"
+                            title="Chỉnh sửa vai trò"
                           >
                             <UserCog className="h-3.5 w-3.5" />
                           </Button>
@@ -361,7 +361,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
-                            title="XÃ³a/KhÃ³a tÃ i khoáº£n"
+                            title="Xóa/Khóa tài khoản"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -382,10 +382,10 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
         <DialogContent className="bg-white dark:bg-gray-800 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-gray-900 dark:text-gray-100">
-              Báº¡n cÃ³ cháº¯c muá»‘n Ä‘áº·t láº¡i máº­t kháº©u?
+              Bạn có chắc muốn đặt lại mật khẩu?
             </DialogTitle>
             <DialogDescription className="text-gray-600 dark:text-gray-400">
-              Má»™t máº­t kháº©u má»›i sáº½ Ä‘Æ°á»£c táº¡o vÃ  gá»­i Ä‘áº¿n email cá»§a ngÆ°á»i dÃ¹ng nÃ y.
+              Một mật khẩu mới sẽ được tạo và gửi đến email của người dùng này.
             </DialogDescription>
           </DialogHeader>
           {resetPasswordUser && (
@@ -406,10 +406,10 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
               variant="outline"
               onClick={() => setResetPasswordUser(null)}
             >
-              Há»§y
+              Hủy
             </Button>
             <Button onClick={handleResetPassword}>
-              XÃ¡c nháº­n
+              Xác nhận
             </Button>
           </DialogFooter>
         </DialogContent>

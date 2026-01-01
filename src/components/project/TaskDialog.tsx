@@ -9,13 +9,13 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Separator } from '../ui/separator';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { 
-  Clock, MessageSquare, Paperclip, Plus, X, Trash2, Edit, 
+import {
+  Clock, MessageSquare, Paperclip, Plus, X, Trash2, Edit,
   Check, CheckSquare, Link as LinkIcon, FileText, Image as ImageIcon,
   AlertCircle
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-import type { User, Project, Task } from '../../App';
+import { toast } from 'sonner';
+import type { User, Project, Task } from '../../types';
 
 interface TaskDialogProps {
   task: Task;
@@ -78,6 +78,7 @@ export function TaskDialog({
     if (newSubtask.trim()) {
       onCreateTask({
         projectId: task.projectId,
+        type: 'task',
         title: newSubtask,
         description: '',
         priority: task.priority,
@@ -96,7 +97,7 @@ export function TaskDialog({
     if (attachmentUrl.trim()) {
       const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(attachmentUrl);
       const fileName = attachmentUrl.split('/').pop() || 'file';
-      
+
       onAddAttachment(task.id, {
         name: fileName,
         url: attachmentUrl,
@@ -111,7 +112,7 @@ export function TaskDialog({
     const newAssignees = editedTask.assignees.includes(userId)
       ? editedTask.assignees.filter(id => id !== userId)
       : [...editedTask.assignees, userId];
-    
+
     setEditedTask({ ...editedTask, assignees: newAssignees });
   };
 

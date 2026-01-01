@@ -5,7 +5,7 @@ import { ScrollArea } from "../ui/scroll-area"
 import { Button } from "../ui/button"
 import { Check, Trash2, CheckCheck, Bell } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import type { Notification } from "../../App"
+import type { Notification } from "../../types"
 
 interface NotificationListProps {
   notifications: Notification[]
@@ -18,7 +18,7 @@ interface NotificationListProps {
 export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead, onDelete, theme }: NotificationListProps) {
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const unreadCount = notifications.filter((n) => !n.read).length
-  
+
   const isDark = theme === 'dark'
 
   const getNotificationIcon = (type: string) => {
@@ -51,7 +51,7 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
 
   return (
     <>
-      <div 
+      <div
         className="flex flex-col h-96 rounded-lg shadow-lg border"
         style={{
           backgroundColor: isDark ? '#111827' : '#ffffff',
@@ -60,7 +60,7 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
         }}
       >
         {/* Header */}
-        <div 
+        <div
           className="flex items-center justify-between px-4 py-3 border-b rounded-t-lg"
           style={{
             backgroundColor: isDark ? '#1f2937' : '#f9fafb',
@@ -68,7 +68,7 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
             color: isDark ? '#f9fafb' : '#111827'
           }}
         >
-          <h3 
+          <h3
             className="font-semibold text-sm"
           >
             Thông báo ({notifications.length})
@@ -100,7 +100,7 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
                   key={notification.id}
                   className={`px-4 py-3 border-b hover:bg-opacity-50 transition-colors cursor-pointer`}
                   style={{
-                    backgroundColor: !notification.read 
+                    backgroundColor: !notification.read
                       ? (isDark ? '#1f2937' : '#eff6ff')
                       : 'transparent',
                     borderColor: isDark ? '#374151' : '#e5e7eb'
@@ -121,20 +121,20 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{getNotificationIcon(notification.type)}</span>
-                        <h4 
+                        <h4
                           className="text-sm font-medium truncate"
                         >
                           {notification.title}
                         </h4>
                         {!notification.read && <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />}
                       </div>
-                      <p 
+                      <p
                         className="text-sm mt-1 line-clamp-2"
                         style={{ color: isDark ? '#d1d5db' : '#4b5563' }}
                       >
                         {notification.message}
                       </p>
-                      <p 
+                      <p
                         className="text-xs mt-1"
                         style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
                       >
@@ -151,7 +151,7 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent) => {
                             e.stopPropagation()
                             onMarkAsRead(notification.id)
                           }}
@@ -164,7 +164,7 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation()
                           onDelete(notification.id)
                         }}

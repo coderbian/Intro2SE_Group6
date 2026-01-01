@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Plus, FolderKanban, CheckCircle2, Clock, AlertCircle, TrendingUp, Calendar, CheckSquare, Users, LayoutDashboard } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
-import type { User, Project, Task } from '../../App';
+import type { User, Project, Task } from '../../types';
 
 interface DashboardPageProps {
   user: User;
@@ -231,8 +231,8 @@ export function DashboardPage({
                               {daysLeft > 0
                                 ? `Còn ${daysLeft} ngày`
                                 : daysLeft === 0
-                                ? 'Hết hạn hôm nay'
-                                : `Trễ ${Math.abs(daysLeft)} ngày`}
+                                  ? 'Hết hạn hôm nay'
+                                  : `Trễ ${Math.abs(daysLeft)} ngày`}
                             </span>
                           </div>
                         </div>
@@ -264,7 +264,7 @@ export function DashboardPage({
                 <div className="space-y-2.5">
                   {myInProgressTasks.slice(0, 5).map((task) => {
                     const project = projects.find(p => p.id === task.projectId);
-                    
+
                     return (
                       <div key={task.id} className="border rounded-lg p-3 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-gray-50">
                         <div className="flex items-start gap-2 mb-2">

@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Edit, Lock } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-import type { User } from '../../App';
+import { toast } from 'sonner';
+import type { User } from '../../types';
 
 interface ProfilePageProps {
   user: User;
@@ -57,7 +57,7 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
       toast.error('Mật khẩu xác nhận không khớp');
       return;
     }
-    
+
     toast.success('Đổi mật khẩu thành công!');
     setIsChangingPassword(false);
     setPasswordData({
