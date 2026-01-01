@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom"
 import { LoginPage } from "./components/auth/LoginPage"
 import { RegisterPage } from "./components/auth/RegisterPage"
 import { ForgotPasswordPage } from "./components/auth/ForgotPasswordPage"
@@ -13,19 +14,8 @@ import { TrashPage } from "./components/trash/TrashPage"
 import { AllProjectsPage } from "./components/projects/AllProjectsPage"
 import { MemberRequestsPage } from "./components/member-requests/MemberRequestsPage"
 import { AdminDashboard, RoleManagement, SystemMonitoring, SystemSettings, BackupRestore } from "./components/admin"
-
-type Page =
-  | "login"
-  | "register"
-  | "forgot-password"
-  | "dashboard"
-  | "profile"
-  | "settings"
-  | "project"
-  | "trash"
-  | "projects"
-  | "member-requests"
-  | "admin"
+import { ProtectedRoute } from "./components/routes/ProtectedRoute"
+import { AdminRoute } from "./components/routes/AdminRoute"
 
 type AdminPage = "users" | "roles" | "monitoring" | "settings" | "backup"
 
@@ -169,8 +159,36 @@ export interface Sprint {
 
 export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   console.log("App: mounted, onEnterAdmin provided:", { hasHandler: !!onEnterAdmin })
+  
+  // State declarations
+  const [user, setUser] = useState<User | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [taskProposals, setTaskProposals] = useState<TaskProposal[]>([])
+  const [settings, setSettings] = useState<Settings>({
+    theme: "light",
+    language: "vi",
+    notifications: {
+      taskAssigned: true,
+      taskCompleted: true,
+      projectUpdates: true,
+      emailNotifications: false,
+    },
+    linkedAccounts: {},
+  })
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [invitations, setInvitations] = useState<ProjectInvitation[]>([])
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
+  const [sprints, setSprints] = useState<Sprint[]>([])
+  const [adminEmail, setAdminEmail] = useState<string | null>(null)
+  const [adminPage, setAdminPage] = useState<AdminPage>("monitoring")
+  const eventListenerAttached = useRef(false)
+  const navigate = useNavigate()
+
   const adminLoginHandler = (email: string, password: string) => {
-    console.log("App: adminLoginHandler called", { email })
+    console.log("App: adminLoginHandler called", { email, password })
 
     // Validate admin credentials
     if (!email.includes("@gmail.com")) {
@@ -197,7 +215,13 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     // Call global window handler if available
     if (typeof window !== "undefined" && (window as any).__onEnterAdmin) {
       console.log("App: calling fallback window.__onEnterAdmin")
-        ; (window as any).__onEnterAdmin(email, password)
+      ;(window as any).__onEnterAdmin(email, password)
+      return
+    }
+
+    // Check for special demo accounts (no password validation)
+    if (email === "abc@gmail.com") {
+      console.log("App: Special account detected (abc@gmail.com)")
       return
     }
 
@@ -208,35 +232,10 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     // Store admin session
     localStorage.setItem("planora_admin", JSON.stringify({ email, loginAt: new Date().toISOString() }))
 
-    // Set admin state and show admin page
+    // Set admin state and navigate to admin
     setAdminEmail(email)
-    setCurrentPage("admin")
+    navigate("/admin/monitoring")
   }
-  const [currentPage, setCurrentPage] = useState<Page>("login")
-  const [user, setUser] = useState<User | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [taskProposals, setTaskProposals] = useState<TaskProposal[]>([])
-  const [settings, setSettings] = useState<Settings>({
-    theme: "light",
-    language: "vi",
-    notifications: {
-      taskAssigned: true,
-      taskCompleted: true,
-      projectUpdates: true,
-      emailNotifications: false,
-    },
-    linkedAccounts: {},
-  })
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [invitations, setInvitations] = useState<ProjectInvitation[]>([])
-  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
-  const [sprints, setSprints] = useState<Sprint[]>([])
-  const [adminEmail, setAdminEmail] = useState<string | null>(null)
-  const [adminPage, setAdminPage] = useState<AdminPage>("monitoring")
-  const eventListenerAttached = useRef(false)
 
   useEffect(() => {
     localStorage.clear()
@@ -269,7 +268,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
       })
       // Chuyển đến màn hình dự án mới tạo
       setSelectedProjectId(newProjectId)
-      setCurrentPage("project")
+      navigate(`/project/${newProjectId}`)
     }
 
     window.addEventListener("createProject" as any, handleCreateProject as any)
@@ -279,7 +278,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
       window.removeEventListener("createProject" as any, handleCreateProject as any)
       eventListenerAttached.current = false
     }
-  }, [user])
+  }, [user, navigate])
 
   useEffect(() => {
     if (user) {
@@ -323,11 +322,6 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     localStorage.setItem("planora_task_proposals", JSON.stringify(taskProposals))
   }, [taskProposals])
 
-  // Adapter to accept generic string navigation from child components
-  const navigate = (page: string) => {
-    setCurrentPage(page as Page)
-  }
-
   // Adapters for simplified child callbacks (they supply minimal data)
   const onAddCommentAdapter = (taskId: string, content: string) => {
     if (!user) return
@@ -347,7 +341,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     }
 
     setUser(newUser)
-    setCurrentPage("dashboard")
+    navigate("/dashboard")
   }
 
   const handleRegister = (data: { email: string; password: string; name: string; phone?: string }) => {
@@ -359,14 +353,14 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     }
 
     setUser(newUser)
-    setCurrentPage("dashboard")
+    navigate("/dashboard")
   }
 
   const handleLogout = () => {
     setUser(null)
     setSelectedProjectId(null)
     localStorage.removeItem("planora_user")
-    setCurrentPage("login")
+    navigate("/login")
   }
 
   const handleUpdateUser = (updatedUser: User) => {
@@ -407,7 +401,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     toast.success("Dự án đã được di chuyển vào thùng rác")
     if (selectedProjectId === projectId) {
       setSelectedProjectId(null)
-      setCurrentPage("dashboard")
+      navigate("/dashboard")
     }
   }
 
@@ -424,7 +418,7 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
 
   const handleSelectProject = (projectId: string) => {
     setSelectedProjectId(projectId)
-    setCurrentPage("project")
+    navigate(`/project/${projectId}`)
   }
 
   const handleCreateTask = (task: Omit<Task, "id" | "createdAt" | "comments" | "attachments">) => {
@@ -816,216 +810,192 @@ export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, p
     toast.success("Đã từ chối đề xuất!")
   }
 
-  if (
-    isLoading ||
-    (!user && currentPage !== "login" && currentPage !== "register" && currentPage !== "forgot-password" && currentPage !== "admin")
-  ) {
-    return (
-      <>
-        <LoginPage
-          onLogin={handleLogin}
-          onSwitchToRegister={() => setCurrentPage("register")}
-          onForgotPassword={() => setCurrentPage("forgot-password")}
-          onAdminLogin={adminLoginHandler}
-        />
-        <Toaster />
-      </>
-    )
-  }
+  // Wrapper component to use URL params
+  const ProjectPageWrapper = () => {
+    const { projectId } = useParams<{ projectId: string }>()
+    const project = projects.find((p) => p.id === projectId)
 
-  if (currentPage === "register") {
-    return (
-      <>
-        <RegisterPage onRegister={handleRegister} onSwitchToLogin={() => setCurrentPage("login")} />
-        <Toaster />
-      </>
-    )
-  }
-
-  if (currentPage === "forgot-password") {
-    return (
-      <>
-        <ForgotPasswordPage onBack={() => setCurrentPage("login")} />
-        <Toaster />
-      </>
-    )
-  }
-
-  if (currentPage === "login") {
-    return (
-      <>
-        <LoginPage
-          onLogin={handleLogin}
-          onSwitchToRegister={() => setCurrentPage("register")}
-          onForgotPassword={() => setCurrentPage("forgot-password")}
-          onAdminLogin={adminLoginHandler}
-        />
-        <Toaster />
-      </>
-    )
-  }
-
-  if (currentPage === "admin") {
-    const handleAdminLogout = () => {
-      console.log("Admin logout")
-      setAdminEmail(null)
-      setAdminPage("monitoring")
-      localStorage.removeItem("planora_admin")
-      toast.success("Đã đăng xuất khỏi admin")
-      setCurrentPage("login")
-    }
-
-    const handleAdminNavigate = (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => {
-      console.log("Admin navigating to:", page)
-      const pageMap: Record<string, AdminPage> = {
-        dashboard: "monitoring",
-        users: "users",
-        roles: "roles",
-        settings: "settings",
-        backup: "backup"
-      }
-      setAdminPage(pageMap[page])
+    if (!projectId || !project) {
+      return <Navigate to="/dashboard" replace />
     }
 
     return (
-      <>
-        {adminPage === "users" && (
-          <AdminDashboard
-            adminEmail={adminEmail || undefined}
-            onNavigate={handleAdminNavigate}
-            onLogout={handleAdminLogout}
-          />
-        )}
-        {adminPage === "roles" && (
-          <RoleManagement
-            adminEmail={adminEmail || undefined}
-            onNavigate={handleAdminNavigate}
-            onLogout={handleAdminLogout}
-          />
-        )}
-        {adminPage === "monitoring" && (
-          <SystemMonitoring
-            adminEmail={adminEmail || undefined}
-            onNavigate={handleAdminNavigate}
-            onLogout={handleAdminLogout}
-          />
-        )}
-        {adminPage === "settings" && (
-          <SystemSettings
-            adminEmail={adminEmail || undefined}
-            onNavigate={handleAdminNavigate}
-            onLogout={handleAdminLogout}
-          />
-        )}
-        {adminPage === "backup" && (
-          <BackupRestore
-            adminEmail={adminEmail || undefined}
-            onNavigate={handleAdminNavigate}
-            onLogout={handleAdminLogout}
-          />
-        )}
-        <Toaster />
-      </>
+      <ProjectPage
+        user={user!}
+        project={project}
+        tasks={tasks.filter((t) => t.projectId === projectId)}
+        sprints={sprints.filter((s) => s.projectId === projectId)}
+        currentSprint={sprints.find((s) => s.projectId === projectId && s.status === "active")}
+        onUpdateProject={handleUpdateProject}
+        onDeleteProject={handlePermanentlyDeleteProject}
+        onMoveToTrash={handleDeleteProject}
+        onCreateTask={handleCreateTask}
+        onUpdateTask={handleUpdateTask}
+        onDeleteTask={handleDeleteTask}
+        onAddComment={onAddCommentAdapter}
+        onAddAttachment={onAddAttachmentAdapter}
+        onCreateSprint={handleCreateSprint}
+        onEndSprint={handleEndSprint}
+      />
     )
   }
 
-  if (!user) {
+  if (isLoading) {
     return null
+  }
+
+  // Admin handlers
+  const handleAdminLogout = () => {
+    console.log("Admin logout")
+    setAdminEmail(null)
+    localStorage.removeItem("planora_admin")
+    toast.success("Đã đăng xuất khỏi admin")
+    navigate("/login")
+  }
+
+  const handleAdminNavigate = (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => {
+    navigate(`/admin/${page}`)
   }
 
   return (
     <>
-      <MainLayout
-        user={user}
-        projects={projects}
-        currentPage={currentPage}
-        selectedProjectId={selectedProjectId}
-        settings={settings}
-        notifications={notifications.filter((n) => n.userId === user.id)}
-        invitations={invitations.filter((i) => i.invitedEmail === user?.email)}
-        joinRequests={joinRequests.filter((r) => {
-          const proj = projects.find((p) => p.id === r.projectId)
-          const isManager =
-            proj?.members.find((m) => m.userId === user?.id)?.role === "manager" || proj?.ownerId === user?.id
-          return isManager
-        })}
-        onNavigate={navigate}
-        onSelectProject={handleSelectProject}
-        onLogout={handleLogout}
-        onUpdateSettings={handleUpdateSettings}
-        onMarkNotificationAsRead={handleMarkNotificationAsRead}
-        onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
-        onDeleteNotification={handleDeleteNotification}
-        onAddNotification={handleAddNotification}
-        onSendInvitation={handleSendInvitation}
-        onAcceptInvitation={handleAcceptInvitation}
-        onCreateJoinRequest={handleCreateJoinRequest}
-        onApproveJoinRequest={handleApproveJoinRequest}
-        onRejectJoinRequest={handleRejectJoinRequest}
-        onRestoreProject={handleRestoreProject}
-        onPermanentlyDeleteProject={handlePermanentlyDeleteProject}
-        onRestoreTask={handleRestoreTask}
-        onPermanentlyDeleteTask={handlePermanentlyDeleteTask}
-        onEnterAdmin={onEnterAdmin}
-      >
-        {currentPage === "dashboard" && (
-          <DashboardPage user={user} projects={projects.filter(p => !p.deletedAt)} tasks={tasks} onSelectProject={handleSelectProject} />
-        )}
-
-        {currentPage === "profile" && <ProfilePage user={user} onUpdateUser={handleUpdateUser} />}
-
-        {currentPage === "settings" && (
-          <SettingsPage settings={settings} onUpdateSettings={handleUpdateSettings} onNavigate={navigate} />
-        )}
-
-        {currentPage === "trash" && (
-          <TrashPage
-            projects={projects}
-            tasks={tasks}
-            onRestoreProject={handleRestoreProject}
-            onPermanentlyDeleteProject={handlePermanentlyDeleteProject}
-            onRestoreTask={handleRestoreTask}
-            onPermanentlyDeleteTask={handlePermanentlyDeleteTask}
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={
+          <LoginPage
+            onLogin={handleLogin}
+            onSwitchToRegister={() => navigate("/register")}
+            onForgotPassword={() => navigate("/forgot-password")}
+            onAdminLogin={adminLoginHandler}
           />
-        )}
+        } />
+        
+        <Route path="/register" element={
+          <RegisterPage onRegister={handleRegister} onSwitchToLogin={() => navigate("/login")} />
+        } />
+        
+        <Route path="/forgot-password" element={
+          <ForgotPasswordPage onBack={() => navigate("/login")} />
+        } />
 
-        {currentPage === "projects" && (
-          <AllProjectsPage
-            user={user}
-            projects={projects}
-            onSelectProject={handleSelectProject}
-            onCreateJoinRequest={handleCreateJoinRequest}
-          />
-        )}
+        {/* Admin Routes */}
+        <Route path="/admin/*" element={
+          <AdminRoute adminEmail={adminEmail}>
+            <Routes>
+              <Route path="monitoring" element={
+                <SystemMonitoring
+                  adminEmail={adminEmail || undefined}
+                  onNavigate={handleAdminNavigate}
+                  onLogout={handleAdminLogout}
+                />
+              } />
+              <Route path="users" element={
+                <AdminDashboard
+                  adminEmail={adminEmail || undefined}
+                  onNavigate={handleAdminNavigate}
+                  onLogout={handleAdminLogout}
+                />
+              } />
+              <Route path="roles" element={
+                <RoleManagement
+                  adminEmail={adminEmail || undefined}
+                  onNavigate={handleAdminNavigate}
+                  onLogout={handleAdminLogout}
+                />
+              } />
+              <Route path="settings" element={
+                <SystemSettings
+                  adminEmail={adminEmail || undefined}
+                  onNavigate={handleAdminNavigate}
+                  onLogout={handleAdminLogout}
+                />
+              } />
+              <Route path="backup" element={
+                <BackupRestore
+                  adminEmail={adminEmail || undefined}
+                  onNavigate={handleAdminNavigate}
+                  onLogout={handleAdminLogout}
+                />
+              } />
+              <Route path="*" element={<Navigate to="/admin/monitoring" replace />} />
+            </Routes>
+          </AdminRoute>
+        } />
 
-        {currentPage === "member-requests" && (
-          <MemberRequestsPage
-            joinRequests={joinRequests}
-            onApproveJoinRequest={handleApproveJoinRequest}
-            onRejectJoinRequest={handleRejectJoinRequest}
-          />
-        )}
-
-        {currentPage === "project" && selectedProjectId && (
-          <ProjectPage
-            user={user}
-            project={projects.find((p) => p.id === selectedProjectId)!}
-            tasks={tasks.filter((t) => t.projectId === selectedProjectId)}
-            sprints={sprints.filter((s) => s.projectId === selectedProjectId)}
-            currentSprint={sprints.find((s) => s.projectId === selectedProjectId && s.status === "active")}
-            onUpdateProject={handleUpdateProject}
-            onDeleteProject={handlePermanentlyDeleteProject}
-            onMoveToTrash={handleDeleteProject}
-            onCreateTask={handleCreateTask}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onAddComment={onAddCommentAdapter}
-            onAddAttachment={onAddAttachmentAdapter}
-            onCreateSprint={handleCreateSprint}
-            onEndSprint={handleEndSprint}
-          />
-        )}
-      </MainLayout>
+        {/* Protected Routes */}
+        <Route path="/*" element={
+          <ProtectedRoute user={user}>
+            <MainLayout
+              user={user!}
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              settings={settings}
+              notifications={notifications.filter((n) => n.userId === user?.id)}
+              invitations={invitations.filter((i) => i.invitedEmail === user?.email)}
+              joinRequests={joinRequests.filter((r) => {
+                const proj = projects.find((p) => p.id === r.projectId)
+                const isManager =
+                  proj?.members.find((m) => m.userId === user?.id)?.role === "manager" || proj?.ownerId === user?.id
+                return isManager
+              })}
+              onSelectProject={handleSelectProject}
+              onLogout={handleLogout}
+              onUpdateSettings={handleUpdateSettings}
+              onMarkNotificationAsRead={handleMarkNotificationAsRead}
+              onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
+              onDeleteNotification={handleDeleteNotification}
+              onAddNotification={handleAddNotification}
+              onSendInvitation={handleSendInvitation}
+              onAcceptInvitation={handleAcceptInvitation}
+              onCreateJoinRequest={handleCreateJoinRequest}
+              onApproveJoinRequest={handleApproveJoinRequest}
+              onRejectJoinRequest={handleRejectJoinRequest}
+              onRestoreProject={handleRestoreProject}
+              onPermanentlyDeleteProject={handlePermanentlyDeleteProject}
+              onRestoreTask={handleRestoreTask}
+              onPermanentlyDeleteTask={handlePermanentlyDeleteTask}
+              onEnterAdmin={onEnterAdmin}
+            >
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={
+                  <DashboardPage user={user!} projects={projects.filter(p => !p.deletedAt)} tasks={tasks} onSelectProject={handleSelectProject} />
+                } />
+                <Route path="/profile" element={<ProfilePage user={user!} onUpdateUser={handleUpdateUser} />} />
+                <Route path="/settings" element={
+                  <SettingsPage settings={settings} onUpdateSettings={handleUpdateSettings} onNavigate={(page) => navigate(`/${page}`)} />
+                } />
+                <Route path="/trash" element={
+                  <TrashPage
+                    projects={projects}
+                    tasks={tasks}
+                    onRestoreProject={handleRestoreProject}
+                    onPermanentlyDeleteProject={handlePermanentlyDeleteProject}
+                    onRestoreTask={handleRestoreTask}
+                    onPermanentlyDeleteTask={handlePermanentlyDeleteTask}
+                  />
+                } />
+                <Route path="/projects" element={
+                  <AllProjectsPage
+                    user={user!}
+                    projects={projects}
+                    onSelectProject={handleSelectProject}
+                    onCreateJoinRequest={handleCreateJoinRequest}
+                  />
+                } />
+                <Route path="/member-requests" element={
+                  <MemberRequestsPage
+                    joinRequests={joinRequests}
+                    onApproveJoinRequest={handleApproveJoinRequest}
+                    onRejectJoinRequest={handleRejectJoinRequest}
+                  />
+                } />
+                <Route path="/project/:projectId" element={<ProjectPageWrapper />} />
+              </Routes>
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+      </Routes>
       <Toaster />
     </>
   )

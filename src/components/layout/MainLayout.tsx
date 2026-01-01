@@ -1,6 +1,7 @@
 "use client"
 
 import { type ReactNode, useState, useRef } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Button } from "../ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { LayoutDashboard, FolderKanban, User, LogOut, Plus, ChevronDown, Menu, X, Settings, Bell, Trash2, Globe, Users, ShieldCheck } from 'lucide-react'
@@ -32,7 +33,6 @@ import { NotificationList } from "../notifications/NotificationList"
 interface MainLayoutProps {
   user: UserType
   projects: Project[]
-  currentPage: string
   selectedProjectId: string | null
   settings: any
   notifications: Notification[]
@@ -44,7 +44,6 @@ interface MainLayoutProps {
   onCreateJoinRequest: (projectId: string) => void
   onApproveJoinRequest: (requestId: string) => void
   onRejectJoinRequest: (requestId: string) => void
-  onNavigate: (page: string) => void
   onSelectProject: (projectId: string) => void
   onLogout: () => void
   onUpdateSettings: (settings: any) => void
@@ -62,11 +61,9 @@ interface MainLayoutProps {
 export function MainLayout({
   user,
   projects,
-  currentPage,
   selectedProjectId,
   settings,
   notifications,
-  onNavigate,
   onSelectProject,
   onLogout,
   onUpdateSettings,
@@ -75,6 +72,9 @@ export function MainLayout({
   onDeleteNotification,
   children,
 }: MainLayoutProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const currentPath = location.pathname
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
@@ -150,39 +150,39 @@ export function MainLayout({
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <div className="space-y-1.5">
             <Button
-              variant={currentPage === "dashboard" ? "default" : "ghost"}
+              variant={currentPath === "/dashboard" ? "default" : "ghost"}
               className={`w-full justify-start h-9 text-sm font-semibold ${
-                currentPage === "dashboard"
+                currentPath === "/dashboard"
                   ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
                   : "hover:bg-blue-50"
               }`}
-              onClick={() => onNavigate("dashboard")}
+              onClick={() => navigate("/dashboard")}
             >
               <LayoutDashboard className="w-4 h-4 mr-2.5" />
               Tổng quan
             </Button>
 
             <Button
-              variant={currentPage === "projects" ? "default" : "ghost"}
+              variant={currentPath === "/projects" ? "default" : "ghost"}
               className={`w-full justify-start h-9 text-sm font-semibold ${
-                currentPage === "projects"
+                currentPath === "/projects"
                   ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
                   : "hover:bg-blue-50"
               }`}
-              onClick={() => onNavigate("projects")}
+              onClick={() => navigate("/projects")}
             >
               <Globe className="w-4 h-4 mr-2.5" />
               Khám phá dự án
             </Button>
 
             <Button
-              variant={currentPage === "member-requests" ? "default" : "ghost"}
+              variant={currentPath === "/member-requests" ? "default" : "ghost"}
               className={`w-full justify-start h-9 text-sm font-semibold ${
-                currentPage === "member-requests"
+                currentPath === "/member-requests"
                   ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
                   : "hover:bg-blue-50"
               }`}
-              onClick={() => onNavigate("member-requests")}
+              onClick={() => navigate("/member-requests")}
             >
               <Users className="w-4 h-4 mr-2.5" />
               Yêu cầu tham gia
@@ -301,13 +301,13 @@ export function MainLayout({
           className={`${settings.theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200"} border-t space-y-1.5 p-4 sticky bottom-14 z-10`}
         >
           <Button
-            variant={currentPage === "trash" ? "default" : "ghost"}
+            variant={currentPath === "/trash" ? "default" : "ghost"}
             className={`w-full justify-start text-sm h-9 ${
-              currentPage === "trash"
+              currentPath === "/trash"
                 ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md"
                 : "hover:bg-red-50 text-gray-700"
             }`}
-            onClick={() => onNavigate("trash")}
+            onClick={() => navigate("/trash")}
           >
             <Trash2 className="w-4 h-4 mr-2.5" />
             <span className="flex-1 text-left font-medium">Thùng rác</span>
@@ -342,7 +342,7 @@ export function MainLayout({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => onNavigate("profile")} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
                 <User className="w-4 h-4 mr-2" />
                 Thông tin cá nhân
               </DropdownMenuItem>
@@ -377,13 +377,13 @@ export function MainLayout({
           </Button>
           
           <div className="flex-1">
-            {currentPage === "dashboard" && (
+            {currentPath === "/dashboard" && (
               <h2 className="text-lg font-bold text-gray-800">Bảng điều khiển</h2>
             )}
-            {currentPage === "projects" && (
+            {currentPath === "/projects" && (
               <h2 className="text-lg font-bold text-gray-800">Khám phá dự án</h2>
             )}
-            {currentPage === "project" && selectedProjectId && (
+            {currentPath.startsWith("/project/") && selectedProjectId && (
               <h2 className="text-lg font-bold text-gray-800">
                 {projects.find(p => p.id === selectedProjectId)?.name}
               </h2>
