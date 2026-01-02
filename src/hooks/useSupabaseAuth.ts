@@ -241,7 +241,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
     const handleResetPassword = useCallback(async (email: string): Promise<boolean> => {
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin,
+                redirectTo: new URL('/reset-password', window.location.origin).toString(),
             });
 
             if (error) {

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { LoginPage } from './components/auth/LoginPage';
 import { RegisterPage } from './components/auth/RegisterPage';
 import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
 import { ForbiddenPage } from './components/auth/ForbiddenPage';
 import { AuthCallbackPage } from './components/auth/AuthCallbackPage';
 import { Toaster } from './components/ui/sonner';
@@ -24,6 +25,7 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
       <Routes>
         <Route path="/403" element={<ForbiddenPage onGoHome={() => navigate('/projects')} />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Public Routes */}
         <Route

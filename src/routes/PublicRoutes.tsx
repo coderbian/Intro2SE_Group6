@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LoginPage } from '../components/auth/LoginPage';
 import { RegisterPage } from '../components/auth/RegisterPage';
 import { ForgotPasswordPage } from '../components/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '../components/auth/ResetPasswordPage';
 import { useApp } from '../contexts/AppContext';
 
 export function PublicRoutes() {
@@ -37,6 +38,7 @@ export function PublicRoutes() {
                 path="/forgot-password"
                 element={<ForgotPasswordPage onBack={() => navigate('/login')} />}
             />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Routes>
     );
 }
