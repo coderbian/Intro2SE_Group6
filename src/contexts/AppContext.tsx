@@ -123,7 +123,7 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
             projectsHook.setSelectedProjectId(null);
             navigate('/login');
         } catch (error) {
-            toast.error('Failed to log out. Please try again.');
+            toast.error('Không thể đăng xuất. Vui lòng thử lại.');
         }
     };
 
