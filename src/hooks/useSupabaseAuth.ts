@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Session, User as SupabaseUser, AuthError } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase-client';
+import { createEphemeralSupabaseClient, getSupabaseClient } from '../lib/supabase-client';
 import { toast } from 'sonner';
 
 export interface User {
@@ -42,6 +42,7 @@ function toAppUser(supabaseUser: SupabaseUser): User {
 }
 
 export function useSupabaseAuth(): UseSupabaseAuthReturn {
+    const supabase = getSupabaseClient();
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -252,21 +253,32 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
 
     const handleChangePassword = useCallback(async (currentPassword: string, newPassword: string): Promise<boolean> => {
         try {
-            // First, verify current password by re-authenticating
+            // Verify that we can identify the current user
             if (!user?.email) {
                 toast.error('Không tìm thấy thông tin người dùng');
                 return false;
             }
 
-            // Re-authenticate user with current password to verify it
-            // Note: signInWithPassword will refresh the session but won't log out the user
-            const { error: signInError } = await supabase.auth.signInWithPassword({
+            if (!currentPassword) {
+                toast.error('Vui lòng nhập mật khẩu hiện tại');
+                return false;
+            }
+
+            // Supabase doesn't provide a dedicated "verify password" endpoint.
+            // We verify credentials using an ephemeral client so we don't overwrite
+            // the existing session or trigger unwanted auth side effects.
+            const authVerifier = createEphemeralSupabaseClient();
+            const { error: signInError } = await authVerifier.auth.signInWithPassword({
                 email: user.email,
                 password: currentPassword,
             });
 
             if (signInError) {
-                handleAuthError(signInError);
+                if (signInError.message === 'Invalid login credentials') {
+                    toast.error('Mật khẩu hiện tại không đúng');
+                } else {
+                    handleAuthError(signInError);
+                }
                 return false;
             }
 
@@ -286,7 +298,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             toast.error('Đã xảy ra lỗi khi đổi mật khẩu');
             return false;
         }
-    }, [user?.email]);
+    }, [user?.email, supabase]);
 
     return {
         user,
