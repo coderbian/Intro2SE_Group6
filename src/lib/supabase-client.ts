@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '../types/supabase'
 
 function getRequiredEnvVar(name: string, value: string | undefined): string {
   if (typeof value !== 'string' || value.length === 0) {
@@ -9,7 +10,7 @@ function getRequiredEnvVar(name: string, value: string | undefined): string {
   }
   return value
 }
-let supabaseClient: ReturnType<typeof createClient> | null = null
+let supabaseClient: ReturnType<typeof createClient<Database>> | null = null
 
 export function getSupabaseClient() {
   if (supabaseClient) {
@@ -19,7 +20,7 @@ export function getSupabaseClient() {
   const supabaseUrl = getRequiredEnvVar('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL)
   const supabaseAnonKey = getRequiredEnvVar('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY)
 
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+  supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey)
   return supabaseClient
 }
 
@@ -43,7 +44,7 @@ export function createEphemeralSupabaseClient() {
   const supabaseUrl = getRequiredEnvVar('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL)
   const supabaseAnonKey = getRequiredEnvVar('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY)
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
