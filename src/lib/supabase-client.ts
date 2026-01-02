@@ -9,7 +9,16 @@ function getRequiredEnvVar(name: string, value: string | undefined): string {
   }
   return value
 }
-const supabaseUrl = getRequiredEnvVar('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL)
-const supabaseAnonKey = getRequiredEnvVar('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY)
+let supabaseClient: ReturnType<typeof createClient> | null = null
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export function getSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient
+  }
+
+  const supabaseUrl = getRequiredEnvVar('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL)
+  const supabaseAnonKey = getRequiredEnvVar('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY)
+
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+  return supabaseClient
+}
