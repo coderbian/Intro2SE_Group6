@@ -258,6 +258,17 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 return false;
             }
 
+            // Re-authenticate user with current password to verify it
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: user.email,
+                password: currentPassword,
+            });
+
+            if (signInError) {
+                toast.error('Mật khẩu hiện tại không đúng');
+                return false;
+            }
+
             // Now update to new password
             const { error: updateError } = await supabase.auth.updateUser({
                 password: newPassword,
