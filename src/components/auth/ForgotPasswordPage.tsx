@@ -62,28 +62,28 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
         </CardHeader>
 
         <form onSubmit={handleSendLink}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 disabled={isSent}
-              />
+                />
               {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-            </div>
+              </div>
             {isSent && (
               <p className="text-sm text-muted-foreground">
                 Nếu email tồn tại, bạn sẽ nhận được một liên kết đặt lại mật khẩu. Hãy mở email và bấm vào liên kết để tiếp tục.
               </p>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+                )}
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
             {!isSent ? (
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full mt-2">
                 Gửi liên kết đặt lại mật khẩu
               </Button>
             ) : (
@@ -101,8 +101,8 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
                 Quay lại đăng nhập
               </button>
             )}
-          </CardFooter>
-        </form>
+            </CardFooter>
+          </form>
       </Card>
     </div>
   );

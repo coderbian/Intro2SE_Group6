@@ -7,7 +7,8 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border",
+        // overflow-hidden ensures gradient headers and other backgrounds respect the card's rounded corners
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border overflow-hidden",
         className,
       )}
       {...props}

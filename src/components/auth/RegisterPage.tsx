@@ -192,7 +192,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full mt-2">
               Đăng ký
             </Button>
             <div className="text-sm text-center text-gray-600">

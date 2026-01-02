@@ -132,7 +132,11 @@ export function ProjectMembers({ user, project, isManager, onUpdateProject }: Pr
                     <div>
                       <div className="flex items-center gap-2">
                         <span>{member.name}</span>
-                        {isOwner && <Crown className="w-4 h-4 text-yellow-600" title="Project Manager" />}
+                        {isOwner && (
+                          <span title="Project Manager">
+                            <Crown className="w-4 h-4 text-yellow-600" />
+                          </span>
+                        )}
                       </div>
                       <span className="text-sm text-gray-600">{member.email}</span>
                     </div>

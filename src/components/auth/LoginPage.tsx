@@ -40,10 +40,10 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
       newErrors.email = "Email không hợp lệ"
     }
 
-    if (!password) {
-      newErrors.password = "Mật khẩu không được để trống"
-    } else if (password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự"
+      if (!password) {
+        newErrors.password = "Mật khẩu không được để trống"
+      } else if (password.length < 6) {
+        newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự"
     }
 
     setErrors(newErrors)
@@ -63,7 +63,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (validateForm()) {
-      onLogin(email, password)
+        onLogin(email, password)
     }
   }
 
@@ -102,7 +102,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-3 rounded-xl">
-              <LayoutDashboard className="w-8 h-8 text-white" />
+                <LayoutDashboard className="w-8 h-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-center text-2xl">
@@ -114,33 +114,33 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            <>
-              <div className="space-y-2">
-                <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleGoogleLogin}>
-                  <Mail className="w-4 h-4 mr-2 text-red-500" />
-                  Đăng nhập với Google
-                </Button>
+              <>
+                <div className="space-y-2">
+                  <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleGoogleLogin}>
+                    <Mail className="w-4 h-4 mr-2 text-red-500" />
+                    Đăng nhập với Google
+                  </Button>
 
-                <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleFacebookLogin}>
-                  <Facebook className="w-4 h-4 mr-2 text-blue-600" />
-                  Đăng nhập với Facebook
-                </Button>
+                  <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleFacebookLogin}>
+                    <Facebook className="w-4 h-4 mr-2 text-blue-600" />
+                    Đăng nhập với Facebook
+                  </Button>
 
-                <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleGithubLogin}>
-                  <Github className="w-4 h-4 mr-2 text-gray-800" />
-                  Đăng nhập với GitHub
-                </Button>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator />
+                  <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleGithubLogin}>
+                    <Github className="w-4 h-4 mr-2 text-gray-800" />
+                    Đăng nhập với GitHub
+                  </Button>
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Hoặc</span>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">Hoặc</span>
+                  </div>
                 </div>
-              </div>
-            </>
+              </>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -171,16 +171,16 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold border border-red-700 shadow-md">
+            <Button type="submit" className="w-full mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold border border-red-700 shadow-md">
               Đăng nhập
             </Button>
-
-            <div className="text-sm text-center text-gray-600">
-              Chưa có tài khoản?{" "}
-              <button type="button" onClick={onSwitchToRegister} className="text-blue-600 hover:underline">
-                Đăng ký ngay
-              </button>
-            </div>
+            
+              <div className="text-sm text-center text-gray-600">
+                Chưa có tài khoản?{" "}
+                <button type="button" onClick={onSwitchToRegister} className="text-blue-600 hover:underline">
+                  Đăng ký ngay
+                </button>
+              </div>
           </CardFooter>
         </form>
       </Card>
