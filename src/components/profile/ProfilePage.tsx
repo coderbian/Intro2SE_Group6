@@ -5,18 +5,20 @@ import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { Edit, Lock } from 'lucide-react';
+import { Edit, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '../../types';
 
 interface ProfilePageProps {
   user: User;
-  onUpdateUser: (user: User) => void;
+  onUpdateUser: (user: User) => Promise<void>;
+  onChangePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
 }
 
-export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
+export function ProfilePage({ user, onUpdateUser, onChangePassword }: ProfilePageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -33,10 +35,9 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
       .slice(0, 2);
   };
 
-  const handleSave = () => {
-    onUpdateUser(editedUser);
+  const handleSave = async () => {
+    await onUpdateUser(editedUser);
     setIsEditing(false);
-    toast.success('Cập nhật thông tin thành công!');
   };
 
   const handleCancel = () => {
@@ -44,7 +45,7 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
     setIsEditing(false);
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!passwordData.currentPassword) {
       toast.error('Vui lòng nhập mật khẩu hiện tại');
       return;
@@ -58,14 +59,29 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
       return;
     }
 
-    toast.success('Đổi mật khẩu thành công!');
-    setIsChangingPassword(false);
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    });
+    setIsSubmitting(true);
+
+    try {
+      // Verify current password by re-authenticating
+      // Use centralized password change function from auth hook
+      const success = await onChangePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
+
+      if (success) {
+        setIsChangingPassword(false);
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -214,10 +230,13 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsChangingPassword(false)}>
+                  <Button variant="outline" onClick={() => setIsChangingPassword(false)} disabled={isSubmitting}>
                     Hủy
                   </Button>
-                  <Button onClick={handleChangePassword}>Đổi mật khẩu</Button>
+                  <Button onClick={handleChangePassword} disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Đổi mật khẩu
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

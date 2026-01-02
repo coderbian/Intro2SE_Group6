@@ -1,7 +1,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAuth } from '../hooks/useAuth';
+import { useSupabaseAuth } from '../hooks/useAuth';
 import { useProjects } from '../hooks/useProjects';
 import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
@@ -15,10 +15,10 @@ interface AppContextType {
     isLoading: boolean;
     adminEmail: string | null;
     setAdminEmail: (email: string | null) => void;
-    handleLogin: (email: string, password: string) => void;
-    handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => void;
-    handleLogout: () => void;
-    handleUpdateUser: (user: User) => void;
+    handleLogin: (email: string, password: string) => Promise<void>;
+    handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => Promise<void>;
+    handleLogout: () => Promise<void>;
+    handleUpdateUser: (user: User) => Promise<void>;
     handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => boolean;
 
     // Projects
@@ -86,7 +86,7 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
     const navigate = useNavigate();
 
     // Use all hooks
-    const auth = useAuth();
+    const auth = useSupabaseAuth();
     const notificationsHook = useNotifications();
     const projectsHook = useProjects({
         user: auth.user,
@@ -102,21 +102,29 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
     });
     const settingsHook = useSettings();
 
-    // Wrapped handlers with navigation
-    const handleLogin = (email: string, password: string) => {
-        auth.handleLogin(email, password);
-        navigate('/dashboard');
+    // Wrapped handlers with navigation (async for Supabase)
+    const handleLogin = async (email: string, password: string) => {
+        const result = await auth.handleLogin(email, password);
+        if (result) {
+            navigate('/dashboard');
+        }
     };
 
-    const handleRegister = (data: { email: string; password: string; name: string; phone?: string }) => {
-        auth.handleRegister(data);
-        navigate('/dashboard');
+    const handleRegister = async (data: { email: string; password: string; name: string; phone?: string }) => {
+        const result = await auth.handleRegister(data);
+        if (result) {
+            navigate('/dashboard');
+        }
     };
 
-    const handleLogout = () => {
-        auth.handleLogout();
-        projectsHook.setSelectedProjectId(null);
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            await auth.handleLogout();
+            projectsHook.setSelectedProjectId(null);
+            navigate('/login');
+        } catch (error) {
+            toast.error('Không thể đăng xuất. Vui lòng thử lại.');
+        }
     };
 
     const handleAdminLogin = (email: string, password: string, propHandler?: (email: string, password: string) => void) => {

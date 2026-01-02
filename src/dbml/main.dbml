@@ -1,0 +1,300 @@
+// Planora - Project Management System Database Schema
+// Use this at https://dbdiagram.io/
+
+Project Planora {
+  database_type: 'PostgreSQL'
+  Note: 'Database schema for project management system like Asana/Trello'
+}
+
+// ===============================
+// USERS
+// ===============================
+Table users {
+  id varchar(128) [pk]
+  email varchar(255) [unique, not null]
+  name varchar(255) [not null]
+  avatar_url text
+  phone varchar(20)
+  role varchar(20) [not null, default: 'user', note: 'user, admin']
+  status varchar(20) [not null, default: 'active', note: 'active, inactive']
+  last_login_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'User accounts and authentication'
+}
+
+Table user_preferences {
+  user_id varchar(128) [pk, ref: - users.id]
+  notifications jsonb [default: '{"email":true,"push":true}']
+  display jsonb [default: '{"theme":"light","view":"board"}']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'User settings and preferences'
+}
+
+// ===============================
+// PROJECTS
+// ===============================
+Table projects {
+  id uuid [pk, default: `gen_random_uuid()`]
+  owner_id varchar(128) [ref: > users.id]
+  name varchar(255) [not null]
+  description text
+  key varchar(20) [unique, not null, note: 'Project key like PROJ, DEV']
+  template varchar(20) [not null, default: 'kanban', note: 'kanban, scrum']
+  visibility varchar(20) [not null, default: 'private', note: 'private, public']
+  settings jsonb
+  deadline date
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete']
+  
+  Note: 'Projects container for tasks and boards'
+}
+
+Table project_members {
+  project_id uuid [ref: > projects.id]
+  user_id varchar(128) [ref: > users.id]
+  role varchar(20) [not null, default: 'member', note: 'manager, member']
+  joined_at timestamp [default: `now()`]
+  
+  indexes {
+    (project_id, user_id) [pk]
+  }
+  
+  Note: 'Project team members and their roles'
+}
+
+Table join_requests {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id]
+  user_id varchar(128) [ref: > users.id]
+  email varchar(255)
+  invited_by varchar(128) [ref: > users.id]
+  request_type varchar(20) [not null, note: 'invite, request']
+  status varchar(20) [not null, default: 'pending', note: 'pending, accepted, rejected']
+  token varchar(255) [unique]
+  expires_at timestamp
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Invitation and join request management'
+}
+
+// ===============================
+// BOARDS / SPRINTS / LISTS
+// ===============================
+Table boards {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id]
+  name varchar(200) [not null]
+  position_index int [not null, default: 0]
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    project_id
+  }
+  
+  Note: 'Kanban boards within projects'
+}
+
+Table sprints {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id]
+  name varchar(255) [not null]
+  goal text
+  start_date date
+  end_date date
+  status varchar(20) [not null, default: 'planned', note: 'planned, active, completed']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Scrum sprints for agile projects'
+}
+
+Table lists {
+  id uuid [pk, default: `gen_random_uuid()`]
+  board_id uuid [ref: > boards.id]
+  name varchar(255) [not null]
+  category varchar(20) [not null, note: 'todo, in-progress, done, etc']
+  position_index int [not null, default: 0]
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (board_id, position_index)
+  }
+  
+  Note: 'Columns/lists within boards'
+}
+
+// ===============================
+// TASKS
+// ===============================
+Table tasks {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id]
+  board_id uuid [ref: > boards.id]
+  list_id uuid [ref: > lists.id]
+  sprint_id uuid [ref: > sprints.id]
+  parent_id uuid [ref: > tasks.id, note: 'For subtasks']
+  task_number int [not null, note: 'Auto-increment per project']
+  title varchar(255) [not null]
+  description text
+  type varchar(50) [not null, default: 'task', note: 'task, user-story, bug, epic']
+  status varchar(20) [not null, default: 'todo', note: 'backlog, todo, in-progress, done']
+  priority varchar(20) [not null, default: 'medium', note: 'low, medium, high, urgent']
+  time_estimate int [note: 'Estimated time in hours']
+  time_spent int [default: 0, note: 'Actual time spent in hours']
+  story_points int [note: 'Story points for scrum']
+  position_index int [default: 0]
+  due_date date
+  reporter_id varchar(128) [ref: > users.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete']
+  
+  indexes {
+    (project_id, task_number) [unique, name: 'idx_tasks_project_number']
+    (board_id, position_index)
+    (list_id, position_index)
+    sprint_id
+    reporter_id
+    deleted_at
+  }
+  
+  Note: 'Tasks, user stories, and subtasks'
+}
+
+Table task_assignees {
+  task_id uuid [ref: > tasks.id]
+  user_id varchar(128) [ref: > users.id]
+  assigned_by varchar(128) [ref: > users.id]
+  assigned_at timestamp [default: `now()`]
+  
+  indexes {
+    (task_id, user_id) [pk]
+  }
+  
+  Note: 'Multiple assignees per task'
+}
+
+// ===============================
+// LABELS
+// ===============================
+Table labels {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id]
+  name varchar(100) [not null]
+  color varchar(7) [not null, note: 'Hex color code']
+  
+  indexes {
+    (project_id, name) [unique, name: 'idx_labels_project_name']
+  }
+  
+  Note: 'Custom labels for tasks'
+}
+
+Table task_labels {
+  task_id uuid [ref: > tasks.id]
+  label_id uuid [ref: > labels.id]
+  
+  indexes {
+    (task_id, label_id) [pk]
+  }
+  
+  Note: 'Many-to-many relationship for task labels'
+}
+
+// ===============================
+// COMMENTS / ATTACHMENTS
+// ===============================
+Table comments {
+  id uuid [pk, default: `gen_random_uuid()`]
+  task_id uuid [ref: > tasks.id]
+  author_id varchar(128) [ref: > users.id]
+  parent_id uuid [ref: > comments.id, note: 'For nested replies']
+  content text [not null]
+  is_edited boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete']
+  
+  indexes {
+    task_id
+  }
+  
+  Note: 'Comments and replies on tasks'
+}
+
+Table attachments {
+  id uuid [pk, default: `gen_random_uuid()`]
+  task_id uuid [ref: > tasks.id]
+  comment_id uuid [ref: > comments.id]
+  uploaded_by varchar(128) [ref: > users.id]
+  name varchar(255) [not null]
+  url text [not null]
+  type varchar(50) [not null, note: 'image, document, link, etc']
+  file_size bigint [not null, note: 'File size in bytes']
+  created_at timestamp [default: `now()`]
+  
+  Note: 'File attachments for tasks and comments'
+}
+
+// ===============================
+// NOTIFICATIONS / ACTIVITY / AI
+// ===============================
+Table notifications {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id varchar(128) [ref: > users.id]
+  type varchar(50) [note: 'task_assigned, task_completed, etc']
+  title varchar(255)
+  content text
+  entity_type varchar(50) [note: 'task, project, comment, etc']
+  entity_id uuid
+  is_read boolean [default: false]
+  read_at timestamp
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (user_id, is_read) [name: 'idx_notifications_user_unread']
+  }
+  
+  Note: 'User notifications'
+}
+
+Table activity_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id]
+  task_id uuid [ref: > tasks.id]
+  user_id varchar(128) [ref: > users.id]
+  action varchar(50) [note: 'created, updated, deleted, etc']
+  entity_type varchar(50) [note: 'task, project, comment, etc']
+  entity_id uuid
+  old_value jsonb
+  new_value jsonb
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Audit trail for all changes'
+}
+
+Table ai_interactions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id varchar(128) [ref: > users.id]
+  project_id uuid [ref: > projects.id]
+  task_id uuid [ref: > tasks.id]
+  feature varchar(50) [note: 'enhance_description, estimate_time, etc']
+  request jsonb
+  response jsonb
+  status varchar(20) [default: 'suggested', note: 'suggested, accepted, rejected']
+  rating int [note: 'User rating 1-5']
+  feedback text
+  provider varchar(50) [note: 'openai, anthropic, etc']
+  model varchar(50)
+  tokens int
+  cost_usd decimal
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'AI feature interactions and tracking'
+}
