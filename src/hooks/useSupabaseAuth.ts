@@ -258,6 +258,18 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 return false;
             }
 
+            // Re-authenticate user with current password to verify it
+            // Note: signInWithPassword will refresh the session but won't log out the user
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: user.email,
+                password: currentPassword,
+            });
+
+            if (signInError) {
+                handleAuthError(signInError);
+                return false;
+            }
+
             // Now update to new password
             const { error: updateError } = await supabase.auth.updateUser({
                 password: newPassword,
