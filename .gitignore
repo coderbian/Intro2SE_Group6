@@ -29,6 +29,7 @@ yarn-error.log
 build/
 dist/
 *.egg-info/
+*.tsbuildinfo
 
 # Logs and runtime files
 *.log
