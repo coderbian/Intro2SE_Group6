@@ -36,13 +36,8 @@ export function ProfilePage({ user, onUpdateUser, onChangePassword }: ProfilePag
   };
 
   const handleSave = async () => {
-    try {
-      await onUpdateUser(editedUser);
-      setIsEditing(false);
-      toast.success('Cập nhật thông tin thành công!');
-    } catch (error) {
-      toast.error('Không thể cập nhật thông tin');
-    }
+    await onUpdateUser(editedUser);
+    setIsEditing(false);
   };
 
   const handleCancel = () => {
