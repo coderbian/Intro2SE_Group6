@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -21,8 +21,13 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
     confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showVerification, setShowVerification] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Logged-out screen: always light mode
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.remove('dark');
+  }, []);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -60,24 +65,14 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Mock: Send verification code
-      toast.success('Mã xác thực đã được gửi đến email của bạn!');
-      setShowVerification(true);
-    }
-  };
-
-  const handleVerify = () => {
-    // Mock verification
-    if (verificationCode === '123456' || verificationCode.length === 6) {
-      toast.success('Đăng ký thành công!');
       onRegister({
         email: formData.email,
         password: formData.password,
         name: formData.name,
         phone: formData.phone || undefined,
       });
-    } else {
-      toast.error('Mã xác thực không đúng!');
+      toast.success('Nếu bật xác nhận email, vui lòng kiểm tra email để kích hoạt tài khoản.');
+      setIsSubmitted(true);
     }
   };
 
@@ -89,50 +84,6 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
       name: 'Demo User',
     });
   };
-
-  if (showVerification) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-center text-2xl">Xác thực tài khoản</CardTitle>
-            <CardDescription className="text-center">
-              Nhập mã xác thực 6 chữ số đã được gửi đến email của bạn
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">Mã xác thực</Label>
-              <Input
-                id="code"
-                type="text"
-                placeholder="123456"
-                maxLength={6}
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                className="text-center text-2xl tracking-widest"
-              />
-              <p className="text-xs text-gray-500 text-center">
-                Demo: Nhập bất kỳ 6 chữ số nào
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button onClick={handleVerify} className="w-full">
-              Xác nhận
-            </Button>
-            <button
-              type="button"
-              onClick={() => setShowVerification(false)}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              Quay lại
-            </button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
@@ -150,6 +101,11 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {isSubmitted && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                Nếu dự án bật xác nhận email, hãy kiểm tra hộp thư và bấm vào liên kết xác nhận để hoàn tất đăng ký.
+              </div>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -236,7 +192,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full mt-2">
               Đăng ký
             </Button>
             <div className="text-sm text-center text-gray-600">

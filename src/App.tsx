@@ -2,6 +2,9 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { LoginPage } from './components/auth/LoginPage';
 import { RegisterPage } from './components/auth/RegisterPage';
 import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
+import { ForbiddenPage } from './components/auth/ForbiddenPage';
+import { AuthCallbackPage } from './components/auth/AuthCallbackPage';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -11,7 +14,7 @@ import { ProtectedRoutes } from './routes/ProtectedRoutes';
 // Inner component that uses context
 function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   const navigate = useNavigate();
-  const { isLoading, handleLogin, handleRegister, handleAdminLogin } = useApp();
+  const { isLoading, handleLogin, handleRegister } = useApp();
 
   if (isLoading) {
     return null;
@@ -20,6 +23,10 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
   return (
     <>
       <Routes>
+        <Route path="/403" element={<ForbiddenPage onGoHome={() => navigate('/projects')} />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
         {/* Public Routes */}
         <Route
           path="/login"
@@ -28,7 +35,6 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
               onLogin={handleLogin}
               onSwitchToRegister={() => navigate('/register')}
               onForgotPassword={() => navigate('/forgot-password')}
-              onAdminLogin={(email, password) => handleAdminLogin(email, password, onEnterAdmin)}
             />
           }
         />

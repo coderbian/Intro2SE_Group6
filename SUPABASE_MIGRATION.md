@@ -24,7 +24,6 @@ VITE_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
 ### 3. Database Schema Reference
-- **DBML Schema:** [`src/dbml/main.dbml`](file:///Users/coderbian/Developer/University/Intro2SE_Group6/src/dbml/main.dbml)
 - **TypeScript Types:** [`src/types/supabase.ts`](file:///Users/coderbian/Developer/University/Intro2SE_Group6/src/types/supabase.ts)
 - **Supabase Client:** [`src/lib/supabase-client.ts`](file:///Users/coderbian/Developer/University/Intro2SE_Group6/src/lib/supabase-client.ts)
 
@@ -95,10 +94,10 @@ feature/supabase-<phase>-<module>
 ```
 
 ### Testing Checklist
-- [ ] User can login and settings load from Supabase
-- [ ] Theme preference persists after logout → login on different browser
-- [ ] Admin login works without localStorage dependency
-- [ ] New user gets default settings created automatically
+- [x] User can login and settings load from Supabase
+- [x] Theme preference persists after logout → login on different browser
+- [x] Admin login works without localStorage dependency
+- [x] New user gets default settings created automatically
 
 ---
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { User } from './useAuth';
+import type { Notification } from './useNotifications';
 
 export interface Comment {
   id: string;
@@ -56,7 +57,7 @@ export interface TaskProposal {
 
 interface UseTasksProps {
   user: User | null;
-  onAddNotification?: (notification: { userId: string; type: string; title: string; message: string; read: boolean; relatedId?: string }) => void;
+  onAddNotification?: (notification: Omit<Notification, 'id' | 'createdAt'>) => void;
 }
 
 export function useTasks({ user, onAddNotification }: UseTasksProps) {

@@ -6,11 +6,10 @@ import { useApp } from '../contexts/AppContext';
 
 export function AdminRoutes() {
     const navigate = useNavigate();
-    const { adminEmail, setAdminEmail } = useApp();
+    const { user, role, adminEmail, handleLogout } = useApp();
 
-    const handleAdminLogout = () => {
-        setAdminEmail(null);
-        localStorage.removeItem('planora_admin');
+    const handleAdminLogout = async () => {
+        await handleLogout();
         toast.success('Đã đăng xuất khỏi admin');
         navigate('/login');
     };
@@ -20,8 +19,18 @@ export function AdminRoutes() {
     };
 
     return (
-        <AdminRoute adminEmail={adminEmail}>
+        <AdminRoute isAuthenticated={!!user} role={role}>
             <Routes>
+                <Route
+                    path="dashboard"
+                    element={
+                        <SystemMonitoring
+                            adminEmail={adminEmail || undefined}
+                            onNavigate={handleAdminNavigate}
+                            onLogout={handleAdminLogout}
+                        />
+                    }
+                />
                 <Route
                     path="monitoring"
                     element={
@@ -72,7 +81,7 @@ export function AdminRoutes() {
                         />
                     }
                 />
-                <Route path="*" element={<Navigate to="/admin/monitoring" replace />} />
+                <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </Routes>
         </AdminRoute>
     );
