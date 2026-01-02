@@ -23,10 +23,14 @@ This repository contains the code and documentation for the Intro to Software En
 - **Lucide React** - Beautiful icon library
 - **next-themes** - Dark mode support
 
+### Backend & Database
+- **Supabase** - Backend-as-a-Service (PostgreSQL database, Authentication, Real-time)
+- **@supabase/supabase-js 2.89.0** - Supabase client library
+
 ### State Management & Data Flow
 - **React Hooks** - useState, useEffect, useRef for local state
-- **localStorage** - Persistent data storage (users, projects, tasks)
-- **Context API** (via React Router) - Routing state management
+- **Context API** - AppContext, AuthContext for global state
+- **Custom Hooks** - useAuth, useProjects, useTasks, useSprints, useNotifications
 
 ### UI Features
 - **Sonner** - Toast notifications
@@ -53,20 +57,48 @@ src/
 │   ├── admin/          # Admin dashboard components
 │   ├── auth/           # Login, Register, ForgotPassword
 │   ├── dashboard/      # User dashboard
+│   ├── figma/          # Figma integration components
 │   ├── kanban/         # Kanban board implementation
 │   ├── layout/         # MainLayout, navigation
+│   ├── member-requests/# Member request management
+│   ├── notifications/  # Notification components
 │   ├── profile/        # User profile management
-│   ├── project/        # Project detail page
+│   ├── project/        # Project detail page (Kanban/Scrum views, tasks)
 │   ├── projects/       # Project list view
 │   ├── routes/         # Route guards (ProtectedRoute, AdminRoute)
 │   ├── scrum/          # Scrum board implementation
 │   ├── settings/       # App settings
 │   ├── trash/          # Deleted items management
-│   └── ui/             # shadcn/ui components
+│   ├── ui/             # shadcn/ui components
+│   ├── ProjectSelector.tsx
+│   └── theme-provider.tsx
+├── contexts/           # React Context providers
+│   ├── AppContext.tsx
+│   └── AuthContext.tsx
 ├── hooks/              # Custom React hooks
-├── lib/                # Utility functions
+│   ├── useAuth.ts
+│   ├── useNotifications.ts
+│   ├── useProjects.ts
+│   ├── useSettings.ts
+│   ├── useSprints.ts
+│   ├── useSupabaseAuth.ts
+│   └── useTasks.ts
+├── lib/                # Utility functions and clients
+│   ├── supabase-client.ts  # Supabase client configuration
+│   └── utils.ts
+├── routes/             # Route definitions
+│   ├── AdminRoutes.tsx
+│   ├── ProtectedRoutes.tsx
+│   └── PublicRoutes.tsx
+├── types/              # TypeScript type definitions
+│   ├── index.ts        # Custom types
+│   └── supabase.ts     # Auto-generated Supabase types
+├── utils/              # Helper utilities
+│   └── permissions.ts
 ├── dbml/               # Database schema designs
+├── guidelines/         # Development guidelines
 ├── styles/             # Global CSS
+├── public/             # Static assets
 ├── App.tsx             # Main app component with routing
 ├── main.tsx            # React entry point
 └── index.html          # HTML template
@@ -131,11 +163,15 @@ All dependencies are defined in `package.json` and will be installed automatical
 - `lucide-react@0.454.0`
 - `next-themes@0.4.6`
 
+**Backend:**
+- `@supabase/supabase-js@2.89.0` (Supabase client)
+
 **Utilities:**
 - `sonner@2.0.3` (toast notifications)
 - `recharts@2.15.2` (charts)
 - `react-hook-form@7.55.0` (forms)
 - `class-variance-authority@0.7.1`, `clsx@2.1.1`, `tailwind-merge@2.5.5`
+- `vaul@1.1.2` (drawer components)
 
 **Dev Tools:**
 - `vite@6.3.5`
