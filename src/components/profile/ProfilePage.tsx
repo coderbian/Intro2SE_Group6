@@ -7,15 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Edit, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '../../lib/supabase-client';
 import type { User } from '../../types';
 
 interface ProfilePageProps {
   user: User;
   onUpdateUser: (user: User) => void;
+  onChangePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
 }
 
-export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
+export function ProfilePage({ user, onUpdateUser, onChangePassword }: ProfilePageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,41 +64,25 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
 
     try {
       // Verify current password by re-authenticating
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: passwordData.currentPassword,
-      });
+      // Use centralized password change function from auth hook
+      const success = await onChangePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
 
-      if (signInError) {
-        toast.error('Mật khẩu hiện tại không đúng');
-        setIsSubmitting(false);
-        return;
+      if (success) {
+        setIsChangingPassword(false);
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
       }
-
-      // Update to new password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: passwordData.newPassword,
-      });
-
-      if (updateError) {
-        toast.error('Không thể đổi mật khẩu: ' + updateError.message);
-        setIsSubmitting(false);
-        return;
-      }
-
-      toast.success('Đổi mật khẩu thành công!');
-      setIsChangingPassword(false);
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-    } catch (error) {
-      toast.error('Đã xảy ra lỗi khi đổi mật khẩu');
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">

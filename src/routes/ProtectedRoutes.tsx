@@ -9,6 +9,7 @@ import { AllProjectsPage } from '../components/projects/AllProjectsPage';
 import { MemberRequestsPage } from '../components/member-requests/MemberRequestsPage';
 import { ProjectPage } from '../components/project/ProjectPage';
 import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
 
 // Wrapper component to use URL params for ProjectPage
 function ProjectPageWrapper() {
@@ -91,6 +92,8 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
         handleUpdateUser,
     } = useApp();
 
+    const { handleChangePassword } = useAuth();
+
     // Filter notifications and join requests for current user
     const userNotifications = notifications.filter((n) => n.userId === user?.id);
     const userInvitations = invitations.filter((i) => i.invitedEmail === user?.email);
@@ -142,7 +145,7 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                             />
                         }
                     />
-                    <Route path="/profile" element={<ProfilePage user={user!} onUpdateUser={handleUpdateUser} />} />
+                    <Route path="/profile" element={<ProfilePage user={user!} onUpdateUser={handleUpdateUser} onChangePassword={handleChangePassword} />} />
                     <Route
                         path="/settings"
                         element={

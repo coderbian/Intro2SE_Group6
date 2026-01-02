@@ -7,11 +7,15 @@ interface AuthContextType {
     session: Session | null;
     isLoading: boolean;
     isAuthenticated: boolean;
+    adminEmail: string | null;
+    setAdminEmail: (email: string | null) => void;
     handleLogin: (email: string, password: string) => Promise<User | null>;
     handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => Promise<User | null>;
     handleLogout: () => Promise<void>;
     handleUpdateUser: (user: User) => Promise<void>;
     handleResetPassword: (email: string) => Promise<boolean>;
+    handleChangePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+    handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -36,11 +40,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         session: auth.session,
         isLoading: auth.isLoading,
         isAuthenticated: !!auth.user,
+        adminEmail: auth.adminEmail,
+        setAdminEmail: auth.setAdminEmail,
         handleLogin: auth.handleLogin,
         handleRegister: auth.handleRegister,
         handleLogout: auth.handleLogout,
         handleUpdateUser: auth.handleUpdateUser,
         handleResetPassword: auth.handleResetPassword,
+        handleChangePassword: auth.handleChangePassword,
+        handleAdminLogin: auth.handleAdminLogin,
     };
 
     return (

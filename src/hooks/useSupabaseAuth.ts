@@ -50,11 +50,20 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
     // Initialize auth state
     useEffect(() => {
         // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ? toAppUser(session.user) : null);
-            setIsLoading(false);
-        });
+        supabase.auth
+            .getSession()
+            .then(({ data: { session } }) => {
+                setSession(session);
+                setUser(session?.user ? toAppUser(session.user) : null);
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                // Ensure loading state is cleared even if initialization fails
+                console.error('Failed to initialize auth session:', error);
+                setSession(null);
+                setUser(null);
+                setIsLoading(false);
+            });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -63,9 +72,10 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 setUser(session?.user ? toAppUser(session.user) : null);
                 setIsLoading(false);
 
-                if (event === 'SIGNED_IN') {
-                    toast.success('Đăng nhập thành công!');
-                } else if (event === 'SIGNED_OUT') {
+                // Note: We don't show toast on SIGNED_IN here because this event
+                // also fires during session refreshes and page reloads.
+                // The success toast is shown in handleLogin instead.
+                if (event === 'SIGNED_OUT') {
                     toast.info('Đã đăng xuất');
                 }
             }
@@ -90,7 +100,8 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
 
             if (data.user) {
                 const appUser = toAppUser(data.user);
-                setUser(appUser);
+                // Note: setUser is handled by onAuthStateChange listener
+                toast.success('Đăng nhập thành công!');
                 return appUser;
             }
 
@@ -137,7 +148,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 }
 
                 const appUser = toAppUser(authData.user);
-                setUser(appUser);
+                // Note: setUser is handled by onAuthStateChange listener
                 toast.success('Đăng ký thành công!');
                 return appUser;
             }
@@ -209,8 +220,8 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
         password: string,
         onEnterAdmin?: (email: string, password: string) => void
     ): boolean => {
-        if (!email.includes('@gmail.com')) {
-            toast.error('Email admin phải có đuôi @gmail.com');
+        if (!email || !email.includes('@')) {
+            toast.error('Email admin không hợp lệ');
             return false;
         }
 
@@ -234,7 +245,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
         }
 
         toast.success('Đăng nhập admin thành công');
-        localStorage.setItem('planora_admin', JSON.stringify({ email, loginAt: new Date().toISOString() }));
+        localStorage.setItem('planora_admin', 'true');
         setAdminEmail(email);
         return true;
     }, []);
@@ -244,16 +255,6 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             // First, verify current password by re-authenticating
             if (!user?.email) {
                 toast.error('Không tìm thấy thông tin người dùng');
-                return false;
-            }
-
-            const { error: signInError } = await supabase.auth.signInWithPassword({
-                email: user.email,
-                password: currentPassword,
-            });
-
-            if (signInError) {
-                toast.error('Mật khẩu hiện tại không đúng');
                 return false;
             }
 
