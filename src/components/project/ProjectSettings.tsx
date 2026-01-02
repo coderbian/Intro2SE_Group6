@@ -4,7 +4,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { AlertCircle, Trash2 } from 'lucide-react';
+import { AlertCircle, Trash2, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { toast } from 'sonner';
 import type { Project } from '../../types';
@@ -23,11 +23,50 @@ export function ProjectSettings({
   onMoveToTrash,
 }: ProjectSettingsProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isEnhancingDescription, setIsEnhancingDescription] = useState(false);
+  const [isEstimatingDeadline, setIsEstimatingDeadline] = useState(false);
   const [editedProject, setEditedProject] = useState({
     name: project.name,
     description: project.description,
     deadline: project.deadline,
   });
+
+  const handleEnhanceDescription = async () => {
+    if (!editedProject.description?.trim()) return;
+    setIsEnhancingDescription(true);
+    try {
+      const { enhanceDescription } = await import('../../lib/aiService');
+      const enhanced = await enhanceDescription(editedProject.description);
+      setEditedProject({ ...editedProject, description: enhanced });
+      toast.success('Đã cải thiện mô tả bằng AI!');
+    } catch (error) {
+      console.error('AI enhance error:', error);
+      toast.error('Lỗi khi gọi AI');
+    } finally {
+      setIsEnhancingDescription(false);
+    }
+  };
+
+  const handleEstimateDeadline = async () => {
+    if (!editedProject.name?.trim() && !editedProject.description?.trim()) return;
+    setIsEstimatingDeadline(true);
+    try {
+      const { estimateTime } = await import('../../lib/aiService');
+      const days = await estimateTime(editedProject.name, editedProject.description || '');
+      const suggestedDeadline = new Date();
+      suggestedDeadline.setDate(suggestedDeadline.getDate() + days);
+      setEditedProject({
+        ...editedProject,
+        deadline: suggestedDeadline.toISOString().split('T')[0],
+      });
+      toast.success(`AI đề xuất: ${days} ngày để hoàn thành`);
+    } catch (error) {
+      console.error('AI estimate error:', error);
+      toast.error('Lỗi khi ước tính thời gian');
+    } finally {
+      setIsEstimatingDeadline(false);
+    }
+  };
 
   const handleSave = () => {
     if (!editedProject.name.trim()) {
@@ -92,13 +131,29 @@ export function ProjectSettings({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Mô tả</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Mô tả</Label>
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEnhanceDescription}
+                  disabled={isEnhancingDescription || !editedProject.description}
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {isEnhancingDescription ? 'Đang xử lý...' : 'AI Cải thiện'}
+                </Button>
+              )}
+            </div>
             {isEditing ? (
               <Textarea
                 id="description"
                 value={editedProject.description}
                 onChange={(e) => setEditedProject({ ...editedProject, description: e.target.value })}
                 rows={4}
+                className="max-h-40 overflow-y-auto resize-none"
               />
             ) : (
               <div className="text-sm py-2 text-gray-700">
@@ -108,7 +163,22 @@ export function ProjectSettings({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="deadline">Deadline *</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="deadline">Deadline *</Label>
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEstimateDeadline}
+                  disabled={isEstimatingDeadline || (!editedProject.name && !editedProject.description)}
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {isEstimatingDeadline ? 'Đang ước tính...' : 'AI Ước tính'}
+                </Button>
+              )}
+            </div>
             {isEditing ? (
               <Input
                 id="deadline"
