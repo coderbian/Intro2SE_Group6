@@ -15,9 +15,9 @@ interface AppContextType {
     isLoading: boolean;
     adminEmail: string | null;
     setAdminEmail: (email: string | null) => void;
-    handleLogin: (email: string, password: string) => void;
-    handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => void;
-    handleLogout: () => void;
+    handleLogin: (email: string, password: string) => Promise<void>;
+    handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => Promise<void>;
+    handleLogout: () => Promise<void>;
     handleUpdateUser: (user: User) => Promise<void>;
     handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => boolean;
 
