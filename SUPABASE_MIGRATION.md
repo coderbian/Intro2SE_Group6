@@ -96,7 +96,7 @@ feature/supabase-<phase>-<module>
 ### Testing Checklist
 - [x] User can login and settings load from Supabase
 - [x] Theme preference persists after logout → login on different browser
-- [ ] Admin login works without localStorage dependency
+- [x] Admin login works without localStorage dependency
 - [x] New user gets default settings created automatically
 
 ---
