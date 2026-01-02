@@ -5,8 +5,9 @@ import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { Edit, Lock } from 'lucide-react';
+import { Edit, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '../../lib/supabase-client';
 import type { User } from '../../types';
 
 interface ProfilePageProps {
@@ -17,6 +18,7 @@ interface ProfilePageProps {
 export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -44,7 +46,7 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
     setIsEditing(false);
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!passwordData.currentPassword) {
       toast.error('Vui lòng nhập mật khẩu hiện tại');
       return;
@@ -58,13 +60,44 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
       return;
     }
 
-    toast.success('Đổi mật khẩu thành công!');
-    setIsChangingPassword(false);
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    });
+    setIsSubmitting(true);
+
+    try {
+      // Verify current password by re-authenticating
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (signInError) {
+        toast.error('Mật khẩu hiện tại không đúng');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Update to new password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordData.newPassword,
+      });
+
+      if (updateError) {
+        toast.error('Không thể đổi mật khẩu: ' + updateError.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      toast.success('Đổi mật khẩu thành công!');
+      setIsChangingPassword(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (error) {
+      toast.error('Đã xảy ra lỗi khi đổi mật khẩu');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -214,10 +247,13 @@ export function ProfilePage({ user, onUpdateUser }: ProfilePageProps) {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsChangingPassword(false)}>
+                  <Button variant="outline" onClick={() => setIsChangingPassword(false)} disabled={isSubmitting}>
                     Hủy
                   </Button>
-                  <Button onClick={handleChangePassword}>Đổi mật khẩu</Button>
+                  <Button onClick={handleChangePassword} disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Đổi mật khẩu
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

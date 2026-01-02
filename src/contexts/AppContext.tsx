@@ -18,7 +18,7 @@ interface AppContextType {
     handleLogin: (email: string, password: string) => void;
     handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => void;
     handleLogout: () => void;
-    handleUpdateUser: (user: User) => void;
+    handleUpdateUser: (user: User) => void | Promise<void>;
     handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => boolean;
 
     // Projects
@@ -102,19 +102,23 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
     });
     const settingsHook = useSettings();
 
-    // Wrapped handlers with navigation
-    const handleLogin = (email: string, password: string) => {
-        auth.handleLogin(email, password);
-        navigate('/dashboard');
+    // Wrapped handlers with navigation (async for Supabase)
+    const handleLogin = async (email: string, password: string) => {
+        const result = await auth.handleLogin(email, password);
+        if (result) {
+            navigate('/dashboard');
+        }
     };
 
-    const handleRegister = (data: { email: string; password: string; name: string; phone?: string }) => {
-        auth.handleRegister(data);
-        navigate('/dashboard');
+    const handleRegister = async (data: { email: string; password: string; name: string; phone?: string }) => {
+        const result = await auth.handleRegister(data);
+        if (result) {
+            navigate('/dashboard');
+        }
     };
 
-    const handleLogout = () => {
-        auth.handleLogout();
+    const handleLogout = async () => {
+        await auth.handleLogout();
         projectsHook.setSelectedProjectId(null);
         navigate('/login');
     };
