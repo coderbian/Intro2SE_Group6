@@ -6,7 +6,7 @@ import { useApp } from '../contexts/AppContext';
 
 export function AdminRoutes() {
     const navigate = useNavigate();
-    const { adminEmail, handleLogout } = useApp();
+    const { user, role, adminEmail, handleLogout } = useApp();
 
     const handleAdminLogout = async () => {
         await handleLogout();
@@ -19,8 +19,18 @@ export function AdminRoutes() {
     };
 
     return (
-        <AdminRoute adminEmail={adminEmail}>
+        <AdminRoute isAuthenticated={!!user} role={role}>
             <Routes>
+                <Route
+                    path="dashboard"
+                    element={
+                        <SystemMonitoring
+                            adminEmail={adminEmail || undefined}
+                            onNavigate={handleAdminNavigate}
+                            onLogout={handleAdminLogout}
+                        />
+                    }
+                />
                 <Route
                     path="monitoring"
                     element={
@@ -71,7 +81,7 @@ export function AdminRoutes() {
                         />
                     }
                 />
-                <Route path="*" element={<Navigate to="/admin/monitoring" replace />} />
+                <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </Routes>
         </AdminRoute>
     );

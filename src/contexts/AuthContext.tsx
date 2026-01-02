@@ -1,20 +1,20 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { useSupabaseAuth, User } from '../hooks/useSupabaseAuth';
+import { useSupabaseAuth, type User, type UserRole, type LoginResult } from '../hooks/useSupabaseAuth';
 
 interface AuthContextType {
     user: User | null;
     session: Session | null;
     isLoading: boolean;
     isAuthenticated: boolean;
+    role: UserRole | null;
     adminEmail: string | null;
-    handleLogin: (email: string, password: string) => Promise<User | null>;
-    handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => Promise<User | null>;
+    handleLogin: (email: string, password: string) => Promise<LoginResult | null>;
+    handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => Promise<LoginResult | null>;
     handleLogout: () => Promise<void>;
     handleUpdateUser: (user: User) => Promise<void>;
     handleResetPassword: (email: string) => Promise<boolean>;
     handleChangePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
-    handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         session: auth.session,
         isLoading: auth.isLoading,
         isAuthenticated: !!auth.user,
+        role: auth.role,
         adminEmail: auth.adminEmail,
         handleLogin: auth.handleLogin,
         handleRegister: auth.handleRegister,
@@ -46,7 +47,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         handleUpdateUser: auth.handleUpdateUser,
         handleResetPassword: auth.handleResetPassword,
         handleChangePassword: auth.handleChangePassword,
-        handleAdminLogin: auth.handleAdminLogin,
     };
 
     return (

@@ -8,17 +8,18 @@ import { useSprints } from '../hooks/useSprints';
 import { useNotifications } from '../hooks/useNotifications';
 import { useSettings } from '../hooks/useSettings';
 import type { User, Project, Task, Sprint, Settings, Notification, ProjectInvitation, JoinRequest } from '../types';
+import type { UserRole } from '../hooks/useSupabaseAuth';
 
 interface AppContextType {
     // Auth
     user: User | null;
     isLoading: boolean;
+    role: UserRole | null;
     adminEmail: string | null;
     handleLogin: (email: string, password: string) => Promise<void>;
     handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => Promise<void>;
     handleLogout: () => Promise<void>;
     handleUpdateUser: (user: User) => Promise<void>;
-    handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => Promise<boolean>;
 
     // Projects
     projects: Project[];
@@ -105,14 +106,14 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
     const handleLogin = async (email: string, password: string) => {
         const result = await auth.handleLogin(email, password);
         if (result) {
-            navigate('/dashboard');
+            navigate(result.role === 'admin' ? '/admin/dashboard' : '/projects');
         }
     };
 
     const handleRegister = async (data: { email: string; password: string; name: string; phone?: string }) => {
         const result = await auth.handleRegister(data);
         if (result) {
-            navigate('/dashboard');
+            navigate(result.role === 'admin' ? '/admin/dashboard' : '/projects');
         }
     };
 
@@ -124,18 +125,6 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         } catch (error) {
             toast.error('Không thể đăng xuất. Vui lòng thử lại.');
         }
-    };
-
-    const handleAdminLogin = async (
-        email: string,
-        password: string,
-        propHandler?: (email: string, password: string) => void
-    ) => {
-        const success = await auth.handleAdminLogin(email, password, propHandler || onEnterAdmin);
-        if (success) {
-            navigate('/admin/monitoring');
-        }
-        return success;
     };
 
     const handleSelectProject = (projectId: string) => {
@@ -230,12 +219,12 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         // Auth
         user: auth.user,
         isLoading: auth.isLoading,
+        role: auth.role,
         adminEmail: auth.adminEmail,
         handleLogin,
         handleRegister,
         handleLogout,
         handleUpdateUser: auth.handleUpdateUser,
-        handleAdminLogin,
 
         // Projects
         projects: projectsHook.projects,

@@ -7,7 +7,7 @@ import { useApp } from '../contexts/AppContext';
 
 export function PublicRoutes() {
     const navigate = useNavigate();
-    const { handleLogin, handleAdminLogin } = useApp();
+    const { handleLogin } = useApp();
 
     return (
         <Routes>
@@ -18,7 +18,6 @@ export function PublicRoutes() {
                         onLogin={handleLogin}
                         onSwitchToRegister={() => navigate('/register')}
                         onForgotPassword={() => navigate('/forgot-password')}
-                        onAdminLogin={handleAdminLogin}
                     />
                 }
             />
