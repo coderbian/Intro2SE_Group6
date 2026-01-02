@@ -11,7 +11,7 @@ import type { User } from '../../types';
 
 interface ProfilePageProps {
   user: User;
-  onUpdateUser: (user: User) => void;
+  onUpdateUser: (user: User) => Promise<void>;
   onChangePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
 }
 
@@ -35,10 +35,9 @@ export function ProfilePage({ user, onUpdateUser, onChangePassword }: ProfilePag
       .slice(0, 2);
   };
 
-  const handleSave = () => {
-    onUpdateUser(editedUser);
+  const handleSave = async () => {
+    await onUpdateUser(editedUser);
     setIsEditing(false);
-    toast.success('Cập nhật thông tin thành công!');
   };
 
   const handleCancel = () => {
