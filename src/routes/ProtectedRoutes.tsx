@@ -8,6 +8,7 @@ import { TrashPage } from '../components/trash/TrashPage';
 import { AllProjectsPage } from '../components/projects/AllProjectsPage';
 import { MemberRequestsPage } from '../components/member-requests/MemberRequestsPage';
 import { ProjectPage } from '../components/project/ProjectPage';
+import { ChatAssistant } from '../components/chat/ChatAssistant';
 import { useApp } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -193,6 +194,7 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                     <Route path="/project/:projectId" element={<ProjectPageWrapper />} />
                 </Routes>
             </MainLayout>
+            <ChatAssistant project={projects.find((p) => p.id === selectedProjectId)} />
         </ProtectedRoute>
     );
 }

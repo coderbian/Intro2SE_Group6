@@ -41,3 +41,32 @@ export async function estimateTime(title: string, description: string): Promise<
 
     return data.days;
 }
+
+export interface ChatMessage {
+    role: "user" | "assistant";
+    content: string;
+}
+
+/**
+ * Send a chat message to AI assistant (via Supabase Edge Function)
+ */
+export async function chat(
+    message: string,
+    history: ChatMessage[] = [],
+    projectContext?: string
+): Promise<string> {
+    const { data, error } = await supabase.functions.invoke('chat', {
+        body: { message, history, projectContext },
+    });
+
+    if (error) {
+        console.error('AI chat error:', error);
+        throw new Error(error.message || 'Lỗi khi gọi AI Chat');
+    }
+
+    if (!data?.reply) {
+        throw new Error('Không nhận được phản hồi từ AI');
+    }
+
+    return data.reply;
+}
