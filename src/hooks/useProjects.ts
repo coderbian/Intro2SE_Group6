@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import type { User } from './useAuth';
+import type { Notification } from './useNotifications';
 
 export interface ProjectMember {
   userId: string;
@@ -45,7 +46,7 @@ export interface JoinRequest {
 
 interface UseProjectsProps {
   user: User | null;
-  onAddNotification?: (notification: { userId: string; type: string; title: string; message: string; read: boolean; relatedId?: string }) => void;
+  onAddNotification?: (notification: Omit<Notification, 'id' | 'createdAt'>) => void;
 }
 
 export function useProjects({ user, onAddNotification }: UseProjectsProps) {

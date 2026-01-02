@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
@@ -23,6 +23,13 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+
+  // Logged-out screens should not inherit a previous user's theme.
+  // Always use light mode for logged-out screens.
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return
+    document.documentElement.classList.remove("dark")
+  }, [])
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {}

@@ -121,6 +121,11 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         try {
             await auth.handleLogout();
             projectsHook.setSelectedProjectId(null);
+            // Ensure Login page never inherits a previous user's dark mode.
+            // Always use light mode for logged-out screens.
+            if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+                document.documentElement.classList.remove('dark');
+            }
             navigate('/login');
         } catch (error) {
             toast.error('Không thể đăng xuất. Vui lòng thử lại.');
