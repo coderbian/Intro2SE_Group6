@@ -4,6 +4,7 @@ import { RegisterPage } from './components/auth/RegisterPage';
 import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { AdminRoutes } from './routes/AdminRoutes';
 import { ProtectedRoutes } from './routes/ProtectedRoutes';
 
@@ -59,8 +60,11 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
 // Main App component with provider
 export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   return (
-    <AppProvider onEnterAdmin={onEnterAdmin}>
-      <AppContent onEnterAdmin={onEnterAdmin} />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider onEnterAdmin={onEnterAdmin}>
+        <AppContent onEnterAdmin={onEnterAdmin} />
+      </AppProvider>
+    </AuthProvider>
   );
 }
+
