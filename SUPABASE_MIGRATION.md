@@ -24,7 +24,6 @@ VITE_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
 ### 3. Database Schema Reference
-- **DBML Schema:** [`src/dbml/main.dbml`](file:///Users/coderbian/Developer/University/Intro2SE_Group6/src/dbml/main.dbml)
 - **TypeScript Types:** [`src/types/supabase.ts`](file:///Users/coderbian/Developer/University/Intro2SE_Group6/src/types/supabase.ts)
 - **Supabase Client:** [`src/lib/supabase-client.ts`](file:///Users/coderbian/Developer/University/Intro2SE_Group6/src/lib/supabase-client.ts)
 

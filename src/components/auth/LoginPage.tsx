@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LayoutDashboard, Mail, Github, Facebook, ShieldCheck } from 'lucide-react'
 import { Separator } from "../ui/separator"
 import { toast } from "sonner"
+import { getSupabaseClient } from "../../lib/supabase-client"
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => void
@@ -19,6 +20,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLogin, onAdminLogin, onSwitchToRegister, onForgotPassword }: LoginPageProps) {
+  const supabase = useMemo(() => getSupabaseClient(), [])
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
@@ -87,42 +89,32 @@ export function LoginPage({ onLogin, onAdminLogin, onSwitchToRegister, onForgotP
   }
 
   const handleGoogleLogin = () => {
-    const loginEmail = "demo@gmail.com"
-    toast.success("Đã liên kết tài khoản Google thành công")
-    const settings = JSON.parse(localStorage.getItem("planora_settings") || "{}")
-    settings.linkedAccounts = settings.linkedAccounts || {}
-    settings.linkedAccounts.google = {
-      email: loginEmail,
-      linkedAt: new Date().toISOString(),
-    }
-    localStorage.setItem("planora_settings", JSON.stringify(settings))
-    onLogin(loginEmail, "google-oauth-token")
+    toast.info("Đăng nhập Google đang được phát triển")
   }
 
   const handleFacebookLogin = () => {
-    const loginEmail = "demo@facebook.com"
-    toast.success("Đã liên kết tài khoản Facebook thành công")
-    const settings = JSON.parse(localStorage.getItem("planora_settings") || "{}")
-    settings.linkedAccounts = settings.linkedAccounts || {}
-    settings.linkedAccounts.facebook = {
-      email: loginEmail,
-      linkedAt: new Date().toISOString(),
-    }
-    localStorage.setItem("planora_settings", JSON.stringify(settings))
-    onLogin(loginEmail, "facebook-oauth-token")
+    toast.info("Đăng nhập Facebook đang được phát triển")
   }
 
   const handleGithubLogin = () => {
-    const loginEmail = "demo@github.com"
-    toast.success("Đã liên kết tài khoản GitHub thành công")
-    const settings = JSON.parse(localStorage.getItem("planora_settings") || "{}")
-    settings.linkedAccounts = settings.linkedAccounts || {}
-    settings.linkedAccounts.github = {
-      email: loginEmail,
-      linkedAt: new Date().toISOString(),
-    }
-    localStorage.setItem("planora_settings", JSON.stringify(settings))
-    onLogin(loginEmail, "github-oauth-token")
+    if (typeof window === "undefined") return
+
+    supabase.auth
+      .signInWithOAuth({
+        provider: "github",
+        options: {
+          redirectTo: new URL("/dashboard", window.location.origin).toString(),
+        },
+      })
+      .then(({ error }) => {
+        if (error) {
+          toast.error(error.message || "Không thể đăng nhập với GitHub")
+        }
+      })
+      .catch((err) => {
+        console.error("GitHub OAuth sign-in failed:", err)
+        toast.error("Không thể đăng nhập với GitHub")
+      })
   }
 
   return (

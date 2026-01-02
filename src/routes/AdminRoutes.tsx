@@ -6,11 +6,10 @@ import { useApp } from '../contexts/AppContext';
 
 export function AdminRoutes() {
     const navigate = useNavigate();
-    const { adminEmail, setAdminEmail } = useApp();
+    const { adminEmail, handleLogout } = useApp();
 
-    const handleAdminLogout = () => {
-        setAdminEmail(null);
-        localStorage.removeItem('planora_admin');
+    const handleAdminLogout = async () => {
+        await handleLogout();
         toast.success('Đã đăng xuất khỏi admin');
         navigate('/login');
     };

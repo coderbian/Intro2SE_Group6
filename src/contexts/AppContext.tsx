@@ -14,12 +14,11 @@ interface AppContextType {
     user: User | null;
     isLoading: boolean;
     adminEmail: string | null;
-    setAdminEmail: (email: string | null) => void;
     handleLogin: (email: string, password: string) => Promise<void>;
     handleRegister: (data: { email: string; password: string; name: string; phone?: string }) => Promise<void>;
     handleLogout: () => Promise<void>;
     handleUpdateUser: (user: User) => Promise<void>;
-    handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => boolean;
+    handleAdminLogin: (email: string, password: string, onEnterAdmin?: (email: string, password: string) => void) => Promise<boolean>;
 
     // Projects
     projects: Project[];
@@ -100,7 +99,7 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         tasks: tasksHook.tasks,
         setTasks: tasksHook.setTasks
     });
-    const settingsHook = useSettings();
+    const settingsHook = useSettings(auth.user?.id);
 
     // Wrapped handlers with navigation (async for Supabase)
     const handleLogin = async (email: string, password: string) => {
@@ -127,9 +126,13 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         }
     };
 
-    const handleAdminLogin = (email: string, password: string, propHandler?: (email: string, password: string) => void) => {
-        const success = auth.handleAdminLogin(email, password, propHandler || onEnterAdmin);
-        if (success && !propHandler && !onEnterAdmin) {
+    const handleAdminLogin = async (
+        email: string,
+        password: string,
+        propHandler?: (email: string, password: string) => void
+    ) => {
+        const success = await auth.handleAdminLogin(email, password, propHandler || onEnterAdmin);
+        if (success) {
             navigate('/admin/monitoring');
         }
         return success;
@@ -228,7 +231,6 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         user: auth.user,
         isLoading: auth.isLoading,
         adminEmail: auth.adminEmail,
-        setAdminEmail: auth.setAdminEmail,
         handleLogin,
         handleRegister,
         handleLogout,

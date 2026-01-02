@@ -25,7 +25,7 @@ interface UseSupabaseAuthReturn {
         email: string,
         password: string,
         onEnterAdmin?: (email: string, password: string) => void
-    ) => boolean;
+    ) => Promise<boolean>;
     handleResetPassword: (email: string) => Promise<boolean>;
     handleChangePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
 }
@@ -48,6 +48,35 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
     const [isLoading, setIsLoading] = useState(true);
     const [adminEmail, setAdminEmail] = useState<string | null>(null);
 
+    const resolveIsAdmin = useCallback(async (supabaseUser: SupabaseUser | null): Promise<boolean> => {
+        if (!supabaseUser) return false;
+
+        const metaRole = (supabaseUser.user_metadata as any)?.role ?? (supabaseUser.app_metadata as any)?.role;
+        if (typeof metaRole === 'string' && metaRole.toLowerCase() === 'admin') {
+            return true;
+        }
+
+        // Fallback: check app `users` table role (if IDs are aligned with auth.users)
+        const { data, error } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', supabaseUser.id)
+            .maybeSingle();
+
+        if (error) {
+            console.warn('Failed to resolve admin role from public.users:', error);
+            return false;
+        }
+
+        return typeof data?.role === 'string' && data.role.toLowerCase() === 'admin';
+    }, [supabase]);
+
+    const refreshAdminState = useCallback(async (nextSession: Session | null) => {
+        const email = nextSession?.user?.email ?? null;
+        const isAdmin = await resolveIsAdmin(nextSession?.user ?? null);
+        setAdminEmail(isAdmin ? email : null);
+    }, [resolveIsAdmin]);
+
     // Initialize auth state
     useEffect(() => {
         // Get initial session
@@ -56,6 +85,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             .then(({ data: { session } }) => {
                 setSession(session);
                 setUser(session?.user ? toAppUser(session.user) : null);
+                refreshAdminState(session);
                 setIsLoading(false);
             })
             .catch((error) => {
@@ -63,6 +93,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 console.error('Failed to initialize auth session:', error);
                 setSession(null);
                 setUser(null);
+                setAdminEmail(null);
                 setIsLoading(false);
             });
 
@@ -71,6 +102,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             async (event, session) => {
                 setSession(session);
                 setUser(session?.user ? toAppUser(session.user) : null);
+                refreshAdminState(session);
                 setIsLoading(false);
 
                 // Note: We don't show toast on SIGNED_IN here because this event
@@ -85,7 +117,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [refreshAdminState, supabase.auth]);
 
     const handleLogin = useCallback(async (email: string, password: string): Promise<User | null> => {
         try {
@@ -170,6 +202,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             }
             setUser(null);
             setSession(null);
+            setAdminEmail(null);
         } catch (error) {
             toast.error('Đã xảy ra lỗi khi đăng xuất');
         }
@@ -216,11 +249,11 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
         }
     }, []);
 
-    const handleAdminLogin = useCallback((
+    const handleAdminLogin = useCallback(async (
         email: string,
         password: string,
         onEnterAdmin?: (email: string, password: string) => void
-    ): boolean => {
+    ): Promise<boolean> => {
         if (!email || !email.includes('@')) {
             toast.error('Email admin không hợp lệ');
             return false;
@@ -231,25 +264,50 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             return false;
         }
 
-        if (onEnterAdmin) {
-            try {
-                onEnterAdmin(email, password);
-                return true;
-            } catch (e) {
-                console.warn('onEnterAdmin threw', e);
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                handleAuthError(error);
+                return false;
             }
-        }
 
-        if (typeof window !== 'undefined' && (window as any).__onEnterAdmin) {
-            (window as any).__onEnterAdmin(email, password);
+            const isAdmin = await resolveIsAdmin(data.user ?? null);
+            if (!isAdmin) {
+                toast.error('Tài khoản này không có quyền quản trị');
+                await supabase.auth.signOut();
+                return false;
+            }
+
+            // Avoid race with onAuthStateChange/refreshAdminState: set immediately for route guard
+            setAdminEmail(email);
+
+            // Optional callback hook for host apps / integrations
+            if (onEnterAdmin) {
+                try {
+                    onEnterAdmin(email, password);
+                } catch (e) {
+                    console.warn('onEnterAdmin threw', e);
+                }
+            } else if (typeof window !== 'undefined' && (window as any).__onEnterAdmin) {
+                try {
+                    (window as any).__onEnterAdmin(email, password);
+                } catch (e) {
+                    console.warn('window.__onEnterAdmin threw', e);
+                }
+            }
+
+            toast.success('Đăng nhập admin thành công');
             return true;
+        } catch (e) {
+            console.error('Admin login failed:', e);
+            toast.error('Đã xảy ra lỗi khi đăng nhập admin');
+            return false;
         }
-
-        toast.success('Đăng nhập admin thành công');
-        localStorage.setItem('planora_admin', 'true');
-        setAdminEmail(email);
-        return true;
-    }, []);
+    }, [resolveIsAdmin, supabase]);
 
     const handleChangePassword = useCallback(async (currentPassword: string, newPassword: string): Promise<boolean> => {
         try {
