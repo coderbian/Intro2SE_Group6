@@ -68,7 +68,24 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
   }
 
   const handleGoogleLogin = () => {
-    toast.info("Đăng nhập Google đang được phát triển")
+    if (typeof window === "undefined") return
+
+    supabase.auth
+      .signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: new URL("/auth/callback", window.location.origin).toString(),
+        },
+      })
+      .then(({ error }) => {
+        if (error) {
+          toast.error(error.message || "Không thể đăng nhập với Google")
+        }
+      })
+      .catch((err) => {
+        console.error("Google OAuth sign-in failed:", err)
+        toast.error("Không thể đăng nhập với Google")
+      })
   }
 
   const handleFacebookLogin = () => {
