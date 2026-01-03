@@ -4,7 +4,7 @@ import { type ReactNode, useState, useRef, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { Button } from "../ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
-import { LayoutDashboard, FolderKanban, User, LogOut, Plus, ChevronDown, Menu, X, Settings, Bell, Trash2, Globe, Users, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, User, LogOut, Plus, ChevronDown, Menu, X, Settings, Bell, Trash2, Globe, Users, ShieldCheck, Sparkles } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,6 +80,8 @@ export function MainLayout({
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [isEnhancingDescription, setIsEnhancingDescription] = useState(false)
+  const [isEstimatingDeadline, setIsEstimatingDeadline] = useState(false)
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -116,6 +118,39 @@ export function MainLayout({
         deadline: "",
         template: "kanban",
       })
+    }
+  }
+
+  const handleEnhanceProjectDescription = async () => {
+    if (!newProject.description.trim()) return
+    setIsEnhancingDescription(true)
+    try {
+      const { enhanceDescription } = await import('../../lib/aiService')
+      const enhanced = await enhanceDescription(newProject.description)
+      setNewProject({ ...newProject, description: enhanced })
+    } catch (error) {
+      console.error('AI enhance error:', error)
+    } finally {
+      setIsEnhancingDescription(false)
+    }
+  }
+
+  const handleEstimateProjectDeadline = async () => {
+    if (!newProject.name.trim() && !newProject.description.trim()) return
+    setIsEstimatingDeadline(true)
+    try {
+      const { estimateTime } = await import('../../lib/aiService')
+      const days = await estimateTime(newProject.name, newProject.description)
+      const suggestedDeadline = new Date()
+      suggestedDeadline.setDate(suggestedDeadline.getDate() + days)
+      setNewProject({
+        ...newProject,
+        deadline: suggestedDeadline.toISOString().split('T')[0],
+      })
+    } catch (error) {
+      console.error('AI estimate error:', error)
+    } finally {
+      setIsEstimatingDeadline(false)
     }
   }
 
@@ -222,18 +257,44 @@ export function MainLayout({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description" className="text-black dark:text-gray-200">Mô tả</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="description" className="text-black dark:text-gray-200">Mô tả</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleEnhanceProjectDescription}
+                          disabled={isEnhancingDescription || !newProject.description}
+                          className="gap-1.5 h-7 text-xs"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          {isEnhancingDescription ? 'Đang xử lý...' : 'AI Cải thiện'}
+                        </Button>
+                      </div>
                       <Textarea
                         id="description"
                         value={newProject.description}
                         onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
                         placeholder="Mô tả ngắn về dự án"
-                        rows={3}
-                        className="bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600"
+                        rows={4}
+                        className="bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 max-h-40 overflow-y-auto resize-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="deadline" className="text-black dark:text-gray-200">Deadline *</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="deadline" className="text-black dark:text-gray-200">Deadline *</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleEstimateProjectDeadline}
+                          disabled={isEstimatingDeadline || (!newProject.name && !newProject.description)}
+                          className="gap-1.5 h-7 text-xs"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          {isEstimatingDeadline ? 'Đang ước tính...' : 'AI Ước tính'}
+                        </Button>
+                      </div>
                       <Input
                         id="deadline"
                         type="date"

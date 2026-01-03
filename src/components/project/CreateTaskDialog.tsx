@@ -72,25 +72,34 @@ export function CreateTaskDialog({
     });
   };
 
-  const handleEnhanceDescription = () => {
+  const handleEnhanceDescription = async () => {
+    if (!formData.description.trim()) {
+      toast.error('Vui lòng nhập mô tả trước khi cải thiện');
+      return;
+    }
     setIsEnhancing(true);
-
-    // Mock AI enhancement
-    setTimeout(() => {
-      const enhanced = `### Mô tả chi tiết\n\n${formData.description}\n\n### Yêu cầu\n- Phân tích và hiểu rõ yêu cầu nghiệp vụ\n- Thiết kế giải pháp phù hợp\n- Implement và test kỹ lưỡng\n\n### Tiêu chí hoàn thành\n- Code được review và approve\n- Test cases pass 100%\n- Documentation đầy đủ`;
-
+    try {
+      const { enhanceDescription } = await import('../../lib/aiService');
+      const enhanced = await enhanceDescription(formData.description);
       setFormData({ ...formData, description: enhanced });
-      setIsEnhancing(false);
       toast.success('Đã cải thiện mô tả bằng AI!');
-    }, 1500);
+    } catch (error) {
+      console.error('AI enhance error:', error);
+      toast.error(error instanceof Error ? error.message : 'Lỗi khi gọi AI, vui lòng thử lại');
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
-  const handleEstimateTime = () => {
+  const handleEstimateTime = async () => {
+    if (!formData.title.trim() && !formData.description.trim()) {
+      toast.error('Vui lòng nhập tiêu đề hoặc mô tả trước');
+      return;
+    }
     setIsEstimating(true);
-
-    // Mock AI time estimation
-    setTimeout(() => {
-      const days = Math.floor(Math.random() * 10) + 3;
+    try {
+      const { estimateTime } = await import('../../lib/aiService');
+      const days = await estimateTime(formData.title, formData.description);
       const suggestedDeadline = new Date();
       suggestedDeadline.setDate(suggestedDeadline.getDate() + days);
 
@@ -99,9 +108,13 @@ export function CreateTaskDialog({
         deadline: suggestedDeadline.toISOString().split('T')[0],
       });
 
-      setIsEstimating(false);
       toast.success(`AI đề xuất: ${days} ngày để hoàn thành`);
-    }, 1500);
+    } catch (error) {
+      console.error('AI estimate error:', error);
+      toast.error(error instanceof Error ? error.message : 'Lỗi khi ước tính thời gian');
+    } finally {
+      setIsEstimating(false);
+    }
   };
 
   const handleAddLabel = () => {

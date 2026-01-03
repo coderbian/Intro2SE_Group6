@@ -62,6 +62,21 @@ export function ScrumView({
   const [sprintName, setSprintName] = useState('');
   const [sprintGoal, setSprintGoal] = useState('');
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [isEnhancingSprintGoal, setIsEnhancingSprintGoal] = useState(false);
+
+  const handleEnhanceSprintGoal = async () => {
+    if (!sprintGoal.trim()) return;
+    setIsEnhancingSprintGoal(true);
+    try {
+      const { enhanceDescription } = await import('../../lib/aiService');
+      const enhanced = await enhanceDescription(sprintGoal);
+      setSprintGoal(enhanced);
+    } catch (error) {
+      console.error('AI enhance error:', error);
+    } finally {
+      setIsEnhancingSprintGoal(false);
+    }
+  };
 
   // Phân loại tasks
   const userStories = tasks.filter(t => t.type === 'user-story' || (!t.type && !t.parentTaskId));
@@ -550,13 +565,27 @@ export function ScrumView({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sprintGoal">Mục tiêu Sprint (tùy chọn)</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sprintGoal">Mục tiêu Sprint (tùy chọn)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEnhanceSprintGoal}
+                  disabled={isEnhancingSprintGoal || !sprintGoal}
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {isEnhancingSprintGoal ? 'Đang xử lý...' : 'AI Cải thiện'}
+                </Button>
+              </div>
               <Textarea
                 id="sprintGoal"
                 placeholder="Mô tả mục tiêu chính của sprint này..."
                 value={sprintGoal}
                 onChange={(e) => setSprintGoal(e.target.value)}
                 rows={3}
+                className="max-h-32 overflow-y-auto resize-none"
               />
             </div>
 
