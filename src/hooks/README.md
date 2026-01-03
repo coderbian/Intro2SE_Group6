@@ -259,7 +259,6 @@ interface Settings {
   };
   linkedAccounts: {
     google?: { email: string; linkedAt: string };
-    facebook?: { email: string; linkedAt: string };
     github?: { email: string; linkedAt: string };
   };
 }

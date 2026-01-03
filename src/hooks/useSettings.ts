@@ -14,7 +14,6 @@ export interface Settings {
   };
   linkedAccounts: {
     google?: { email: string; linkedAt: string };
-    facebook?: { email: string; linkedAt: string };
     github?: { email: string; linkedAt: string };
   };
 }
@@ -200,7 +199,7 @@ export function useSettings(userId?: string) {
     }));
   };
 
-  const linkAccount = (provider: 'google' | 'facebook' | 'github', email: string) => {
+  const linkAccount = (provider: 'google' | 'github', email: string) => {
     setSettings((prev) => ({
       ...prev,
       linkedAccounts: {
@@ -210,7 +209,7 @@ export function useSettings(userId?: string) {
     }));
   };
 
-  const unlinkAccount = (provider: 'google' | 'facebook' | 'github') => {
+  const unlinkAccount = (provider: 'google' | 'github') => {
     setSettings((prev) => {
       const { [provider]: _, ...rest } = prev.linkedAccounts;
       return {
