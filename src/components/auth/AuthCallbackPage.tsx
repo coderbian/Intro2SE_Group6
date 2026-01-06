@@ -4,7 +4,8 @@ import { useApp } from "../../contexts/AppContext";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
-  const { isLoading, user, role } = useApp();
+  const { auth, isLoading } = useApp();
+  const { user, role } = auth;
 
   useEffect(() => {
     if (isLoading) return;
@@ -24,5 +25,3 @@ export function AuthCallbackPage() {
 
   return null;
 }
-
-

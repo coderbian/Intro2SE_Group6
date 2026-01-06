@@ -108,6 +108,7 @@ export function ScrumView({
   const sprintProgress = totalPoints > 0 ? (completedPoints / totalPoints) * 100 : 0;
 
   const getDaysUntilDeadline = () => {
+    if (!project.deadline) return 0;
     const days = Math.ceil((new Date(project.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return days;
   };

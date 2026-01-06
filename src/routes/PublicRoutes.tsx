@@ -8,7 +8,27 @@ import { useApp } from '../contexts/AppContext';
 
 export function PublicRoutes() {
     const navigate = useNavigate();
-    const { handleLogin } = useApp();
+    const { auth } = useApp();
+    const { handleLogin, handleRegister } = auth;
+
+    // Wrapper to convert Promise<LoginResult | null> to void
+    const handleLoginWrapper = async (email: string, password: string) => {
+        const result = await handleLogin(email, password);
+        if (result) {
+            if (result.role === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/projects');
+            }
+        }
+    };
+
+    const handleRegisterWrapper = async (data: { email: string; password: string; name: string; phone?: string }) => {
+        const result = await handleRegister(data);
+        if (result) {
+            navigate('/projects');
+        }
+    };
 
     return (
         <Routes>
@@ -16,7 +36,7 @@ export function PublicRoutes() {
                 path="/login"
                 element={
                     <LoginPage
-                        onLogin={handleLogin}
+                        onLogin={handleLoginWrapper}
                         onSwitchToRegister={() => navigate('/register')}
                         onForgotPassword={() => navigate('/forgot-password')}
                     />
@@ -26,10 +46,7 @@ export function PublicRoutes() {
                 path="/register"
                 element={
                     <RegisterPage
-                        onRegister={(data) => {
-                            const { handleRegister } = useApp();
-                            handleRegister(data);
-                        }}
+                        onRegister={handleRegisterWrapper}
                         onSwitchToLogin={() => navigate('/login')}
                     />
                 }

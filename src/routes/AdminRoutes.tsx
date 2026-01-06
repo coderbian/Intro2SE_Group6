@@ -6,7 +6,8 @@ import { useApp } from '../contexts/AppContext';
 
 export function AdminRoutes() {
     const navigate = useNavigate();
-    const { user, role, adminEmail, handleLogout } = useApp();
+    const { auth } = useApp();
+    const { user, role, adminEmail, handleLogout } = auth;
 
     const handleAdminLogout = async () => {
         await handleLogout();

@@ -24,7 +24,7 @@ interface ProjectPageProps {
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, comment: { userId: string; userName: string; content: string }) => void
-  onAddAttachment: (taskId: string, file: { name: string; url: string; type: string; uploadedBy: string }) => unknown | Promise<unknown>
+  onAddAttachment: (taskId: string, attachment: { name: string; url: string; type: string; uploadedBy: string }) => void
   onCreateSprint?: (projectId: string, name: string, goal: string, taskIds: string[]) => void
   onEndSprint?: (sprintId: string) => void
 }
@@ -51,6 +51,22 @@ export function ProjectPage({
   const userMember = project.members.find((m) => m.userId === user.id)
   const isManager = userMember?.role === "manager"
   const isMember = userMember?.role === "member"
+
+  // Wrapper to adapt simple signature to full signature
+  const handleAddCommentSimple = (taskId: string, content: string) => {
+    onAddComment(taskId, {
+      userId: user.id,
+      userName: user.name,
+      content,
+    })
+  }
+
+  const handleAddAttachmentSimple = (taskId: string, file: { name: string; url: string; type: string }) => {
+    onAddAttachment(taskId, {
+      ...file,
+      uploadedBy: user.id,
+    })
+  }
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
@@ -138,8 +154,8 @@ export function ProjectPage({
                 onCreateTask={onCreateTask}
                 onUpdateTask={onUpdateTask}
                 onDeleteTask={onDeleteTask}
-                onAddComment={onAddComment}
-                onAddAttachment={onAddAttachment}
+                onAddComment={handleAddCommentSimple}
+                onAddAttachment={handleAddAttachmentSimple}
               />
             ) : (
               <ScrumView
@@ -152,8 +168,8 @@ export function ProjectPage({
                 onCreateTask={onCreateTask}
                 onUpdateTask={onUpdateTask}
                 onDeleteTask={onDeleteTask}
-                onAddComment={onAddComment}
-                onAddAttachment={onAddAttachment}
+                onAddComment={handleAddCommentSimple}
+                onAddAttachment={handleAddAttachmentSimple}
                 onCreateSprint={onCreateSprint}
                 onEndSprint={onEndSprint}
               />

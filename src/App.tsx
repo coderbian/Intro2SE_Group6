@@ -14,10 +14,50 @@ import { ProtectedRoutes } from './routes/ProtectedRoutes';
 // Inner component that uses context
 function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   const navigate = useNavigate();
-  const { isLoading, handleLogin, handleRegister } = useApp();
+  const { auth, isLoading } = useApp();
+  const { handleLogin, handleRegister, user, role } = auth;
+
+  // Wrapper to convert Promise<LoginResult | null> to void
+  const handleLoginWrapper = async (email: string, password: string) => {
+    const result = await handleLogin(email, password);
+    if (result) {
+      // Navigate based on role
+      if (result.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/projects');
+      }
+    }
+  };
+
+  const handleRegisterWrapper = async (data: { email: string; password: string; name: string; phone?: string }) => {
+    const result = await handleRegister(data);
+    if (result) {
+      navigate('/projects');
+    }
+  };
 
   if (isLoading) {
     return null;
+  }
+
+  // Redirect if already logged in
+  if (user) {
+    return (
+      <>
+        <Routes>
+          <Route path="/403" element={<ForbiddenPage onGoHome={() => navigate('/projects')} />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/login" element={<Navigate to={role === 'admin' ? '/admin/dashboard' : '/projects'} replace />} />
+          <Route path="/register" element={<Navigate to="/projects" replace />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage onBack={() => navigate('/login')} />} />
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route path="/*" element={<ProtectedRoutes onEnterAdmin={onEnterAdmin} />} />
+        </Routes>
+        <Toaster />
+      </>
+    );
   }
 
   return (
@@ -32,7 +72,7 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
           path="/login"
           element={
             <LoginPage
-              onLogin={handleLogin}
+              onLogin={handleLoginWrapper}
               onSwitchToRegister={() => navigate('/register')}
               onForgotPassword={() => navigate('/forgot-password')}
             />
@@ -42,7 +82,7 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
           path="/register"
           element={
             <RegisterPage
-              onRegister={handleRegister}
+              onRegister={handleRegisterWrapper}
               onSwitchToLogin={() => navigate('/login')}
             />
           }
@@ -52,11 +92,8 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
           element={<ForgotPasswordPage onBack={() => navigate('/login')} />}
         />
 
-        {/* Admin Routes */}
-        <Route path="/admin/*" element={<AdminRoutes />} />
-
-        {/* Protected Routes */}
-        <Route path="/*" element={<ProtectedRoutes onEnterAdmin={onEnterAdmin} />} />
+        {/* Default redirect to login */}
+        <Route path="/*" element={<Navigate to="/login" replace />} />
       </Routes>
       <Toaster />
     </>
@@ -67,10 +104,9 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
 export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   return (
     <AuthProvider>
-      <AppProvider onEnterAdmin={onEnterAdmin}>
+      <AppProvider>
         <AppContent onEnterAdmin={onEnterAdmin} />
       </AppProvider>
     </AuthProvider>
   );
 }
-

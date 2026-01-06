@@ -15,24 +15,10 @@ import { useAuth } from '../contexts/AuthContext';
 // Wrapper component to use URL params for ProjectPage
 function ProjectPageWrapper() {
     const { projectId } = useParams<{ projectId: string }>();
-    const {
-        user,
-        projects,
-        tasks,
-        sprints,
-        handleUpdateProject,
-        handlePermanentlyDeleteProject,
-        handleDeleteProject,
-        handleCreateTask,
-        handleUpdateTask,
-        handleDeleteTask,
-        handleAddComment,
-        handleAddAttachment,
-        handleCreateSprint,
-        handleEndSprint,
-    } = useApp();
+    const { auth, projects, tasks, sprints } = useApp();
+    const { user } = auth;
 
-    const project = projects.find((p) => p.id === projectId);
+    const project = projects.projects.find((p) => p.id === projectId);
 
     if (!projectId || !project) {
         return <Navigate to="/dashboard" replace />;
@@ -42,19 +28,19 @@ function ProjectPageWrapper() {
         <ProjectPage
             user={user!}
             project={project}
-            tasks={tasks.filter((t) => t.projectId === projectId)}
-            sprints={sprints.filter((s) => s.projectId === projectId)}
-            currentSprint={sprints.find((s) => s.projectId === projectId && s.status === 'active')}
-            onUpdateProject={handleUpdateProject}
-            onDeleteProject={handlePermanentlyDeleteProject}
-            onMoveToTrash={handleDeleteProject}
-            onCreateTask={handleCreateTask}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onAddComment={handleAddComment}
-            onAddAttachment={handleAddAttachment}
-            onCreateSprint={handleCreateSprint}
-            onEndSprint={handleEndSprint}
+            tasks={tasks.tasks.filter((t) => t.projectId === projectId)}
+            sprints={sprints.sprints.filter((s) => s.projectId === projectId)}
+            currentSprint={sprints.sprints.find((s) => s.projectId === projectId && s.status === 'active')}
+            onUpdateProject={projects.handleUpdateProject}
+            onDeleteProject={projects.handlePermanentlyDeleteProject}
+            onMoveToTrash={projects.handleDeleteProject}
+            onCreateTask={tasks.handleCreateTask}
+            onUpdateTask={tasks.handleUpdateTask}
+            onDeleteTask={tasks.handleDeleteTask}
+            onAddComment={tasks.handleAddComment}
+            onAddAttachment={tasks.handleAddAttachment}
+            onCreateSprint={sprints.handleCreateSprint}
+            onEndSprint={sprints.handleEndSprint}
         />
     );
 }
@@ -65,41 +51,21 @@ interface ProtectedRoutesProps {
 
 export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
     const navigate = useNavigate();
-    const {
-        user,
-        projects,
-        tasks,
-        selectedProjectId,
-        settings,
-        notifications,
-        invitations,
-        joinRequests,
-        handleSelectProject,
-        handleLogout,
-        handleUpdateSettings,
-        handleMarkNotificationAsRead,
-        handleMarkAllNotificationsAsRead,
-        handleDeleteNotification,
-        handleAddNotification,
-        handleSendInvitation,
-        handleAcceptInvitation,
-        handleCreateJoinRequest,
-        handleApproveJoinRequest,
-        handleRejectJoinRequest,
-        handleRestoreProject,
-        handlePermanentlyDeleteProject,
-        handleRestoreTask,
-        handlePermanentlyDeleteTask,
-        handleUpdateUser,
-    } = useApp();
-
+    const { auth, projects, tasks, sprints, settings, notifications } = useApp();
+    const { user, handleLogout, handleUpdateUser } = auth;
     const { handleChangePassword } = useAuth();
 
+    // Wrapper that selects project AND navigates to project page
+    const handleSelectProjectWithNavigate = (projectId: string) => {
+        projects.handleSelectProject(projectId);
+        navigate(`/project/${projectId}`);
+    };
+
     // Filter notifications and join requests for current user
-    const userNotifications = notifications.filter((n) => n.userId === user?.id);
-    const userInvitations = invitations.filter((i) => i.invitedEmail === user?.email);
-    const managerJoinRequests = joinRequests.filter((r) => {
-        const proj = projects.find((p) => p.id === r.projectId);
+    const userNotifications = notifications.notifications.filter((n) => n.userId === user?.id);
+    const userInvitations = projects.invitations.filter((i) => i.invitedEmail === user?.email);
+    const managerJoinRequests = projects.joinRequests.filter((r) => {
+        const proj = projects.projects.find((p) => p.id === r.projectId);
         const isManager =
             proj?.members.find((m) => m.userId === user?.id)?.role === 'manager' || proj?.ownerId === user?.id;
         return isManager;
@@ -109,28 +75,28 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
         <ProtectedRoute user={user}>
             <MainLayout
                 user={user!}
-                projects={projects}
-                selectedProjectId={selectedProjectId}
-                settings={settings}
+                projects={projects.projects}
+                selectedProjectId={projects.selectedProjectId}
+                settings={settings.settings}
                 notifications={userNotifications}
                 invitations={userInvitations}
                 joinRequests={managerJoinRequests}
-                onSelectProject={handleSelectProject}
+                onSelectProject={handleSelectProjectWithNavigate}
                 onLogout={handleLogout}
-                onUpdateSettings={handleUpdateSettings}
-                onMarkNotificationAsRead={handleMarkNotificationAsRead}
-                onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
-                onDeleteNotification={handleDeleteNotification}
-                onAddNotification={handleAddNotification}
-                onSendInvitation={handleSendInvitation}
-                onAcceptInvitation={handleAcceptInvitation}
-                onCreateJoinRequest={handleCreateJoinRequest}
-                onApproveJoinRequest={handleApproveJoinRequest}
-                onRejectJoinRequest={handleRejectJoinRequest}
-                onRestoreProject={handleRestoreProject}
-                onPermanentlyDeleteProject={handlePermanentlyDeleteProject}
-                onRestoreTask={handleRestoreTask}
-                onPermanentlyDeleteTask={handlePermanentlyDeleteTask}
+                onUpdateSettings={settings.handleUpdateSettings}
+                onMarkNotificationAsRead={notifications.handleMarkNotificationAsRead}
+                onMarkAllNotificationsAsRead={notifications.handleMarkAllNotificationsAsRead}
+                onDeleteNotification={notifications.handleDeleteNotification}
+                onAddNotification={notifications.handleAddNotification}
+                onSendInvitation={projects.handleSendInvitation}
+                onAcceptInvitation={projects.handleAcceptInvitation}
+                onCreateJoinRequest={projects.handleRequestJoinProject}
+                onApproveJoinRequest={projects.handleApproveJoinRequest}
+                onRejectJoinRequest={projects.handleRejectJoinRequest}
+                onRestoreProject={projects.handleRestoreProject}
+                onPermanentlyDeleteProject={projects.handlePermanentlyDeleteProject}
+                onRestoreTask={tasks.handleRestoreTask}
+                onPermanentlyDeleteTask={tasks.handlePermanentlyDeleteTask}
                 onEnterAdmin={onEnterAdmin}
             >
                 <Routes>
@@ -140,9 +106,9 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                         element={
                             <DashboardPage
                                 user={user!}
-                                projects={projects.filter((p) => !p.deletedAt)}
-                                tasks={tasks}
-                                onSelectProject={handleSelectProject}
+                                projects={projects.projects.filter((p) => !p.deletedAt)}
+                                tasks={tasks.tasks}
+                                onSelectProject={handleSelectProjectWithNavigate}
                             />
                         }
                     />
@@ -151,8 +117,8 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                         path="/settings"
                         element={
                             <SettingsPage
-                                settings={settings}
-                                onUpdateSettings={handleUpdateSettings}
+                                settings={settings.settings}
+                                onUpdateSettings={settings.handleUpdateSettings}
                                 onNavigate={(page) => navigate(`/${page}`)}
                             />
                         }
@@ -161,12 +127,12 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                         path="/trash"
                         element={
                             <TrashPage
-                                projects={projects}
-                                tasks={tasks}
-                                onRestoreProject={handleRestoreProject}
-                                onPermanentlyDeleteProject={handlePermanentlyDeleteProject}
-                                onRestoreTask={handleRestoreTask}
-                                onPermanentlyDeleteTask={handlePermanentlyDeleteTask}
+                                projects={projects.projects}
+                                tasks={tasks.tasks}
+                                onRestoreProject={projects.handleRestoreProject}
+                                onPermanentlyDeleteProject={projects.handlePermanentlyDeleteProject}
+                                onRestoreTask={tasks.handleRestoreTask}
+                                onPermanentlyDeleteTask={tasks.handlePermanentlyDeleteTask}
                             />
                         }
                     />
@@ -175,9 +141,9 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                         element={
                             <AllProjectsPage
                                 user={user!}
-                                projects={projects}
-                                onSelectProject={handleSelectProject}
-                                onCreateJoinRequest={handleCreateJoinRequest}
+                                projects={projects.projects}
+                                onSelectProject={handleSelectProjectWithNavigate}
+                                onCreateJoinRequest={projects.handleRequestJoinProject}
                             />
                         }
                     />
@@ -185,16 +151,16 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                         path="/member-requests"
                         element={
                             <MemberRequestsPage
-                                joinRequests={joinRequests}
-                                onApproveJoinRequest={handleApproveJoinRequest}
-                                onRejectJoinRequest={handleRejectJoinRequest}
+                                joinRequests={projects.joinRequests}
+                                onApproveJoinRequest={projects.handleApproveJoinRequest}
+                                onRejectJoinRequest={projects.handleRejectJoinRequest}
                             />
                         }
                     />
                     <Route path="/project/:projectId" element={<ProjectPageWrapper />} />
                 </Routes>
             </MainLayout>
-            <ChatAssistant project={projects.find((p) => p.id === selectedProjectId)} />
+            <ChatAssistant project={projects.projects.find((p) => p.id === projects.selectedProjectId)} />
         </ProtectedRoute>
     );
 }
