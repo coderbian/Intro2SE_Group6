@@ -183,16 +183,16 @@ export function ProjectSettings({
               <Input
                 id="deadline"
                 type="date"
-                value={editedProject.deadline}
+                value={editedProject.deadline || ''}
                 onChange={(e) => setEditedProject({ ...editedProject, deadline: e.target.value })}
               />
             ) : (
               <div className="text-sm py-2">
-                {new Date(project.deadline).toLocaleDateString('vi-VN', {
+                {project.deadline ? new Date(project.deadline).toLocaleDateString('vi-VN', {
                   day: '2-digit',
                   month: '2-digit',
                   year: 'numeric',
-                })}
+                }) : 'Chưa đặt'}
               </div>
             )}
           </div>

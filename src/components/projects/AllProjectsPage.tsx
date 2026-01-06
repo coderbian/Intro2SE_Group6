@@ -87,7 +87,7 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="w-4 h-4" />
-                    Deadline: {new Date(project.deadline).toLocaleDateString("vi-VN")}
+                    Deadline: {project.deadline ? new Date(project.deadline).toLocaleDateString("vi-VN") : 'Chưa đặt'}
                   </div>
                   <Button
                     className="w-full"
@@ -130,7 +130,7 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Deadline:</span>
-                    <span>{new Date(selectedProject.deadline).toLocaleDateString("vi-VN")}</span>
+                    <span>{selectedProject.deadline ? new Date(selectedProject.deadline).toLocaleDateString("vi-VN") : 'Chưa đặt'}</span>
                   </div>
                 </div>
               </div>

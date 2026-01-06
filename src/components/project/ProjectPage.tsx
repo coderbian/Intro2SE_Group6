@@ -23,8 +23,8 @@ interface ProjectPageProps {
   onCreateTask: (task: Omit<Task, "id" | "createdAt" | "comments" | "attachments">) => void
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void
   onDeleteTask: (taskId: string) => void
-  onAddComment: (taskId: string, content: string) => void
-  onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void
+  onAddComment: (taskId: string, comment: { userId: string; userName: string; content: string }) => void
+  onAddAttachment: (taskId: string, file: { name: string; url: string; type: string; uploadedBy: string }) => unknown | Promise<unknown>
   onCreateSprint?: (projectId: string, name: string, goal: string, taskIds: string[]) => void
   onEndSprint?: (sprintId: string) => void
 }
@@ -79,7 +79,7 @@ export function ProjectPage({
                 <div className="text-right">
                   <div className="text-xs text-blue-100">Deadline</div>
                   <div className="text-sm font-semibold text-white">
-                    {new Date(project.deadline).toLocaleDateString("vi-VN")}
+                    {project.deadline ? new Date(project.deadline).toLocaleDateString("vi-VN") : 'Chưa đặt'}
                   </div>
                 </div>
               </div>

@@ -1,48 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
+import * as projectService from '../services/projectService';
 import type { User } from './useAuth';
 import type { Notification } from './useNotifications';
 
-export interface ProjectMember {
-  userId: string;
-  role: 'manager' | 'member';
-  name: string;
-  email: string;
-  avatar?: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  deadline: string;
-  ownerId: string;
-  createdAt: string;
-  template: 'kanban' | 'scrum';
-  members: ProjectMember[];
-  deletedAt?: string;
-}
-
-export interface ProjectInvitation {
-  id: string;
-  projectId: string;
-  projectName: string;
-  invitedEmail: string;
-  invitedBy: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  createdAt: string;
-}
-
-export interface JoinRequest {
-  id: string;
-  projectId: string;
-  projectName: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-}
+export type { Project, ProjectMember, ProjectInvitation, JoinRequest } from '../services/projectService';
 
 interface UseProjectsProps {
   user: User | null;
@@ -50,53 +12,93 @@ interface UseProjectsProps {
 }
 
 export function useProjects({ user, onAddNotification }: UseProjectsProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<projectService.Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [invitations, setInvitations] = useState<ProjectInvitation[]>([]);
-  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  const [invitations, setInvitations] = useState<projectService.ProjectInvitation[]>([]);
+  const [joinRequests, setJoinRequests] = useState<projectService.JoinRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const eventListenerAttached = useRef(false);
+  const hasFetched = useRef(false);
+  const lastUserId = useRef<string | null>(null);
 
-  // Persist to localStorage
+  // Fetch projects from Supabase on mount
   useEffect(() => {
-    localStorage.setItem('planora_projects', JSON.stringify(projects));
-  }, [projects]);
+    // Skip if no user - reset state and refs
+    if (!user) {
+      setProjects([]);
+      setInvitations([]);
+      setJoinRequests([]);
+      hasFetched.current = false;
+      lastUserId.current = null;
+      return;
+    }
 
-  useEffect(() => {
-    localStorage.setItem('planora_invitations', JSON.stringify(invitations));
-  }, [invitations]);
+    // Reset refs if user changed (including login after logout)
+    if (lastUserId.current !== null && lastUserId.current !== user.id) {
+      hasFetched.current = false;
+      lastUserId.current = null;
+    }
 
-  useEffect(() => {
-    localStorage.setItem('planora_join_requests', JSON.stringify(joinRequests));
-  }, [joinRequests]);
+    // Skip if already fetched for this user
+    if (hasFetched.current && lastUserId.current === user.id) {
+      return;
+    }
+
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        console.log('[useProjects] Fetching projects for user:', user.id);
+        const [fetchedProjects, fetchedInvitations] = await Promise.all([
+          projectService.fetchProjects(user.id),
+          projectService.fetchInvitations(user.email),
+        ]);
+        console.log('[useProjects] Fetched projects:', fetchedProjects.length);
+        setProjects(fetchedProjects);
+        setInvitations(fetchedInvitations);
+        hasFetched.current = true;
+        lastUserId.current = user.id;
+
+        // Fetch join requests for projects where user is owner
+        const ownedProjectIds = fetchedProjects
+          .filter((p) => p.ownerId === user.id)
+          .map((p) => p.id);
+
+        if (ownedProjectIds.length > 0) {
+          const fetchedJoinRequests = await projectService.fetchJoinRequests(ownedProjectIds);
+          setJoinRequests(fetchedJoinRequests);
+        }
+      } catch (error) {
+        console.error('[useProjects] Error fetching projects:', error);
+        // Don't set hasFetched to true on error - allow retry
+        toast.error('Không thể tải dữ liệu dự án');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user?.id, user?.email]);
 
   // Listen for createProject events
   useEffect(() => {
     if (eventListenerAttached.current || !user) return;
 
-    const handleCreateProject = (e: CustomEvent) => {
-      const newProjectId = Date.now().toString();
-      setProjects((prev) => {
-        const newProject: Project = {
-          ...(e as any).detail,
-          id: newProjectId,
-          ownerId: user.id,
-          createdAt: new Date().toISOString(),
-          members: [
-            {
-              userId: user.id,
-              role: 'manager' as const,
-              name: user.name,
-              email: user.email,
-              avatar: user.avatar,
-            },
-          ],
-        };
-        return [...prev, newProject];
-      });
-      setSelectedProjectId(newProjectId);
-      // Dispatch event to notify that project was created
-      window.dispatchEvent(new CustomEvent('projectCreated', { detail: { projectId: newProjectId } }));
-      return newProjectId;
+    const handleCreateProject = async (e: CustomEvent) => {
+      try {
+        const newProject = await projectService.createProject(
+          (e as any).detail,
+          user.id,
+          user.name,
+          user.email,
+          user.avatar
+        );
+        setProjects((prev) => [...prev, newProject]);
+        setSelectedProjectId(newProject.id);
+        window.dispatchEvent(new CustomEvent('projectCreated', { detail: { projectId: newProject.id } }));
+      } catch (error) {
+        console.error('Error creating project:', error);
+        toast.error('Không thể tạo dự án');
+      }
     };
 
     window.addEventListener('createProject' as any, handleCreateProject as any);
@@ -108,142 +110,202 @@ export function useProjects({ user, onAddNotification }: UseProjectsProps) {
     };
   }, [user]);
 
-  const handleUpdateProject = (projectId: string, updates: Partial<Project>) => {
-    setProjects(projects.map((p) => (p.id === projectId ? { ...p, ...updates } : p)));
-  };
-
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(projects.map((p) => (p.id === projectId ? { ...p, deletedAt: new Date().toISOString() } : p)));
-    toast.success('Dự án đã được di chuyển vào thùng rác');
-    if (selectedProjectId === projectId) {
-      setSelectedProjectId(null);
+  const handleUpdateProject = useCallback(async (projectId: string, updates: Partial<projectService.Project>) => {
+    try {
+      const updated = await projectService.updateProject(projectId, updates);
+      setProjects((prev) => prev.map((p) => (p.id === projectId ? updated : p)));
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast.error('Không thể cập nhật dự án');
     }
-    return true; // Indicate should navigate to dashboard
-  };
+  }, []);
 
-  const handleRestoreProject = (projectId: string) => {
-    setProjects(projects.map((p) => (p.id === projectId ? { ...p, deletedAt: undefined } : p)));
-    toast.success('Dự án đã được khôi phục');
-  };
-
-  const handlePermanentlyDeleteProject = (projectId: string, deleteRelatedTasks?: (projectId: string) => void) => {
-    setProjects(projects.filter((p) => p.id !== projectId));
-    if (deleteRelatedTasks) {
-      deleteRelatedTasks(projectId);
+  const handleDeleteProject = useCallback(async (projectId: string) => {
+    try {
+      await projectService.deleteProject(projectId);
+      setProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? { ...p, deletedAt: new Date().toISOString() } : p))
+      );
+      toast.success('Dự án đã được di chuyển vào thùng rác');
+      if (selectedProjectId === projectId) {
+        setSelectedProjectId(null);
+      }
+      return true;
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Không thể xóa dự án');
+      return false;
     }
-    toast.success('Dự án đã được xóa vĩnh viễn');
-  };
+  }, [selectedProjectId]);
 
-  const handleSelectProject = (projectId: string) => {
+  const handleRestoreProject = useCallback(async (projectId: string) => {
+    try {
+      await projectService.restoreProject(projectId);
+      setProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? { ...p, deletedAt: undefined } : p))
+      );
+      toast.success('Dự án đã được khôi phục');
+    } catch (error) {
+      console.error('Error restoring project:', error);
+      toast.error('Không thể khôi phục dự án');
+    }
+  }, []);
+
+  const handlePermanentlyDeleteProject = useCallback(
+    async (projectId: string, deleteRelatedTasks?: (projectId: string) => void) => {
+      try {
+        if (deleteRelatedTasks) {
+          deleteRelatedTasks(projectId);
+        }
+        await projectService.permanentlyDeleteProject(projectId);
+        setProjects((prev) => prev.filter((p) => p.id !== projectId));
+        toast.success('Dự án đã được xóa vĩnh viễn');
+      } catch (error) {
+        console.error('Error permanently deleting project:', error);
+        toast.error('Không thể xóa vĩnh viễn dự án');
+      }
+    },
+    []
+  );
+
+  const handleSelectProject = useCallback((projectId: string | null) => {
     setSelectedProjectId(projectId);
-  };
+  }, []);
 
-  const handleSendInvitation = (projectId: string, email: string) => {
-    const project = projects.find((p) => p.id === projectId);
-    if (!project || !user) return;
+  const handleSendInvitation = useCallback(
+    async (projectId: string, email: string) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (!project || !user) return;
 
-    const invitation: ProjectInvitation = {
-      id: Date.now().toString(),
-      projectId,
-      projectName: project.name,
-      invitedEmail: email,
-      invitedBy: user.id,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
+      try {
+        await projectService.sendInvitation(projectId, email, user.id);
+        toast.success('Đã gửi lời mời');
 
-    setInvitations([...invitations, invitation]);
+        if (onAddNotification) {
+          onAddNotification({
+            userId: '',
+            type: 'project_update',
+            title: 'Bạn được mời vào dự án',
+            message: `${user.name} đã mời bạn tham gia dự án: "${project.name}"`,
+            read: false,
+            relatedId: projectId,
+          });
+        }
+      } catch (error) {
+        console.error('Error sending invitation:', error);
+        toast.error('Không thể gửi lời mời');
+      }
+    },
+    [projects, user, onAddNotification]
+  );
 
-    if (onAddNotification) {
-      onAddNotification({
-        userId: '',
-        type: 'project_update',
-        title: 'Bạn được mời vào dự án',
-        message: `${user.name} đã mời bạn tham gia dự án: "${project.name}"`,
-        read: false,
-        relatedId: projectId,
-      });
-    }
-  };
+  const handleAcceptInvitation = useCallback(
+    async (invitationId: string) => {
+      const invitation = invitations.find((i) => i.id === invitationId);
+      if (!invitation || !user) return;
 
-  const handleAcceptInvitation = (invitationId: string) => {
-    const invitation = invitations.find((i) => i.id === invitationId);
-    if (!invitation || !user) return;
+      try {
+        await projectService.respondToInvitation(invitationId, true, user.id);
 
-    const project = projects.find((p) => p.id === invitation.projectId);
-    if (!project) return;
+        // Refresh projects
+        const fetchedProjects = await projectService.fetchProjects(user.id);
+        setProjects(fetchedProjects);
+        setInvitations((prev) =>
+          prev.map((i) => (i.id === invitationId ? { ...i, status: 'accepted' as const } : i))
+        );
+        toast.success(`Đã tham gia dự án: ${invitation.projectName}`);
+      } catch (error) {
+        console.error('Error accepting invitation:', error);
+        toast.error('Không thể chấp nhận lời mời');
+      }
+    },
+    [invitations, user]
+  );
 
-    const newMember: ProjectMember = {
-      userId: user.id,
-      name: user.name,
-      email: user.email,
-      role: 'member',
-      avatar: user.avatar,
-    };
+  const handleRejectInvitation = useCallback(
+    async (invitationId: string) => {
+      try {
+        await projectService.respondToInvitation(invitationId, false);
+        setInvitations((prev) =>
+          prev.map((i) => (i.id === invitationId ? { ...i, status: 'rejected' as const } : i))
+        );
+        toast.success('Đã từ chối lời mời');
+      } catch (error) {
+        console.error('Error rejecting invitation:', error);
+        toast.error('Không thể từ chối lời mời');
+      }
+    },
+    []
+  );
 
-    setProjects(projects.map((p) => (p.id === project.id ? { ...p, members: [...p.members, newMember] } : p)));
-    setInvitations(invitations.map((i) => (i.id === invitationId ? { ...i, status: 'accepted' } : i)));
-    toast.success(`Đã tham gia dự án: ${project.name}`);
-  };
+  const handleRequestJoinProject = useCallback(
+    async (projectId: string) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (!project || !user) return;
 
-  const handleRejectInvitation = (invitationId: string) => {
-    setInvitations(invitations.map((i) => (i.id === invitationId ? { ...i, status: 'rejected' } : i)));
-    toast.success('Đã từ chối lời mời');
-  };
+      const existingRequest = joinRequests.find(
+        (r) => r.projectId === projectId && r.userId === user.id && r.status === 'pending'
+      );
+      if (existingRequest) {
+        toast.error('Bạn đã gửi yêu cầu tham gia dự án này rồi');
+        return;
+      }
 
-  const handleRequestJoinProject = (projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
-    if (!project || !user) return;
+      try {
+        await projectService.createJoinRequest(projectId, user.id);
+        toast.success('Đã gửi yêu cầu tham gia dự án');
+      } catch (error) {
+        console.error('Error requesting to join project:', error);
+        toast.error('Không thể gửi yêu cầu tham gia');
+      }
+    },
+    [projects, user, joinRequests]
+  );
 
-    const existingRequest = joinRequests.find(
-      (r) => r.projectId === projectId && r.userId === user.id && r.status === 'pending'
-    );
-    if (existingRequest) {
-      toast.error('Bạn đã gửi yêu cầu tham gia dự án này rồi');
-      return;
-    }
+  const handleApproveJoinRequest = useCallback(
+    async (requestId: string) => {
+      const request = joinRequests.find((r) => r.id === requestId);
+      if (!request) return;
 
-    const request: JoinRequest = {
-      id: Date.now().toString(),
-      projectId,
-      projectName: project.name,
-      userId: user.id,
-      userName: user.name,
-      userEmail: user.email,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
+      try {
+        await projectService.respondToJoinRequest(requestId, true);
 
-    setJoinRequests([...joinRequests, request]);
-    toast.success('Đã gửi yêu cầu tham gia dự án');
-  };
+        // Refresh projects to get updated member list
+        if (user) {
+          const fetchedProjects = await projectService.fetchProjects(user.id);
+          setProjects(fetchedProjects);
+        }
 
-  const handleApproveJoinRequest = (requestId: string) => {
-    const request = joinRequests.find((r) => r.id === requestId);
-    if (!request) return;
+        setJoinRequests((prev) =>
+          prev.map((r) => (r.id === requestId ? { ...r, status: 'approved' as const } : r))
+        );
+        toast.success(`Đã chấp nhận ${request.userName} vào dự án`);
+      } catch (error) {
+        console.error('Error approving join request:', error);
+        toast.error('Không thể chấp nhận yêu cầu');
+      }
+    },
+    [joinRequests, user]
+  );
 
-    const project = projects.find((p) => p.id === request.projectId);
-    if (!project) return;
+  const handleRejectJoinRequest = useCallback(
+    async (requestId: string) => {
+      try {
+        await projectService.respondToJoinRequest(requestId, false);
+        setJoinRequests((prev) =>
+          prev.map((r) => (r.id === requestId ? { ...r, status: 'rejected' as const } : r))
+        );
+        toast.success('Đã từ chối yêu cầu tham gia');
+      } catch (error) {
+        console.error('Error rejecting join request:', error);
+        toast.error('Không thể từ chối yêu cầu');
+      }
+    },
+    []
+  );
 
-    const newMember: ProjectMember = {
-      userId: request.userId,
-      name: request.userName,
-      email: request.userEmail,
-      role: 'member',
-    };
-
-    setProjects(projects.map((p) => (p.id === project.id ? { ...p, members: [...p.members, newMember] } : p)));
-    setJoinRequests(joinRequests.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r)));
-    toast.success(`Đã chấp nhận ${request.userName} vào dự án`);
-  };
-
-  const handleRejectJoinRequest = (requestId: string) => {
-    setJoinRequests(joinRequests.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r)));
-    toast.success('Đã từ chối yêu cầu tham gia');
-  };
-
-  const getActiveProjects = () => projects.filter((p) => !p.deletedAt);
-  const getDeletedProjects = () => projects.filter((p) => p.deletedAt);
+  const getActiveProjects = useCallback(() => projects.filter((p) => !p.deletedAt), [projects]);
+  const getDeletedProjects = useCallback(() => projects.filter((p) => p.deletedAt), [projects]);
 
   return {
     projects,
@@ -252,6 +314,7 @@ export function useProjects({ user, onAddNotification }: UseProjectsProps) {
     setSelectedProjectId,
     invitations,
     joinRequests,
+    isLoading,
     handleUpdateProject,
     handleDeleteProject,
     handleRestoreProject,

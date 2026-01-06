@@ -183,7 +183,7 @@ export function DashboardPage({
                 <div className="space-y-4">
                   {projects.map((project) => {
                     const progress = getProjectProgress(project.id);
-                    const daysLeft = getDaysUntilDeadline(project.deadline);
+                    const daysLeft = project.deadline ? getDaysUntilDeadline(project.deadline) : null;
                     const projectTaskCount = tasks.filter(t => t.projectId === project.id).length;
 
                     return (
@@ -225,16 +225,18 @@ export function DashboardPage({
                               <span>{project.members.length} thành viên</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 text-gray-700 font-medium px-2 py-1 bg-blue-50 rounded-md">
-                            <Calendar className="w-4 h-4 text-blue-600" />
-                            <span>
-                              {daysLeft > 0
-                                ? `Còn ${daysLeft} ngày`
-                                : daysLeft === 0
-                                  ? 'Hết hạn hôm nay'
-                                  : `Trễ ${Math.abs(daysLeft)} ngày`}
-                            </span>
-                          </div>
+                          {daysLeft !== null && (
+                            <div className="flex items-center gap-1.5 text-gray-700 font-medium px-2 py-1 bg-blue-50 rounded-md">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <span>
+                                {daysLeft > 0
+                                  ? `Còn ${daysLeft} ngày`
+                                  : daysLeft === 0
+                                    ? 'Hết hạn hôm nay'
+                                    : `Trễ ${Math.abs(daysLeft)} ngày`}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

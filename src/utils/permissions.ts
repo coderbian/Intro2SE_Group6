@@ -1,4 +1,4 @@
-import type { Project } from "../App"
+import type { Project } from "../types"
 
 export type Permission =
   | "create_task"
