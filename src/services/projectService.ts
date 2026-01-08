@@ -18,6 +18,7 @@ export interface Project {
     ownerId: string;
     createdAt: string;
     template: 'kanban' | 'scrum';
+    visibility: 'public' | 'private';
     members: ProjectMember[];
     deletedAt?: string;
 }
@@ -64,6 +65,7 @@ function transformProject(
         ownerId: row.owner_id || '',
         createdAt: row.created_at || new Date().toISOString(),
         template: (row.template as 'kanban' | 'scrum') || 'kanban',
+        visibility: (row.visibility as 'public' | 'private') || 'private',
         members: members.map((m) => ({
             userId: m.user_id,
             role: m.role as 'manager' | 'member',
@@ -73,6 +75,48 @@ function transformProject(
         })),
         deletedAt: row.deleted_at || undefined,
     };
+}
+
+/**
+ * Fetch all public projects (for Explore Projects feature)
+ * TODO: Currently fetching all projects. Add visibility filter when UI supports public/private setting.
+ */
+export async function fetchAllProjects(): Promise<Project[]> {
+    const supabase = getSupabaseClient();
+
+    // Fetch all non-deleted projects (TODO: filter by visibility='public' when implemented)
+    const { data: projects, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .is('deleted_at', null);
+
+    console.log('[fetchAllProjects] Fetched projects:', projects?.length || 0, projects);
+    console.log('[fetchAllProjects] Error:', projectError);
+
+    if (projectError) {
+        console.error('[fetchAllProjects] Query failed:', projectError.message, projectError.details, projectError.hint);
+        throw projectError;
+    }
+
+    if (!projects || projects.length === 0) return [];
+
+    const projectIds = projects.map((p) => p.id);
+
+    // Fetch all members for these projects
+    const { data: allMembers, error: membersError } = await supabase
+        .from('project_members')
+        .select(`
+      *,
+      user:users(name, email, avatar_url)
+    `)
+        .in('project_id', projectIds);
+
+    if (membersError) throw membersError;
+
+    return projects.map((project) => {
+        const projectMembers = (allMembers || []).filter((m) => m.project_id === project.id);
+        return transformProject(project, projectMembers as any);
+    });
 }
 
 /**
@@ -141,6 +185,7 @@ export async function createProject(
         deadline: project.deadline,
         owner_id: userId,
         template: project.template,
+        visibility: project.visibility || 'private',
         key,
     };
 
@@ -171,6 +216,7 @@ export async function createProject(
         ownerId: data.owner_id || '',
         createdAt: data.created_at || new Date().toISOString(),
         template: (data.template as 'kanban' | 'scrum') || 'kanban',
+        visibility: (data.visibility as 'public' | 'private') || 'private',
         members: [
             {
                 userId,
@@ -198,6 +244,7 @@ export async function updateProject(
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.deadline !== undefined) updateData.deadline = updates.deadline;
     if (updates.template !== undefined) updateData.template = updates.template;
+    if (updates.visibility !== undefined) updateData.visibility = updates.visibility;
     updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase

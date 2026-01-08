@@ -4,7 +4,8 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { AlertCircle, Trash2, Sparkles } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { AlertCircle, Trash2, Sparkles, Globe, Lock } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { toast } from 'sonner';
 import type { Project } from '../../types';
@@ -29,6 +30,7 @@ export function ProjectSettings({
     name: project.name,
     description: project.description,
     deadline: project.deadline,
+    visibility: project.visibility || 'private' as 'public' | 'private',
   });
 
   const handleEnhanceDescription = async () => {
@@ -89,6 +91,7 @@ export function ProjectSettings({
       name: project.name,
       description: project.description,
       deadline: project.deadline,
+      visibility: project.visibility || 'private',
     });
     setIsEditing(false);
   };
@@ -202,6 +205,50 @@ export function ProjectSettings({
             <div className="text-sm py-2">
               {project.template === 'kanban' ? 'Kanban Board' : 'Scrum Board'}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Khả năng hiển thị</Label>
+            {isEditing ? (
+              <Select
+                value={editedProject.visibility}
+                onValueChange={(value: string) =>
+                  setEditedProject({ ...editedProject, visibility: value as 'public' | 'private' })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="private">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4" />
+                      Riêng tư
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="public">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4" />
+                      Công khai
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="text-sm py-2 flex items-center gap-2">
+                {project.visibility === 'public' ? (
+                  <>
+                    <Globe className="w-4 h-4 text-green-600" />
+                    <span>Công khai</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4 text-gray-500" />
+                    <span>Riêng tư</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

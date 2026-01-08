@@ -240,8 +240,12 @@ export function useProjects({ user, onAddNotification }: UseProjectsProps) {
 
   const handleRequestJoinProject = useCallback(
     async (projectId: string) => {
-      const project = projects.find((p) => p.id === projectId);
-      if (!project || !user) return;
+      // Note: We don't check if project exists in `projects` array because
+      // the user is requesting to join a project they're NOT a member of yet
+      if (!user) {
+        toast.error('Bạn cần đăng nhập để gửi yêu cầu tham gia');
+        return;
+      }
 
       const existingRequest = joinRequests.find(
         (r) => r.projectId === projectId && r.userId === user.id && r.status === 'pending'
@@ -259,7 +263,7 @@ export function useProjects({ user, onAddNotification }: UseProjectsProps) {
         toast.error('Không thể gửi yêu cầu tham gia');
       }
     },
-    [projects, user, joinRequests]
+    [user, joinRequests]
   );
 
   const handleApproveJoinRequest = useCallback(

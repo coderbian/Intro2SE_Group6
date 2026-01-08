@@ -87,6 +87,7 @@ export function MainLayout({
     description: "",
     deadline: "",
     template: "kanban" as "kanban" | "scrum",
+    visibility: "private" as "public" | "private",
   })
   const sidebarRef = useRef<HTMLDivElement>(null)
 
@@ -117,6 +118,7 @@ export function MainLayout({
         description: "",
         deadline: "",
         template: "kanban",
+        visibility: "private",
       })
     }
   }
@@ -324,6 +326,23 @@ export function MainLayout({
                           {templateDescriptions[newProject.template]}
                         </AlertDescription>
                       </Alert>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="visibility" className="text-black dark:text-gray-200">Khả năng hiển thị</Label>
+                      <Select
+                        value={newProject.visibility}
+                        onValueChange={(value: string) =>
+                          setNewProject({ ...newProject, visibility: value as "public" | "private" })
+                        }
+                      >
+                        <SelectTrigger className="bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="private">🔒 Riêng tư</SelectItem>
+                          <SelectItem value="public">🌐 Công khai</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <DialogFooter>

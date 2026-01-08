@@ -1,30 +1,55 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Badge } from "../ui/badge"
 import { Input } from "../ui/input"
-import { Search, FolderKanban, Users, Calendar, LogIn } from "lucide-react"
+import { Search, FolderKanban, Users, Calendar, LogIn, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
 import { toast } from "sonner"
 import type { Project, User } from "../../types"
+import { fetchAllProjects } from "../../services/projectService"
 
 interface AllProjectsPageProps {
   user: User
-  projects: Project[]
+  projects: Project[]  // User's projects (for filtering out already joined)
   onSelectProject: (projectId: string) => void
   onCreateJoinRequest: (projectId: string) => void
 }
 
-export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinRequest }: AllProjectsPageProps) {
+export function AllProjectsPage({ user, projects: userProjects, onSelectProject, onCreateJoinRequest }: AllProjectsPageProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [allProjects, setAllProjects] = useState<Project[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch all projects on mount
+  useEffect(() => {
+    const loadAllProjects = async () => {
+      try {
+        setIsLoading(true)
+        const projects = await fetchAllProjects()
+        console.log('[AllProjectsPage] Fetched all projects:', projects.length, projects)
+        setAllProjects(projects)
+      } catch (error) {
+        console.error('Error fetching all projects:', error)
+        toast.error('Không thể tải danh sách dự án')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadAllProjects()
+  }, [])
 
   const userProjectIds = new Set(
-    projects.filter((p) => p.members.some((m) => m.userId === user.id) || p.ownerId === user.id).map((p) => p.id),
+    userProjects.filter((p) => p.members.some((m) => m.userId === user.id) || p.ownerId === user.id).map((p) => p.id),
   )
-  const availableProjects = projects.filter((p) => !p.deletedAt && !userProjectIds.has(p.id))
+  console.log('[AllProjectsPage] User project IDs:', Array.from(userProjectIds))
+  console.log('[AllProjectsPage] All projects count:', allProjects.length)
+
+  const availableProjects = allProjects.filter((p) => !p.deletedAt && !userProjectIds.has(p.id))
+  console.log('[AllProjectsPage] Available projects (after filter):', availableProjects.length, availableProjects)
 
   const filteredProjects = availableProjects.filter(
     (p) =>
@@ -51,7 +76,14 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
         </div>
       </div>
 
-      {filteredProjects.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 className="w-12 h-12 mx-auto text-blue-500 mb-4 animate-spin" />
+            <p className="text-gray-600">Đang tải danh sách dự án...</p>
+          </CardContent>
+        </Card>
+      ) : filteredProjects.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <FolderKanban className="w-12 h-12 mx-auto text-gray-300 mb-4" />
