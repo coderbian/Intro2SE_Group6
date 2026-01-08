@@ -79,43 +79,53 @@ function transformProject(
 
 /**
  * Fetch all public projects (for Explore Projects feature)
- * TODO: Currently fetching all projects. Add visibility filter when UI supports public/private setting.
+ * Note: Due to RLS restrictions on project_members, we fetch owner info from users table directly
  */
 export async function fetchAllProjects(): Promise<Project[]> {
     const supabase = getSupabaseClient();
 
-    // Fetch all non-deleted projects (TODO: filter by visibility='public' when implemented)
+    // Fetch all non-deleted projects with owner info
     const { data: projects, error: projectError } = await supabase
         .from('projects')
-        .select('*')
+        .select(`
+            *,
+            owner:users!projects_owner_id_fkey(id, name, email, avatar_url)
+        `)
         .is('deleted_at', null);
 
-    console.log('[fetchAllProjects] Fetched projects:', projects?.length || 0, projects);
-    console.log('[fetchAllProjects] Error:', projectError);
+    console.log('[fetchAllProjects] Fetched projects:', projects?.length || 0);
 
     if (projectError) {
-        console.error('[fetchAllProjects] Query failed:', projectError.message, projectError.details, projectError.hint);
+        console.error('[fetchAllProjects] Query failed:', projectError.message);
         throw projectError;
     }
 
     if (!projects || projects.length === 0) return [];
 
-    const projectIds = projects.map((p) => p.id);
-
-    // Fetch all members for these projects
-    const { data: allMembers, error: membersError } = await supabase
-        .from('project_members')
-        .select(`
-      *,
-      user:users(name, email, avatar_url)
-    `)
-        .in('project_id', projectIds);
-
-    if (membersError) throw membersError;
-
+    // Transform projects - for public projects, include owner as a "manager" member
+    // This avoids needing to query project_members which has RLS restrictions
     return projects.map((project) => {
-        const projectMembers = (allMembers || []).filter((m) => m.project_id === project.id);
-        return transformProject(project, projectMembers as any);
+        const owner = project.owner as any;
+        const ownerMember = owner ? [{
+            userId: owner.id || project.owner_id,
+            role: 'manager' as const,
+            name: owner.name || 'Unknown',
+            email: owner.email || '',
+            avatar: owner.avatar_url || undefined,
+        }] : [];
+
+        return {
+            id: project.id,
+            name: project.name,
+            description: project.description || '',
+            deadline: project.deadline,
+            ownerId: project.owner_id || '',
+            createdAt: project.created_at || new Date().toISOString(),
+            template: (project.template as 'kanban' | 'scrum') || 'kanban',
+            visibility: (project.visibility as 'public' | 'private') || 'private',
+            members: ownerMember,  // Only show owner for public discovery
+            deletedAt: project.deleted_at || undefined,
+        };
     });
 }
 

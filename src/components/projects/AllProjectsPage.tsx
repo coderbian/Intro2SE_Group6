@@ -168,19 +168,20 @@ export function AllProjectsPage({ user, projects: userProjects, onSelectProject,
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm mb-2">Thành viên hiện tại</h4>
+                <h4 className="font-semibold text-sm mb-2">Quản lý dự án</h4>
                 <div className="space-y-2">
-                  {selectedProject.members.slice(0, 5).map((member) => (
-                    <div key={member.userId} className="flex items-center justify-between text-sm">
-                      <div>
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-xs text-gray-500">{member.email}</p>
+                  {selectedProject.members.filter(m => m.role === 'manager').length > 0 ? (
+                    selectedProject.members.filter(m => m.role === 'manager').map((member) => (
+                      <div key={member.userId} className="flex items-center justify-between text-sm">
+                        <div>
+                          <p className="font-medium">{member.name}</p>
+                          <p className="text-xs text-gray-500">{member.email}</p>
+                        </div>
+                        <Badge variant="default">Project Manager</Badge>
                       </div>
-                      <Badge variant="secondary">{member.role}</Badge>
-                    </div>
-                  ))}
-                  {selectedProject.members.length > 5 && (
-                    <p className="text-xs text-gray-500">+{selectedProject.members.length - 5} thành viên khác</p>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-500">Không có thông tin</p>
                   )}
                 </div>
               </div>
