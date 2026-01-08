@@ -15,12 +15,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog"
-import { UserPlus, Trash2, Crown } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu"
+import { UserPlus, Trash2, Crown, MoreVertical, Shield, User } from 'lucide-react'
 import { toast } from "sonner"
-import type { User, Project } from "../../types"
+import type { User as UserType, Project } from "../../types"
 
 interface ProjectMembersProps {
-  user: User
+  user: UserType
   project: Project
   isManager: boolean
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void
@@ -61,6 +68,28 @@ export function ProjectMembers({ user, project, isManager, onUpdateProject }: Pr
       const updatedMembers = project.members.filter((m) => m.userId !== userId)
       onUpdateProject(project.id, { members: updatedMembers })
       toast.success("Đã xóa thành viên!")
+    }
+  }
+
+  const handleChangeRole = async (userId: string, newRole: 'manager' | 'member') => {
+    if (userId === project.ownerId) {
+      toast.error("Không thể thay đổi quyền của chủ sở hữu dự án!")
+      return
+    }
+
+    try {
+      const { updateMemberRole } = await import('../../services/projectService')
+      await updateMemberRole(project.id, userId, newRole)
+
+      // Update local state
+      const updatedMembers = project.members.map((m) =>
+        m.userId === userId ? { ...m, role: newRole } : m
+      )
+      onUpdateProject(project.id, { members: updatedMembers })
+      toast.success(newRole === 'manager' ? 'Đã thăng cấp thành Project Manager!' : 'Đã chuyển về Team Member!')
+    } catch (error) {
+      console.error('Error updating member role:', error)
+      toast.error('Không thể thay đổi quyền thành viên')
     }
   }
 
@@ -142,13 +171,38 @@ export function ProjectMembers({ user, project, isManager, onUpdateProject }: Pr
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={isOwner ? "default" : "secondary"}>
-                      {isOwner ? "Project Manager" : "Team Member"}
+                    <Badge variant={member.role === 'manager' ? "default" : "secondary"}>
+                      {member.role === 'manager' ? "Project Manager" : "Team Member"}
                     </Badge>
                     {isManager && !isOwner && !isCurrentUser && (
-                      <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.userId)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {member.role === 'member' ? (
+                            <DropdownMenuItem onClick={() => handleChangeRole(member.userId, 'manager')}>
+                              <Shield className="w-4 h-4 mr-2 text-blue-600" />
+                              Thăng cấp làm PM
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => handleChangeRole(member.userId, 'member')}>
+                              <User className="w-4 h-4 mr-2" />
+                              Chuyển về Team Member
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleRemoveMember(member.userId)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Xóa khỏi dự án
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </div>

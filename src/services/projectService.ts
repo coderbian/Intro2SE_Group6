@@ -351,6 +351,25 @@ export async function removeProjectMember(
 }
 
 /**
+ * Update a member's role in a project
+ */
+export async function updateMemberRole(
+    projectId: string,
+    userId: string,
+    newRole: 'manager' | 'member'
+): Promise<void> {
+    const supabase = getSupabaseClient();
+
+    const { error } = await supabase
+        .from('project_members')
+        .update({ role: newRole })
+        .eq('project_id', projectId)
+        .eq('user_id', userId);
+
+    if (error) throw error;
+}
+
+/**
  * Send an invitation to join a project
  */
 export async function sendInvitation(
