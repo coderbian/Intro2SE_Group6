@@ -14,19 +14,18 @@ interface AllProjectsPageProps {
   user: User
   projects: Project[]
   onSelectProject: (projectId: string) => void
-  onCreateJoinRequest: (projectId: string) => void
 }
 
-export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinRequest }: AllProjectsPageProps) {
+export function AllProjectsPage({ user, projects, onSelectProject }: AllProjectsPageProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
-  const userProjectIds = new Set(
-    projects.filter((p) => p.members.some((m) => m.userId === user.id) || p.ownerId === user.id).map((p) => p.id),
+  // Show only user's projects (invitation-only system)
+  const userProjects = projects.filter(
+    (p) => !p.deletedAt && (p.members.some((m) => m.userId === user.id) || p.ownerId === user.id)
   )
-  const availableProjects = projects.filter((p) => !p.deletedAt && !userProjectIds.has(p.id))
 
-  const filteredProjects = availableProjects.filter(
+  const filteredProjects = userProjects.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -35,8 +34,8 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Khám phá dự án</h1>
-        <p className="text-gray-600 text-sm">Xem tất cả các dự án hiện có và tham gia vào những dự án bạn quan tâm</p>
+        <h1 className="text-2xl font-bold mb-2">Dự án của tôi</h1>
+        <p className="text-gray-600 text-sm">Xem tất cả các dự án bạn đang tham gia</p>
       </div>
 
       <div className="mb-4">
@@ -56,7 +55,7 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
           <CardContent className="py-12 text-center">
             <FolderKanban className="w-12 h-12 mx-auto text-gray-300 mb-4" />
             <p className="text-gray-600">
-              {availableProjects.length === 0 ? "Không có dự án nào khả dụng" : "Không tìm thấy dự án phù hợp"}
+              {userProjects.length === 0 ? "Bạn chưa tham gia dự án nào" : "Không tìm thấy dự án phù hợp"}
             </p>
           </CardContent>
         </Card>
@@ -93,12 +92,10 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
                     className="w-full"
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation()
-                      onCreateJoinRequest(project.id)
-                      toast.success("Đã gửi yêu cầu tham gia dự án")
+                      onSelectProject(project.id)
                     }}
                   >
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Yêu cầu tham gia
+                    Xem dự án
                   </Button>
                 </div>
               </CardContent>
@@ -156,14 +153,12 @@ export function AllProjectsPage({ user, projects, onSelectProject, onCreateJoinR
               <div className="flex gap-2 pt-4 border-t">
                 <Button
                   onClick={() => {
-                    onCreateJoinRequest(selectedProject.id)
+                    onSelectProject(selectedProject.id)
                     setSelectedProject(null)
-                    toast.success("Đã gửi yêu cầu tham gia dự án")
                   }}
                   className="flex-1"
                 >
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Yêu cầu tham gia
+                  Xem dự án
                 </Button>
                 <Button variant="outline" onClick={() => setSelectedProject(null)} className="flex-1">
                   Đóng

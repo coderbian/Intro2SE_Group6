@@ -1,8 +1,50 @@
-# Intro2SE_Group6
+# Planora - Project Management System
 
 ## Project Overview
 
 This repository contains the code and documentation for the Intro to Software Engineering Group 6 project. The project focuses on developing **Planora** - a user-friendly, efficient, and AI-powered project management tool that supports both Kanban and Scrum methodologies.
+
+## 📁 Project Structure
+
+```
+Intro2SE_Group6/
+├── frontend/              # React + Vite frontend application
+│   ├── src/
+│   │   ├── components/    # React UI components
+│   │   │   ├── admin/     # Admin dashboard
+│   │   │   ├── auth/      # Authentication pages
+│   │   │   ├── chat/      # AI chat assistant
+│   │   │   ├── dashboard/ # User dashboard
+│   │   │   ├── kanban/    # Kanban board
+│   │   │   ├── layout/    # Main layout
+│   │   │   ├── project/   # Project details
+│   │   │   ├── scrum/     # Scrum board
+│   │   │   ├── ui/        # shadcn/ui components
+│   │   │   └── ...
+│   │   ├── contexts/      # React Context (Auth, App)
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── lib/           # Supabase client, utilities
+│   │   ├── routes/        # Route definitions
+│   │   ├── types/         # TypeScript types
+│   │   └── utils/         # Helper functions
+│   ├── .env               # Environment variables
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── supabase/              # Supabase Edge Functions (AI services)
+│   └── functions/
+│       ├── chat/              # AI chat assistant
+│       ├── enhance-description/ # Task description enhancement
+│       └── estimate-time/     # Time estimation
+│
+├── docs/                  # Documentation
+│   ├── analysis-and-design/
+│   ├── management/
+│   ├── requirements/
+│   └── test/
+│
+└── pa/                    # Project assignments
+```
 
 ## Tech Stack
 
@@ -24,8 +66,12 @@ This repository contains the code and documentation for the Intro to Software En
 - **next-themes** - Dark mode support
 
 ### Backend & Database
-- **Supabase** - Backend-as-a-Service (PostgreSQL database, Authentication, Real-time)
-- **@supabase/supabase-js 2.89.0** - Supabase client library
+- **Supabase** - Backend-as-a-Service
+  - PostgreSQL database
+  - Authentication (Email, OAuth)
+  - Edge Functions (AI services)
+  - Row Level Security (RLS)
+  - Real-time subscriptions
 
 ### State Management & Data Flow
 - **React Hooks** - useState, useEffect, useRef for local state
@@ -48,137 +94,49 @@ This repository contains the code and documentation for the Intro to Software En
 - **@vitejs/plugin-react-swc** - Fast React refresh with SWC compiler
 - **PostCSS & Autoprefixer** - CSS processing
 - **ESLint & Prettier** - Code quality and formatting
+- **tsx** - TypeScript execution for Node.js
+- **Jest** - Testing framework
 
-## Project Structure
+## 🚀 Quick Start
 
-```
-src/
-├── components/          # React components
-│   ├── admin/          # Admin dashboard components
-│   ├── auth/           # Login, Register, ForgotPassword
-│   ├── dashboard/      # User dashboard
-│   ├── figma/          # Figma integration components
-│   ├── kanban/         # Kanban board implementation
-│   ├── layout/         # MainLayout, navigation
-│   ├── member-requests/# Member request management
-│   ├── notifications/  # Notification components
-│   ├── profile/        # User profile management
-│   ├── project/        # Project detail page (Kanban/Scrum views, tasks)
-│   ├── projects/       # Project list view
-│   ├── routes/         # Route guards (ProtectedRoute, AdminRoute)
-│   ├── scrum/          # Scrum board implementation
-│   ├── settings/       # App settings
-│   ├── trash/          # Deleted items management
-│   ├── ui/             # shadcn/ui components
-│   ├── ProjectSelector.tsx
-│   └── theme-provider.tsx
-├── contexts/           # React Context providers
-│   ├── AppContext.tsx
-│   └── AuthContext.tsx
-├── hooks/              # Custom React hooks
-│   ├── useAuth.ts
-│   ├── useNotifications.ts
-│   ├── useProjects.ts
-│   ├── useSettings.ts
-│   ├── useSprints.ts
-│   ├── useSupabaseAuth.ts
-│   └── useTasks.ts
-├── lib/                # Utility functions and clients
-│   ├── supabase-client.ts  # Supabase client configuration
-│   └── utils.ts
-├── routes/             # Route definitions
-│   ├── AdminRoutes.tsx
-│   ├── ProtectedRoutes.tsx
-│   └── PublicRoutes.tsx
-├── types/              # TypeScript type definitions
-│   ├── index.ts        # Custom types
-│   └── supabase.ts     # Auto-generated Supabase types
-├── utils/              # Helper utilities
-│   └── permissions.ts
-├── dbml/               # Database schema designs
-├── guidelines/         # Development guidelines
-├── styles/             # Global CSS
-├── public/             # Static assets
-├── App.tsx             # Main app component with routing
-├── main.tsx            # React entry point
-└── index.html          # HTML template
-```
-
-## Run Locally
-
-Project code is in the `src` folder. The instructions below are for anyone cloning the repository.
-
-### Requirements
+### Prerequisites
 - **Node.js 18+** (recommended: Node 20 LTS)
-- **pnpm** recommended (the project includes `pnpm-lock.yaml`)
+- **pnpm** (recommended) or npm
+- **Supabase account** for database and authentication
 
-### Install and Run (Recommended with pnpm)
-
+### ⚠️ PowerShell Users (Windows)
+If you encounter script execution errors, run this in each new terminal:
 ```powershell
-# From the repository root
-cd ./src
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
 pnpm install
 pnpm dev
 ```
+Frontend runs at: **http://localhost:3000**
 
-### Build and Preview
+### Environment Variables
 
-```powershell
-# From the src folder
-pnpm build
-pnpm exec vite preview
+**Frontend** (`frontend/.env`):
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### Alternative: Using npm
+## 🛠️ Available Scripts
 
-```powershell
-# From the repository root
-cd ./src
-npm install
-npm run dev
-```
+### Frontend (`cd frontend`)
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server |
+| `pnpm build` | Build for production |
+| `pnpm preview` | Preview production build |
 
-### Clean Install (Start Fresh)
-
-```powershell
-# From the repository root
-cd ./src
-Remove-Item -Recurse -Force node_modules
-pnpm install
-pnpm dev
-```
-
-### Key Dependencies to Install
-
-All dependencies are defined in `package.json` and will be installed automatically. Major libraries include:
-
-**Core:**
-- `react@18.3.1`, `react-dom@18.3.1`
-- `react-router-dom@7.11.0`
-- `typescript@5.x`
-
-**UI & Styling:**
-- `tailwindcss@4.1.17`
-- `@radix-ui/*` (multiple packages)
-- `lucide-react@0.454.0`
-- `next-themes@0.4.6`
-
-**Backend:**
-- `@supabase/supabase-js@2.89.0` (Supabase client)
-
-**Utilities:**
-- `sonner@2.0.3` (toast notifications)
-- `recharts@2.15.2` (charts)
-- `react-hook-form@7.55.0` (forms)
-- `class-variance-authority@0.7.1`, `clsx@2.1.1`, `tailwind-merge@2.5.5`
-- `vaul@1.1.2` (drawer components)
-
-**Dev Tools:**
-- `vite@6.3.5`
-- `@vitejs/plugin-react-swc@3.10.2`
-- `@types/react@19.2.2`, `@types/react-dom@19.2.2`
-
-## Features
+## ✨ Features
 
 ### User Features
 - 🔐 User authentication (register, login, password recovery)
@@ -198,6 +156,12 @@ All dependencies are defined in `package.json` and will be installed automatical
 - ⚙️ System settings configuration
 - 💾 Backup and restore functionality
 
-## Notes
-- Run all commands from the `src` directory (where `package.json` lives)
-- Keep `pnpm-lock.yaml` to reproduce exact dependency versions
+## 📚 Documentation
+
+- [Developer Guide](DEVELOPER.md)
+- [Supabase Migration](SUPABASE_MIGRATION.md)
+- [Project Documentation](docs/)
+
+## 📄 License
+
+MIT License

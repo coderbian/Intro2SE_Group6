@@ -7,7 +7,7 @@ import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
 import { useNotifications } from '../hooks/useNotifications';
 import { useSettings } from '../hooks/useSettings';
-import type { User, Project, Task, Sprint, Settings, Notification, ProjectInvitation, JoinRequest } from '../types';
+import type { User, Project, Task, Sprint, Settings, Notification, ProjectInvitation } from '../types';
 import type { UserRole } from '../hooks/useSupabaseAuth';
 
 interface AppContextType {
@@ -25,7 +25,6 @@ interface AppContextType {
     projects: Project[];
     selectedProjectId: string | null;
     invitations: ProjectInvitation[];
-    joinRequests: JoinRequest[];
     handleSelectProject: (projectId: string) => void;
     handleUpdateProject: (projectId: string, updates: Partial<Project>) => void;
     handleDeleteProject: (projectId: string) => void;
@@ -33,9 +32,7 @@ interface AppContextType {
     handlePermanentlyDeleteProject: (projectId: string) => void;
     handleSendInvitation: (projectId: string, email: string) => void;
     handleAcceptInvitation: (invitationId: string) => void;
-    handleCreateJoinRequest: (projectId: string) => void;
-    handleApproveJoinRequest: (requestId: string) => void;
-    handleRejectJoinRequest: (requestId: string) => void;
+    handleRejectInvitation: (invitationId: string) => void;
 
     // Tasks
     tasks: Task[];
@@ -87,10 +84,9 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
 
     // Use all hooks
     const auth = useSupabaseAuth();
-    const notificationsHook = useNotifications();
+    const notificationsHook = useNotifications({ user: auth.user });
     const projectsHook = useProjects({
         user: auth.user,
-        onAddNotification: notificationsHook.handleAddNotification
     });
     const tasksHook = useTasks({
         user: auth.user,
@@ -183,8 +179,8 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
                 userId: project.ownerId,
                 type: 'project_update',
                 title: 'Có đề xuất nhiệm vụ mới',
-                message: `${auth.user.name} đã đề xuất tạo nhiệm vụ: "${task.title}" trong dự án "${project.name}"`,
-                read: false,
+                content: `${auth.user.name} đã đề xuất tạo nhiệm vụ: "${task.title}" trong dự án "${project.name}"`,
+                isRead: false,
             });
         }
         toast.success('Đã gửi đề xuất nhiệm vụ!');
@@ -199,8 +195,8 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
             userId: proposal.proposedBy,
             type: 'project_update',
             title: 'Đề xuất được chấp thuận',
-            message: `Đề xuất của bạn cho nhiệm vụ "${proposal.title}" đã được chấp thuận`,
-            read: false,
+            content: `Đề xuất của bạn cho nhiệm vụ "${proposal.title}" đã được chấp thuận`,
+            isRead: false,
         });
         toast.success('Đã phê duyệt đề xuất!');
     };
@@ -214,8 +210,8 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
             userId: proposal.proposedBy,
             type: 'project_update',
             title: 'Đề xuất bị từ chối',
-            message: `Đề xuất của bạn cho nhiệm vụ "${proposal.title}" đã bị từ chối`,
-            read: false,
+            content: `Đề xuất của bạn cho nhiệm vụ "${proposal.title}" đã bị từ chối`,
+            isRead: false,
         });
         toast.success('Đã từ chối đề xuất!');
     };
@@ -235,7 +231,6 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         projects: projectsHook.projects,
         selectedProjectId: projectsHook.selectedProjectId,
         invitations: projectsHook.invitations,
-        joinRequests: projectsHook.joinRequests,
         handleSelectProject,
         handleUpdateProject: projectsHook.handleUpdateProject,
         handleDeleteProject,
@@ -243,9 +238,7 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         handlePermanentlyDeleteProject,
         handleSendInvitation: projectsHook.handleSendInvitation,
         handleAcceptInvitation: projectsHook.handleAcceptInvitation,
-        handleCreateJoinRequest: projectsHook.handleRequestJoinProject,
-        handleApproveJoinRequest: projectsHook.handleApproveJoinRequest,
-        handleRejectJoinRequest: projectsHook.handleRejectJoinRequest,
+        handleRejectInvitation: projectsHook.handleRejectInvitation,
 
         // Tasks
         tasks: tasksHook.tasks,

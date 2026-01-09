@@ -24,6 +24,8 @@ export function getSupabaseClient() {
   return supabaseClient
 }
 
+export const supabase = getSupabaseClient()
+
 function createInMemoryStorage() {
   const store: Record<string, string> = {}
   return {

@@ -73,7 +73,6 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
         settings,
         notifications,
         invitations,
-        joinRequests,
         handleSelectProject,
         handleLogout,
         handleUpdateSettings,
@@ -83,9 +82,7 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
         handleAddNotification,
         handleSendInvitation,
         handleAcceptInvitation,
-        handleCreateJoinRequest,
-        handleApproveJoinRequest,
-        handleRejectJoinRequest,
+        handleRejectInvitation,
         handleRestoreProject,
         handlePermanentlyDeleteProject,
         handleRestoreTask,
@@ -95,15 +92,9 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
 
     const { handleChangePassword } = useAuth();
 
-    // Filter notifications and join requests for current user
+    // Filter notifications and invitations for current user
     const userNotifications = notifications.filter((n) => n.userId === user?.id);
     const userInvitations = invitations.filter((i) => i.invitedEmail === user?.email);
-    const managerJoinRequests = joinRequests.filter((r) => {
-        const proj = projects.find((p) => p.id === r.projectId);
-        const isManager =
-            proj?.members.find((m) => m.userId === user?.id)?.role === 'manager' || proj?.ownerId === user?.id;
-        return isManager;
-    });
 
     return (
         <ProtectedRoute user={user}>
@@ -114,7 +105,6 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                 settings={settings}
                 notifications={userNotifications}
                 invitations={userInvitations}
-                joinRequests={managerJoinRequests}
                 onSelectProject={handleSelectProject}
                 onLogout={handleLogout}
                 onUpdateSettings={handleUpdateSettings}
@@ -124,9 +114,7 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                 onAddNotification={handleAddNotification}
                 onSendInvitation={handleSendInvitation}
                 onAcceptInvitation={handleAcceptInvitation}
-                onCreateJoinRequest={handleCreateJoinRequest}
-                onApproveJoinRequest={handleApproveJoinRequest}
-                onRejectJoinRequest={handleRejectJoinRequest}
+                onRejectInvitation={handleRejectInvitation}
                 onRestoreProject={handleRestoreProject}
                 onPermanentlyDeleteProject={handlePermanentlyDeleteProject}
                 onRestoreTask={handleRestoreTask}
@@ -177,11 +165,11 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                                 user={user!}
                                 projects={projects}
                                 onSelectProject={handleSelectProject}
-                                onCreateJoinRequest={handleCreateJoinRequest}
                             />
                         }
                     />
-                    <Route
+                    {/* Member requests removed - invitation-only system */}
+                    {/* <Route
                         path="/member-requests"
                         element={
                             <MemberRequestsPage
@@ -190,7 +178,7 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                                 onRejectJoinRequest={handleRejectJoinRequest}
                             />
                         }
-                    />
+                    /> */}
                     <Route path="/project/:projectId" element={<ProjectPageWrapper />} />
                 </Routes>
             </MainLayout>
