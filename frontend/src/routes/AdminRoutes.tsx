@@ -10,7 +10,6 @@ export function AdminRoutes() {
 
     const handleAdminLogout = async () => {
         await handleLogout();
-        toast.success('Đã đăng xuất khỏi admin');
         navigate('/login');
     };
 

@@ -109,9 +109,8 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 // Note: We don't show toast on SIGNED_IN here because this event
                 // also fires during session refreshes and page reloads.
                 // The success toast is shown in handleLogin instead.
-                if (event === 'SIGNED_OUT') {
-                    toast.info('Đã đăng xuất');
-                }
+                // We also don't show toast on SIGNED_OUT to avoid duplicate toasts
+                // since handleLogout will show its own toast.
             }
         );
 
@@ -211,6 +210,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             setSession(null);
             setAdminEmail(null);
             setRole(null);
+            toast.success('Đã đăng xuất thành công');
         } catch (error) {
             toast.error('Đã xảy ra lỗi khi đăng xuất');
         }

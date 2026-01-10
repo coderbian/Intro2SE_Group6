@@ -3,9 +3,10 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
-import { LayoutDashboard, Mail } from 'lucide-react';
+import { LayoutDashboard, Mail, Github } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { toast } from 'sonner';
+import { getSupabaseClient } from '../../lib/supabase-client';
 
 interface RegisterPageProps {
   onRegister: (data: { email: string; password: string; name: string; phone?: string }) => void;
@@ -13,6 +14,7 @@ interface RegisterPageProps {
 }
 
 export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps) {
+  const supabase = getSupabaseClient();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -77,12 +79,45 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
   };
 
   const handleGoogleRegister = () => {
-    // Mock Google registration
-    onRegister({
-      email: 'demo@planora.com',
-      password: 'demo123',
-      name: 'Demo User',
-    });
+    if (typeof window === "undefined") return;
+
+    supabase.auth
+      .signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: new URL("/auth/callback", window.location.origin).toString(),
+        },
+      })
+      .then(({ error }) => {
+        if (error) {
+          toast.error(error.message || "Không thể đăng ký với Google");
+        }
+      })
+      .catch((err) => {
+        console.error("Google OAuth sign-up failed:", err);
+        toast.error("Không thể đăng ký với Google");
+      });
+  };
+
+  const handleGithubRegister = () => {
+    if (typeof window === "undefined") return;
+
+    supabase.auth
+      .signInWithOAuth({
+        provider: "github",
+        options: {
+          redirectTo: new URL("/auth/callback", window.location.origin).toString(),
+        },
+      })
+      .then(({ error }) => {
+        if (error) {
+          toast.error(error.message || "Không thể đăng ký với GitHub");
+        }
+      })
+      .catch((err) => {
+        console.error("GitHub OAuth sign-up failed:", err);
+        toast.error("Không thể đăng ký với GitHub");
+      });
   };
 
   return (
@@ -112,8 +147,18 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
               className="w-full"
               onClick={handleGoogleRegister}
             >
-              <Mail className="w-4 h-4 mr-2" />
+              <Mail className="w-4 h-4 mr-2 text-red-500" />
               Đăng ký với Google
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleGithubRegister}
+            >
+              <Github className="w-4 h-4 mr-2 text-gray-800" />
+              Đăng ký với GitHub
             </Button>
 
             <div className="relative">

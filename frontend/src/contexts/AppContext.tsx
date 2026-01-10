@@ -121,18 +121,14 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
     };
 
     const handleLogout = async () => {
-        try {
-            await auth.handleLogout();
-            projectsHook.setSelectedProjectId(null);
-            // Ensure Login page never inherits a previous user's dark mode.
-            // Always use light mode for logged-out screens.
-            if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-                document.documentElement.classList.remove('dark');
-            }
-            navigate('/login');
-        } catch (error) {
-            toast.error('Không thể đăng xuất. Vui lòng thử lại.');
+        await auth.handleLogout();
+        projectsHook.setSelectedProjectId(null);
+        // Ensure Login page never inherits a previous user's dark mode.
+        // Always use light mode for logged-out screens.
+        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+            document.documentElement.classList.remove('dark');
         }
+        navigate('/login');
     };
 
     const handleSelectProject = (projectId: string) => {
@@ -183,7 +179,6 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
                 isRead: false,
             });
         }
-        toast.success('Đã gửi đề xuất nhiệm vụ!');
     };
 
     const handleApproveTaskProposal = (proposalId: string) => {
@@ -198,7 +193,6 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
             content: `Đề xuất của bạn cho nhiệm vụ "${proposal.changes.title || 'Unknown'}" đã được chấp thuận`,
             isRead: false,
         });
-        toast.success('Đã phê duyệt đề xuất!');
     };
 
     const handleRejectTaskProposal = (proposalId: string) => {
@@ -213,7 +207,6 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
             content: `Đề xuất của bạn cho nhiệm vụ "${proposal.changes.title || 'Unknown'}" đã bị từ chối`,
             isRead: false,
         });
-        toast.success('Đã từ chối đề xuất!');
     };
 
     const value: AppContextType = {
