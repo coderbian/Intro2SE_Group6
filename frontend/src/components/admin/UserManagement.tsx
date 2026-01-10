@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
-import { LayoutDashboard, Users, Shield, Settings, Database, LogOut, UserPlus, KeyRound, UserCog, Trash2, User, ShieldCheck, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Users, Shield, FolderKanban, BarChart3, Settings, LogOut, KeyRound, Loader2, UserPlus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getAllUsers, resetUserPassword, updateUserStatus, type AdminUser } from '@/services/adminService'
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,7 @@ import { SettingsModal } from "../settings/SettingsModal"
 
 interface AdminDashboardProps {
   adminEmail?: string
-  onNavigate: (page: 'dashboard' | 'users' | 'roles') => void
+  onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'projects') => void
   onLogout?: () => void
 }
 
@@ -143,7 +143,7 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>Giám sát hệ thống</span>
+                <span>Tổng quan</span>
               </button>
             </li>
             <li>
@@ -162,6 +162,15 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
               >
                 <Shield className="h-4 w-4" />
                 <span>Quản lý vai trò</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => onNavigate('projects')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                <FolderKanban className="h-4 w-4" />
+                <span>Quản lý dự án</span>
               </button>
             </li>
           </ul>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LayoutDashboard, Users, Shield, Settings, Database, LogOut, Activity, FolderKanban, CheckSquare, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Users, Shield, FolderKanban, BarChart3, LogOut, Settings, Activity, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getActivityLogs, getSystemStats, type ActivityLog, type SystemStats } from '@/services/adminService'
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,7 @@ import { SettingsModal } from "../settings/SettingsModal"
 
 interface SystemMonitoringProps {
   adminEmail?: string
-  onNavigate: (page: 'dashboard' | 'users' | 'roles') => void
+  onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'projects' | 'statistics') => void
   onLogout?: () => void
 }
 
@@ -137,6 +137,24 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
               >
                 <Shield className="h-4 w-4" />
                 <span>Quản lý vai trò</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => onNavigate('projects')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                <FolderKanban className="h-4 w-4" />
+                <span>Quản lý dự án</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => onNavigate('statistics')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span>Thống kê</span>
               </button>
             </li>
           </ul>
@@ -323,7 +341,7 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center justify-center h-[250px]">
                   <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-4 rounded-2xl shadow-lg mb-4">
-                    <CheckSquare className="w-12 h-12 text-white" />
+                    <Activity className="w-12 h-12 text-white" />
                   </div>
                   <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : stats?.totalTasks ?? 0}

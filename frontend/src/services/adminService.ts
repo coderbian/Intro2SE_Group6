@@ -195,3 +195,213 @@ export async function deleteUser(userId: string): Promise<void> {
     // For safety, we soft-delete by suspending the user
     return updateUserStatus(userId, 'suspended');
 }
+
+// ===== PROJECT MANAGEMENT =====
+
+export interface AdminProject {
+    id: string;
+    name: string;
+    description: string | null;
+    owner_id: string;
+    owner_name: string | null;
+    owner_email: string | null;
+    member_count: number;
+    task_count: number;
+    created_at: string;
+    updated_at: string;
+}
+
+/**
+ * Fetch all projects for admin management
+ */
+export async function getAllProjects(): Promise<AdminProject[]> {
+    const supabase = getSupabaseClient();
+
+    // Fetch projects with owner info
+    const { data: projects, error } = await supabase
+        .from('projects')
+        .select(`
+            *,
+            owner:owner_id (name, email)
+        `)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching projects:', error);
+        throw new Error('Không thể tải danh sách dự án');
+    }
+
+    // Get member counts and task counts
+    const projectIds = (projects || []).map(p => p.id);
+
+    const [membersResult, tasksResult] = await Promise.all([
+        supabase
+            .from('project_members')
+            .select('project_id')
+            .in('project_id', projectIds),
+        supabase
+            .from('tasks')
+            .select('project_id')
+            .in('project_id', projectIds)
+            .is('deleted_at', null),
+    ]);
+
+    // Count members and tasks per project
+    const memberCounts = new Map<string, number>();
+    const taskCounts = new Map<string, number>();
+
+    (membersResult.data || []).forEach((m: { project_id: string }) => {
+        memberCounts.set(m.project_id, (memberCounts.get(m.project_id) || 0) + 1);
+    });
+
+    (tasksResult.data || []).forEach((t: { project_id: string }) => {
+        taskCounts.set(t.project_id, (taskCounts.get(t.project_id) || 0) + 1);
+    });
+
+    return (projects || []).map((p: {
+        id: string;
+        name: string;
+        description: string | null;
+        owner_id: string;
+        owner?: { name: string; email: string } | null;
+        created_at: string;
+        updated_at: string;
+    }) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        owner_id: p.owner_id,
+        owner_name: p.owner?.name || null,
+        owner_email: p.owner?.email || null,
+        member_count: memberCounts.get(p.id) || 0,
+        task_count: taskCounts.get(p.id) || 0,
+        created_at: p.created_at,
+        updated_at: p.updated_at,
+    }));
+}
+
+/**
+ * Delete a project (soft delete)
+ */
+export async function deleteProject(projectId: string): Promise<void> {
+    const supabase = getSupabaseClient();
+
+    const { error } = await supabase
+        .from('projects')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', projectId);
+
+    if (error) {
+        console.error('Error deleting project:', error);
+        throw new Error('Không thể xóa dự án');
+    }
+}
+
+// ===== DETAILED STATISTICS =====
+
+export interface TaskStatusStats {
+    status: string;
+    count: number;
+}
+
+export interface MonthlyStats {
+    month: string;
+    projects: number;
+    users: number;
+}
+
+export interface DetailedStats {
+    tasksByStatus: TaskStatusStats[];
+    monthlyData: MonthlyStats[];
+    usersByRole: { role: string; count: number }[];
+    totalStats: {
+        totalUsers: number;
+        totalProjects: number;
+        totalTasks: number;
+        completedTasks: number;
+    };
+}
+
+/**
+ * Fetch detailed statistics for charts
+ */
+export async function getDetailedStats(): Promise<DetailedStats> {
+    const supabase = getSupabaseClient();
+
+    // Fetch all data in parallel
+    const [usersResult, projectsResult, tasksResult] = await Promise.all([
+        supabase.from('users').select('id, role, created_at'),
+        supabase.from('projects').select('id, created_at').is('deleted_at', null),
+        supabase.from('tasks').select('id, status, created_at').is('deleted_at', null),
+    ]);
+
+    const users = usersResult.data || [];
+    const projects = projectsResult.data || [];
+    const tasks = tasksResult.data || [];
+
+    // Tasks by status
+    const statusCounts = new Map<string, number>();
+    tasks.forEach((t: { status: string }) => {
+        const status = t.status || 'unknown';
+        statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+    });
+    const tasksByStatus: TaskStatusStats[] = Array.from(statusCounts.entries()).map(([status, count]) => ({
+        status,
+        count,
+    }));
+
+    // Users by role
+    const roleCounts = new Map<string, number>();
+    users.forEach((u: { role?: string }) => {
+        const role = u.role || 'user';
+        roleCounts.set(role, (roleCounts.get(role) || 0) + 1);
+    });
+    const usersByRole = Array.from(roleCounts.entries()).map(([role, count]) => ({
+        role,
+        count,
+    }));
+
+    // Monthly data (last 6 months)
+    const monthlyData: MonthlyStats[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthStr = date.toLocaleDateString('vi-VN', { month: 'short', year: '2-digit' });
+        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+        const projectCount = projects.filter((p: { created_at: string }) => {
+            const d = new Date(p.created_at);
+            return d >= startOfMonth && d <= endOfMonth;
+        }).length;
+
+        const userCount = users.filter((u: { created_at: string }) => {
+            const d = new Date(u.created_at);
+            return d >= startOfMonth && d <= endOfMonth;
+        }).length;
+
+        monthlyData.push({
+            month: monthStr,
+            projects: projectCount,
+            users: userCount,
+        });
+    }
+
+    // Total stats
+    const completedTasks = tasks.filter((t: { status: string }) =>
+        t.status === 'done' || t.status === 'completed'
+    ).length;
+
+    return {
+        tasksByStatus,
+        monthlyData,
+        usersByRole,
+        totalStats: {
+            totalUsers: users.length,
+            totalProjects: projects.length,
+            totalTasks: tasks.length,
+            completedTasks,
+        },
+    };
+}

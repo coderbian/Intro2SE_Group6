@@ -1,7 +1,6 @@
 import { Route, Routes, Navigate, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { AdminRoute } from '../components/routes/AdminRoute';
-import { AdminDashboard, RoleManagement, SystemMonitoring, SystemSettings, BackupRestore } from '../components/admin';
+import { AdminDashboard, RoleManagement, ProjectManagement, Dashboard } from '../components/admin';
 import { useApp } from '../contexts/AppContext';
 
 export function AdminRoutes() {
@@ -13,7 +12,7 @@ export function AdminRoutes() {
         navigate('/login');
     };
 
-    const handleAdminNavigate = (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => {
+    const handleAdminNavigate = (page: 'dashboard' | 'users' | 'roles' | 'projects') => {
         navigate(`/admin/${page}`);
     };
 
@@ -23,17 +22,7 @@ export function AdminRoutes() {
                 <Route
                     path="dashboard"
                     element={
-                        <SystemMonitoring
-                            adminEmail={adminEmail || undefined}
-                            onNavigate={handleAdminNavigate}
-                            onLogout={handleAdminLogout}
-                        />
-                    }
-                />
-                <Route
-                    path="monitoring"
-                    element={
-                        <SystemMonitoring
+                        <Dashboard
                             adminEmail={adminEmail || undefined}
                             onNavigate={handleAdminNavigate}
                             onLogout={handleAdminLogout}
@@ -61,19 +50,9 @@ export function AdminRoutes() {
                     }
                 />
                 <Route
-                    path="settings"
+                    path="projects"
                     element={
-                        <SystemSettings
-                            adminEmail={adminEmail || undefined}
-                            onNavigate={handleAdminNavigate}
-                            onLogout={handleAdminLogout}
-                        />
-                    }
-                />
-                <Route
-                    path="backup"
-                    element={
-                        <BackupRestore
+                        <ProjectManagement
                             adminEmail={adminEmail || undefined}
                             onNavigate={handleAdminNavigate}
                             onLogout={handleAdminLogout}
