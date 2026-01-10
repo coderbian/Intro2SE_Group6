@@ -183,10 +183,16 @@ export function useProjects({ user }: UseProjectsProps) {
             email
           )
         `)
-        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching invitations:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Fetched invitations:', data); // Debug log
 
       const transformedInvitations: ProjectInvitation[] = (data || []).map((inv: any) => ({
         id: inv.id,
@@ -200,8 +206,10 @@ export function useProjects({ user }: UseProjectsProps) {
       }));
 
       setInvitations(transformedInvitations);
+      console.log('Transformed invitations:', transformedInvitations); // Debug log
     } catch (err: any) {
       console.error('Error fetching invitations:', err);
+      toast.error('Không thể tải lời mời: ' + err.message);
     }
   }, [user]);
 
@@ -573,8 +581,10 @@ export function useProjects({ user }: UseProjectsProps) {
 
       if (insertError) throw insertError;
 
+      console.log('Created invitation:', invitation); // Debug log
+
       // 5. Create notification
-      await supabase.from('notifications').insert({
+      const { error: notificationError } = await supabase.from('notifications').insert({
         user_id: existingUser.id,
         type: 'project_invite',
         title: 'Lời mời tham gia dự án',
@@ -583,6 +593,13 @@ export function useProjects({ user }: UseProjectsProps) {
         entity_id: projectId,
         is_read: false,
       });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Don't throw - invitation was created successfully
+      } else {
+        console.log('Notification created successfully');
+      }
 
       // 6. Refresh invitations
       await fetchInvitations();
@@ -737,7 +754,243 @@ export function useProjects({ user }: UseProjectsProps) {
   };
 
   // ========================================
-  // 13. HELPER FUNCTIONS
+  // 13. REMOVE MEMBER FROM PROJECT
+  // ========================================
+  const handleRemoveMember = async (projectId: string, userId: string) => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập');
+      return { success: false };
+    }
+
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) {
+      toast.error('Không tìm thấy dự án');
+      return { success: false };
+    }
+
+    // Check if current user is manager or owner
+    const currentUserMember = project.members.find((m) => m.userId === user.id);
+    const isOwner = project.ownerId === user.id;
+    const isManager = currentUserMember?.role === 'manager';
+
+    if (!isOwner && !isManager) {
+      toast.error('Chỉ chủ dự án hoặc quản lý mới có thể xóa thành viên');
+      return { success: false };
+    }
+
+    // Cannot remove owner
+    if (userId === project.ownerId) {
+      toast.error('Không thể xóa chủ dự án');
+      return { success: false };
+    }
+
+    // Cannot remove yourself (use leave project instead)
+    if (userId === user.id) {
+      toast.error('Không thể tự xóa mình. Hãy dùng chức năng "Rời khỏi dự án"');
+      return { success: false };
+    }
+
+    try {
+      const memberToRemove = project.members.find((m) => m.userId === userId);
+
+      // Delete from project_members
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('project_id', projectId)
+        .eq('user_id', userId);
+
+      if (error) {
+        if (error.code === 'PGRST301') {
+          toast.error('Bạn không có quyền xóa thành viên này');
+        } else {
+          throw error;
+        }
+        return { success: false };
+      }
+
+      // Notify removed member
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'member_added',
+        title: 'Bị xóa khỏi dự án',
+        content: `Bạn đã bị ${user.name} xóa khỏi dự án "${project.name}"`,
+        entity_type: 'project',
+        entity_id: projectId,
+        is_read: false,
+      });
+
+      // Optimistic update
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId
+            ? {
+                ...p,
+                members: p.members.filter((m) => m.userId !== userId),
+              }
+            : p
+        )
+      );
+
+      toast.success(`Đã xóa ${memberToRemove?.name || 'thành viên'} khỏi dự án`);
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error removing member:', err);
+      toast.error('Không thể xóa thành viên: ' + err.message);
+      fetchProjects(); // Refetch to sync
+      return { success: false };
+    }
+  };
+
+  // ========================================
+  // 14. LEAVE PROJECT (MEMBER SELF-REMOVE)
+  // ========================================
+  const handleLeaveProject = async (projectId: string) => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập');
+      return { success: false };
+    }
+
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) {
+      toast.error('Không tìm thấy dự án');
+      return { success: false };
+    }
+
+    // Cannot leave if you're the owner
+    if (project.ownerId === user.id) {
+      toast.error('Chủ dự án không thể rời khỏi dự án. Hãy xóa dự án hoặc chuyển quyền sở hữu trước.');
+      return { success: false };
+    }
+
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('project_id', projectId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Notify owner and managers
+      const managersAndOwner = project.members.filter(
+        (m) => (m.role === 'manager' || m.userId === project.ownerId) && m.userId !== user.id
+      );
+
+      for (const member of managersAndOwner) {
+        await supabase.from('notifications').insert({
+          user_id: member.userId,
+          type: 'member_added',
+          title: 'Thành viên rời khỏi dự án',
+          content: `${user.name} đã rời khỏi dự án "${project.name}"`,
+          entity_type: 'project',
+          entity_id: projectId,
+          is_read: false,
+        });
+      }
+
+      // Remove from local state
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+
+      // Deselect if current project
+      if (selectedProjectId === projectId) {
+        setSelectedProjectId(null);
+      }
+
+      toast.success(`Đã rời khỏi dự án "${project.name}"`);
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error leaving project:', err);
+      toast.error('Không thể rời khỏi dự án');
+      return { success: false };
+    }
+  };
+
+  // ========================================
+  // 15. UPDATE MEMBER ROLE
+  // ========================================
+  const handleUpdateMemberRole = async (
+    projectId: string,
+    userId: string,
+    newRole: 'manager' | 'member'
+  ) => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập');
+      return { success: false };
+    }
+
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) {
+      toast.error('Không tìm thấy dự án');
+      return { success: false };
+    }
+
+    // Only owner can change roles
+    if (project.ownerId !== user.id) {
+      toast.error('Chỉ chủ dự án mới có thể thay đổi vai trò thành viên');
+      return { success: false };
+    }
+
+    // Cannot change owner role
+    if (userId === project.ownerId) {
+      toast.error('Không thể thay đổi vai trò của chủ dự án');
+      return { success: false };
+    }
+
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .update({ role: newRole })
+        .eq('project_id', projectId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      const member = project.members.find((m) => m.userId === userId);
+
+      // Notify member
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'member_added',
+        title: 'Vai trò đã thay đổi',
+        content: `${user.name} đã thay đổi vai trò của bạn thành "${
+          newRole === 'manager' ? 'Quản lý' : 'Thành viên'
+        }" trong dự án "${project.name}"`,
+        entity_type: 'project',
+        entity_id: projectId,
+        is_read: false,
+      });
+
+      // Optimistic update
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId
+            ? {
+                ...p,
+                members: p.members.map((m) =>
+                  m.userId === userId ? { ...m, role: newRole } : m
+                ),
+              }
+            : p
+        )
+      );
+
+      toast.success(
+        `Đã thay đổi vai trò của ${member?.name || 'thành viên'} thành ${
+          newRole === 'manager' ? 'Quản lý' : 'Thành viên'
+        }`
+      );
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error updating member role:', err);
+      toast.error('Không thể thay đổi vai trò');
+      fetchProjects();
+      return { success: false };
+    }
+  };
+
+  // ========================================
+  // 16. HELPER FUNCTIONS
   // ========================================
   const handleSelectProject = (projectId: string) => {
     setSelectedProjectId(projectId);
@@ -747,7 +1000,7 @@ export function useProjects({ user }: UseProjectsProps) {
   const getDeletedProjects = () => projects.filter((p) => p.deletedAt);
 
   // ========================================
-  // 14. RETURN VALUES
+  // 17. RETURN VALUES
   // ========================================
   return {
     projects,
@@ -766,6 +1019,9 @@ export function useProjects({ user }: UseProjectsProps) {
     handleSendInvitation,
     handleAcceptInvitation,
     handleRejectInvitation,
+    handleRemoveMember,
+    handleLeaveProject,
+    handleUpdateMemberRole,
     getActiveProjects,
     getDeletedProjects,
   };

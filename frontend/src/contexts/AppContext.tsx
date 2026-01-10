@@ -33,6 +33,9 @@ interface AppContextType {
     handleSendInvitation: (projectId: string, email: string) => void;
     handleAcceptInvitation: (invitationId: string) => void;
     handleRejectInvitation: (invitationId: string) => void;
+    handleRemoveMember: (projectId: string, userId: string) => Promise<{ success: boolean }>;
+    handleLeaveProject: (projectId: string) => Promise<{ success: boolean }>;
+    handleUpdateMemberRole: (projectId: string, userId: string, newRole: 'manager' | 'member') => Promise<{ success: boolean }>;
 
     // Tasks
     tasks: Task[];
@@ -239,6 +242,9 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         handleSendInvitation: projectsHook.handleSendInvitation,
         handleAcceptInvitation: projectsHook.handleAcceptInvitation,
         handleRejectInvitation: projectsHook.handleRejectInvitation,
+        handleRemoveMember: projectsHook.handleRemoveMember,
+        handleLeaveProject: projectsHook.handleLeaveProject,
+        handleUpdateMemberRole: projectsHook.handleUpdateMemberRole,
 
         // Tasks
         tasks: tasksHook.tasks,
