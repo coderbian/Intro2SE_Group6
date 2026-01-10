@@ -1,7 +1,9 @@
 ﻿"use client"
 
-import { useState } from "react"
-import { LayoutDashboard, Users, Shield, Settings, Database, LogOut, UserPlus, KeyRound, UserCog, Trash2, User, ShieldCheck } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { LayoutDashboard, Users, Shield, Settings, Database, LogOut, UserPlus, KeyRound, UserCog, Trash2, User, ShieldCheck, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { getAllUsers, resetUserPassword, updateUserStatus, type AdminUser } from '@/services/adminService'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -40,8 +42,9 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashboardProps) {
   const [activeNav, setActiveNav] = useState("users")
-  const [resetPasswordUser, setResetPasswordUser] = useState<{ id: number; name: string; email: string } | null>(null)
+  const [resetPasswordUser, setResetPasswordUser] = useState<{ id: string; name: string; email: string } | null>(null)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
   const [settings, setSettings] = useState({
     theme: 'light' as 'light' | 'dark',
     language: 'vi' as 'vi' | 'en',
@@ -54,52 +57,69 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
     linkedAccounts: {},
   })
 
-  const mockUsers = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      email: "nguyenvana@example.com",
-      avatar: "/placeholder.svg?height=40&width=40",
-      role: "Admin",
-      roleColor: "default",
-      joinDate: "15/01/2024",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      email: "tranthib@example.com",
-      avatar: "/placeholder.svg?height=40&width=40",
-      role: "Manager",
-      roleColor: "secondary",
-      joinDate: "20/01/2024",
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      email: "levanc@example.com",
-      avatar: "/placeholder.svg?height=40&width=40",
-      role: "Member",
-      roleColor: "outline",
-      joinDate: "25/01/2024",
-      status: "active",
-    },
-    {
-      id: 4,
-      name: "Phạm Thị D",
-      email: "phamthid@example.com",
-      avatar: "/placeholder.svg?height=40&width=40",
-      role: "Member",
-      roleColor: "outline",
-      joinDate: "01/02/2024",
-      status: "inactive",
-    },
-  ]
+  // Real data states
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleResetPassword = () => {
-    console.log("[v0] Resetting password for user:", resetPasswordUser)
-    setResetPasswordUser(null)
+  // Fetch users from Supabase
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await getAllUsers()
+        setUsers(data)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Đã xảy ra lỗi'
+        setError(message)
+        toast.error(message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUsers()
+  }, [])
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordUser) return
+
+    setIsResetting(true)
+    try {
+      await resetUserPassword(resetPasswordUser.email)
+      toast.success(`Đã gửi email đặt lại mật khẩu đến ${resetPasswordUser.email}`)
+      setResetPasswordUser(null)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể gửi email'
+      toast.error(message)
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  const handleToggleUserStatus = async (user: AdminUser) => {
+    const newStatus = user.status === 'active' ? 'suspended' : 'active'
+    try {
+      await updateUserStatus(user.id, newStatus)
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: newStatus } : u))
+      toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'khóa'} tài khoản ${user.name}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể cập nhật trạng thái'
+      toast.error(message)
+    }
+  }
+
+  // Helper to format date
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('vi-VN')
+  }
+
+  // Helper to get role display info
+  const getRoleDisplay = (role: string) => {
+    return role === 'admin'
+      ? { label: 'Admin', variant: 'default' as const }
+      : { label: 'Thành viên', variant: 'secondary' as const }
   }
 
   const adminUsername = adminEmail ? adminEmail.split('@')[0] : 'Admin'
@@ -213,75 +233,6 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="border border-blue-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-white">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-blue-700 font-semibold uppercase tracking-wide">Tổng người dùng</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    {mockUsers.length}
-                  </div>
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-md">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-green-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-white">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-green-700 font-semibold uppercase tracking-wide">Đang hoạt động</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    {mockUsers.filter(u => u.status === 'active').length}
-                  </div>
-                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2.5 rounded-xl shadow-md">
-                    <ShieldCheck className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-purple-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-white">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-purple-700 font-semibold uppercase tracking-wide">Quản trị viên</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    {mockUsers.filter(u => u.role === 'Admin').length}
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-2.5 rounded-xl shadow-md">
-                    <Shield className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-orange-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 to-white">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-orange-700 font-semibold uppercase tracking-wide">Thành viên mới</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                    +2
-                  </div>
-                  <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-2.5 rounded-xl shadow-md">
-                    <UserPlus className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                <p className="text-xs text-orange-700 font-medium mt-2">
-                  Tuần này
-                </p>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Users Table */}
           <Card className="border shadow-md">
@@ -310,67 +261,90 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                  {mockUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                            <AvatarFallback className="text-[11px]">{user.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium text-foreground text-xs">{user.name}</div>
-                            <div className="text-[11px] text-muted-foreground">{user.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.roleColor as "default" | "secondary" | "outline"}>
-                          {user.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{user.joinDate}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={user.status === "active" ? "default" : "destructive"}
-                          className={user.status === "active" ? "bg-green-500 hover:bg-green-600" : ""}
-                        >
-                          {user.status === "active" ? "Hoạt động" : "Bị khóa"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            title="Đặt lại mật khẩu"
-                            onClick={() => setResetPasswordUser({ id: user.id, name: user.name, email: user.email })}
-                          >
-                            <KeyRound className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            title="Chỉnh sửa vai trò"
-                          >
-                            <UserCog className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            title="Xóa/Khóa tài khoản"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                          <p className="text-muted-foreground mt-2">Đang tải...</p>
+                        </TableCell>
+                      </TableRow>
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-destructive">
+                          {error}
+                        </TableCell>
+                      </TableRow>
+                    ) : users.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Chưa có người dùng nào
+                        </TableCell>
+                      </TableRow>
+                    ) : users.map((user) => {
+                      const roleDisplay = getRoleDisplay(user.role)
+                      return (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={user.avatar_url || "/placeholder.svg"} alt={user.name} />
+                                <AvatarFallback className="text-[11px]">{user.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium text-foreground text-xs">{user.name}</div>
+                                <div className="text-[11px] text-muted-foreground">{user.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={roleDisplay.variant}>
+                              {roleDisplay.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{formatDate(user.created_at)}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={user.status === "active" ? "default" : "destructive"}
+                              className={user.status === "active" ? "bg-green-500 hover:bg-green-600" : ""}
+                            >
+                              {user.status === "active" ? "Hoạt động" : "Bị khóa"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                title="Đặt lại mật khẩu"
+                                onClick={() => setResetPasswordUser({ id: user.id, name: user.name, email: user.email })}
+                              >
+                                <KeyRound className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                title="Chỉnh sửa vai trò"
+                              >
+                                <UserCog className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                title={user.status === 'active' ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'}
+                                onClick={() => handleToggleUserStatus(user)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -408,7 +382,8 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
             >
               Hủy
             </Button>
-            <Button onClick={handleResetPassword}>
+            <Button onClick={handleResetPassword} disabled={isResetting}>
+              {isResetting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Xác nhận
             </Button>
           </DialogFooter>
