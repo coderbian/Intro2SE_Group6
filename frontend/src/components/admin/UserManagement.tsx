@@ -35,8 +35,8 @@ import { cn } from "@/lib/utils"
 import { SettingsModal } from "../settings/SettingsModal"
 
 interface AdminDashboardProps {
-  adminEmail?: string // added adminEmail prop
-  onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => void
+  adminEmail?: string
+  onNavigate: (page: 'dashboard' | 'users' | 'roles') => void
   onLogout?: () => void
 }
 
@@ -162,24 +162,6 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
               >
                 <Shield className="h-4 w-4" />
                 <span>Quản lý vai trò</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => onNavigate('settings')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <Settings className="h-4 w-4" />
-                <span>Cấu hình hệ thống</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => onNavigate('backup')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <Database className="h-4 w-4" />
-                <span>Backup/Restore</span>
               </button>
             </li>
           </ul>
@@ -320,14 +302,6 @@ export function AdminDashboard({ adminEmail, onNavigate, onLogout }: AdminDashbo
                                 onClick={() => setResetPasswordUser({ id: user.id, name: user.name, email: user.email })}
                               >
                                 <KeyRound className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                title="Chỉnh sửa vai trò"
-                              >
-                                <UserCog className="h-3.5 w-3.5" />
                               </Button>
                               <Button
                                 variant="ghost"
