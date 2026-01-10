@@ -1,14 +1,40 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase-client';
+import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
-import type { User } from './useAuth';
-import type { Notification } from './useNotifications';
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'backlog' | 'todo' | 'in-progress' | 'done' | 'deleted';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  type?: 'task' | 'user-story' | 'bug' | 'epic';
+  dueDate?: string;
+  deadline?: string; // Alias for dueDate for backward compatibility
+  parentTaskId?: string;
+  sprintId?: string;
+  projectId: string;
+  createdBy: string;
+  assignees: string[];
+  comments: Comment[];
+  attachments: Attachment[];
+  labels?: string[];
+  timeEstimate?: number;
+  timeSpent?: number;
+  storyPoints?: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
 
 export interface Comment {
   id: string;
   taskId: string;
-  userId: string;
-  userName: string;
   content: string;
+  authorId: string;
+  authorName?: string;
+  userName?: string; // Alias for authorName
   createdAt: string;
 }
 
@@ -19,245 +45,683 @@ export interface Attachment {
   url: string;
   type: string;
   uploadedBy: string;
-  uploadedAt: string;
-}
-
-export interface Task {
-  id: string;
-  projectId: string;
-  type: 'user-story' | 'task';
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'backlog' | 'todo' | 'in-progress' | 'done';
-  assignees: string[];
-  deadline?: string;
-  labels: string[];
-  storyPoints?: number;
-  parentTaskId?: string;
-  sprintId?: string;
-  createdBy: string;
   createdAt: string;
-  comments: Comment[];
-  attachments: Attachment[];
-  deletedAt?: string;
+  uploadedAt?: string; // Alias for createdAt
 }
 
 export interface TaskProposal {
   id: string;
-  projectId: string;
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  taskId: string;
   proposedBy: string;
-  proposedByName: string;
+  changes: Partial<Task>;
+  reason?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
 
-interface UseTasksProps {
-  user: User | null;
-  onAddNotification?: (notification: Omit<Notification, 'id' | 'createdAt'>) => void;
-}
-
-export function useTasks({ user, onAddNotification }: UseTasksProps) {
+export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskProposals, setTaskProposals] = useState<TaskProposal[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Persist to localStorage
-  useEffect(() => {
-    localStorage.setItem('planora_tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem('planora_task_proposals', JSON.stringify(taskProposals));
-  }, [taskProposals]);
-
-  const handleCreateTask = (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => {
-    const newTask: Task = {
-      ...task,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      comments: [],
-      attachments: [],
-    };
-
-    setTasks((prevTasks) => {
-      const updatedTasks = [...prevTasks, newTask];
-
-      // Nếu task mới thuộc một User Story, cập nhật lại trạng thái User Story
-      if (newTask.parentTaskId && newTask.type === 'task') {
-        const parentStory = updatedTasks.find((t) => t.id === newTask.parentTaskId);
-        // Nếu User Story đang "done" mà có task mới chưa done → chuyển về "in-progress"
-        if (parentStory && parentStory.status === 'done' && newTask.status !== 'done') {
-          return updatedTasks.map((t) =>
-            t.id === newTask.parentTaskId ? { ...t, status: 'in-progress' as const } : t
-          );
-        }
+  // Fetch tasks from Supabase
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setTasks([]);
+        setLoading(false);
+        return;
       }
 
-      return updatedTasks;
-    });
+      // Get user's projects first
+      const { data: projectMembers, error: projectError } = await supabase
+        .from('project_members')
+        .select('project_id')
+        .eq('user_id', user.id);
 
-    if (task.assignees.length > 0 && user && onAddNotification) {
-      task.assignees.forEach((assigneeId) => {
-        if (assigneeId !== user.id) {
-          onAddNotification({
-            userId: assigneeId,
-            type: 'task_assigned',
-            title: 'Bạn được giao một nhiệm vụ mới',
-            message: `${user.name} đã giao cho bạn nhiệm vụ: "${newTask.title}"`,
-            read: false,
-            relatedId: newTask.id,
-          });
-        }
-      });
+      if (projectError) throw projectError;
+
+      const projectIds = projectMembers?.map(pm => pm.project_id) || [];
+
+      if (projectIds.length === 0) {
+        setTasks([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch tasks with nested data
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          task_assignees!task_assignees_task_id_fkey (
+            user_id,
+            users!task_assignees_user_id_fkey (
+              id,
+              name,
+              email
+            )
+          ),
+          comments (
+            id,
+            content,
+            author_id,
+            created_at,
+            users!comments_author_id_fkey (
+              id,
+              name
+            )
+          ),
+          attachments (
+            id,
+            name,
+            url,
+            type,
+            uploaded_by,
+            created_at
+          )
+        `)
+        .in('project_id', projectIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform database format to app format
+      const transformedTasks: Task[] = (data || []).map((dbTask: any) => ({
+        id: dbTask.id,
+        title: dbTask.title,
+        description: dbTask.description || '',
+        status: dbTask.status,
+        priority: dbTask.priority,
+        type: dbTask.type,
+        dueDate: dbTask.due_date,
+        parentTaskId: dbTask.parent_id,
+        sprintId: dbTask.sprint_id,
+        projectId: dbTask.project_id,
+        createdBy: dbTask.reporter_id,
+        assignees: (dbTask.task_assignees || []).map((ta: any) => ta.user_id),
+        comments: (dbTask.comments || []).map((c: any) => ({
+          id: c.id,
+          taskId: dbTask.id,
+          content: c.content,
+          authorId: c.author_id,
+          authorName: c.users?.name || 'Unknown',
+          createdAt: c.created_at,
+        })),
+        attachments: (dbTask.attachments || []).map((a: any) => ({
+          id: a.id,
+          taskId: dbTask.id,
+          name: a.name,
+          url: a.url,
+          type: a.type,
+          uploadedBy: a.uploaded_by,
+          createdAt: a.created_at,
+        })),
+        labels: dbTask.labels || [],
+        timeEstimate: dbTask.time_estimate,
+        timeSpent: dbTask.time_spent,
+        createdAt: dbTask.created_at,
+        updatedAt: dbTask.updated_at,
+        deletedAt: dbTask.deleted_at,
+      }));
+
+      setTasks(transformedTasks);
+      setLoading(false);
+    } catch (error: any) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to fetch tasks: ' + error.message);
+      setLoading(false);
     }
-
-    return newTask;
   };
 
-  const handleUpdateTask = (taskId: string, updates: Partial<Task>) => {
-    setTasks((prevTasks) => {
-      const updatedTasks = prevTasks.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
+  // Setup realtime subscriptions
+  useEffect(() => {
+    fetchTasks();
 
-      // Auto-update User Story status if a Task is updated
-      const updatedTask = updatedTasks.find((t) => t.id === taskId);
-      if (updatedTask?.parentTaskId && updatedTask.type === 'task') {
-        const siblingTasks = updatedTasks.filter((t) => t.parentTaskId === updatedTask.parentTaskId);
-        const allDone = siblingTasks.every((t) => t.status === 'done');
-        const anyInProgress = siblingTasks.some((t) => t.status === 'in-progress' || t.status === 'done');
+    // Subscribe to tasks changes
+    const tasksChannel = supabase
+      .channel('tasks_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          fetchTasks();
+        }
+      )
+      .subscribe();
 
-        // Find and update parent User Story
-        return updatedTasks.map((t) => {
-          if (t.id === updatedTask.parentTaskId) {
-            if (allDone && siblingTasks.length > 0) {
-              return { ...t, status: 'done' as const };
-            } else if (anyInProgress) {
-              return { ...t, status: 'in-progress' as const };
-            } else {
-              return { ...t, status: 'todo' as const };
-            }
-          }
-          return t;
-        });
+    // Subscribe to comments changes
+    const commentsChannel = supabase
+      .channel('comments_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'comments' },
+        () => {
+          fetchTasks();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to attachments changes
+    const attachmentsChannel = supabase
+      .channel('attachments_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'attachments' },
+        () => {
+          fetchTasks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(tasksChannel);
+      supabase.removeChannel(commentsChannel);
+      supabase.removeChannel(attachmentsChannel);
+    };
+  }, []);
+
+  // Create a new task
+  const createTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to create tasks');
+        return { success: false };
       }
 
-      return updatedTasks;
-    });
+      const newTaskId = uuidv4();
+      const now = new Date().toISOString();
+
+      // Get next task number for this project
+      const { data: existingTasks, error: countError } = await supabase
+        .from('tasks')
+        .select('task_number')
+        .eq('project_id', taskData.projectId)
+        .order('task_number', { ascending: false })
+        .limit(1);
+
+      if (countError) throw countError;
+
+      const nextTaskNumber = existingTasks && existingTasks.length > 0 
+        ? existingTasks[0].task_number + 1 
+        : 1;
+
+      // Insert task
+      const { data: newTask, error: taskError } = await supabase
+        .from('tasks')
+        .insert({
+          id: newTaskId,
+          project_id: taskData.projectId,
+          task_number: nextTaskNumber,
+          title: taskData.title,
+          description: taskData.description,
+          status: taskData.status,
+          priority: taskData.priority,
+          type: taskData.type || 'task',
+          due_date: taskData.dueDate,
+          parent_id: taskData.parentTaskId,
+          sprint_id: taskData.sprintId,
+          reporter_id: user.id,
+          time_estimate: taskData.timeEstimate,
+          time_spent: taskData.timeSpent,
+          created_at: now,
+          updated_at: now,
+        })
+        .select()
+        .single();
+
+      if (taskError) throw taskError;
+
+      // Insert assignees
+      if (taskData.assignees && taskData.assignees.length > 0) {
+        const assigneesData = taskData.assignees.map(userId => ({
+          task_id: newTaskId,
+          user_id: userId,
+          assigned_at: now,
+        }));
+
+        const { error: assigneesError } = await supabase
+          .from('task_assignees')
+          .insert(assigneesData);
+
+        if (assigneesError) throw assigneesError;
+
+        // Send notifications to assignees
+        for (const assigneeId of taskData.assignees) {
+          if (assigneeId !== user.id) {
+            await supabase.from('notifications').insert({
+              user_id: assigneeId,
+              type: 'task_assigned',
+              title: 'New Task Assigned',
+              message: `You have been assigned to task: ${taskData.title}`,
+              related_id: newTaskId,
+              created_at: now,
+            });
+          }
+        }
+      }
+
+      // Update parent task status if applicable
+      if (taskData.parentTaskId) {
+        await updateParentTaskStatus(taskData.parentTaskId);
+      }
+
+      toast.success('Task created successfully!');
+      await fetchTasks();
+      return { success: true, taskId: newTaskId };
+    } catch (error: any) {
+      console.error('Error creating task:', error);
+      toast.error('Failed to create task: ' + error.message);
+      return { success: false };
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, deletedAt: new Date().toISOString() } : t)));
-    toast.success('Nhiệm vụ đã được di chuyển vào thùng rác');
+  // Update parent task status based on subtasks
+  const updateParentTaskStatus = async (parentTaskId: string) => {
+    try {
+      const { data: subtasks, error } = await supabase
+        .from('tasks')
+        .select('status')
+        .eq('parent_id', parentTaskId)
+        .is('deleted_at', null);
+
+      if (error) throw error;
+
+      if (!subtasks || subtasks.length === 0) return;
+
+      const allDone = subtasks.every((task: any) => task.status === 'done');
+      const anyInProgress = subtasks.some((task: any) => task.status === 'in-progress');
+
+      let newStatus: 'todo' | 'in-progress' | 'done' = 'todo';
+      if (allDone) {
+        newStatus = 'done';
+      } else if (anyInProgress) {
+        newStatus = 'in-progress';
+      }
+
+      await supabase
+        .from('tasks')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', parentTaskId);
+
+    } catch (error) {
+      console.error('Error updating parent task status:', error);
+    }
   };
 
-  const handleRestoreTask = (taskId: string) => {
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, deletedAt: undefined } : t)));
-    toast.success('Nhiệm vụ đã được khôi phục');
+  // Update a task
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to update tasks');
+        return { success: false };
+      }
+
+      // Optimistic update
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId
+            ? { ...task, ...updates, updatedAt: new Date().toISOString() }
+            : task
+        )
+      );
+
+      // Prepare database updates
+      const dbUpdates: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (updates.title !== undefined) dbUpdates.title = updates.title;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
+      if (updates.type !== undefined) dbUpdates.type = updates.type;
+      if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+      if (updates.sprintId !== undefined) dbUpdates.sprint_id = updates.sprintId;
+      if (updates.timeEstimate !== undefined) dbUpdates.time_estimate = updates.timeEstimate;
+      if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(dbUpdates)
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Update assignees if provided
+      if (updates.assignees !== undefined) {
+        // Delete existing assignees
+        await supabase
+          .from('task_assignees')
+          .delete()
+          .eq('task_id', taskId);
+
+        // Insert new assignees
+        if (updates.assignees.length > 0) {
+          const assigneesData = updates.assignees.map(userId => ({
+            task_id: taskId,
+            user_id: userId,
+            assigned_at: new Date().toISOString(),
+          }));
+
+          await supabase
+            .from('task_assignees')
+            .insert(assigneesData);
+        }
+      }
+
+      // Get parent task ID for status update
+      const { data: taskData } = await supabase
+        .from('tasks')
+        .select('parent_id')
+        .eq('id', taskId)
+        .single();
+
+      if (taskData?.parent_id) {
+        await updateParentTaskStatus(taskData.parent_id);
+      }
+
+      toast.success('Task updated successfully!');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error updating task:', error);
+      toast.error('Failed to update task: ' + error.message);
+      await fetchTasks(); // Rollback
+      return { success: false };
+    }
   };
 
-  const handlePermanentlyDeleteTask = (taskId: string) => {
-    setTasks(tasks.filter((t) => t.id !== taskId && t.parentTaskId !== taskId));
-    toast.success('Nhiệm vụ đã được xóa vĩnh viễn');
+  // Soft delete a task
+  const deleteTask = async (taskId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to delete tasks');
+        return { success: false };
+      }
+
+      // Optimistic update
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId
+            ? { ...task, status: 'deleted' as const, deletedAt: new Date().toISOString() }
+            : task
+        )
+      );
+
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          status: 'deleted',
+          deleted_at: now,
+          updated_at: now,
+        })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast.success('Task moved to trash');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task: ' + error.message);
+      await fetchTasks(); // Rollback
+      return { success: false };
+    }
   };
 
-  const handleDeleteTasksByProject = (projectId: string) => {
-    setTasks(tasks.filter((t) => t.projectId !== projectId));
+  // Restore a deleted task
+  const restoreTask = async (taskId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to restore tasks');
+        return { success: false };
+      }
+
+      // Optimistic update
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId
+            ? { ...task, status: 'todo' as const, deletedAt: undefined }
+            : task
+        )
+      );
+
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          status: 'todo',
+          deleted_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast.success('Task restored successfully');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error restoring task:', error);
+      toast.error('Failed to restore task: ' + error.message);
+      await fetchTasks(); // Rollback
+      return { success: false };
+    }
   };
 
-  const handleAddComment = (
-    taskId: string,
-    comment: { userId: string; userName: string; content: string }
-  ) => {
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      taskId,
-      ...comment,
-      createdAt: new Date().toISOString(),
-    };
+  // Permanently delete a task
+  const permanentlyDeleteTask = async (taskId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to permanently delete tasks');
+        return { success: false };
+      }
 
-    setTasks(
-      tasks.map((t) => (t.id === taskId ? { ...t, comments: [...t.comments, newComment] } : t))
-    );
+      // Optimistic update
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+
+      // Delete assignees first (foreign key constraint)
+      await supabase
+        .from('task_assignees')
+        .delete()
+        .eq('task_id', taskId);
+
+      // Delete comments
+      await supabase
+        .from('comments')
+        .delete()
+        .eq('task_id', taskId);
+
+      // Delete attachments
+      await supabase
+        .from('attachments')
+        .delete()
+        .eq('task_id', taskId);
+
+      // Delete the task
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast.success('Task permanently deleted');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error permanently deleting task:', error);
+      toast.error('Failed to permanently delete task: ' + error.message);
+      await fetchTasks(); // Rollback
+      return { success: false };
+    }
   };
 
-  const handleAddAttachment = (
-    taskId: string,
-    attachment: { name: string; url: string; type: string; uploadedBy: string }
-  ) => {
-    const newAttachment: Attachment = {
-      id: Date.now().toString(),
-      taskId,
-      ...attachment,
-      uploadedAt: new Date().toISOString(),
-    };
+  // Add a comment to a task
+  const addComment = async (taskId: string, content: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to add comments');
+        return { success: false };
+      }
 
-    setTasks(
-      tasks.map((t) =>
-        t.id === taskId ? { ...t, attachments: [...t.attachments, newAttachment] } : t
+      const newComment = {
+        id: uuidv4(),
+        task_id: taskId,
+        content,
+        author_id: user.id,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('comments')
+        .insert(newComment);
+
+      if (error) throw error;
+
+      toast.success('Comment added successfully');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment: ' + error.message);
+      return { success: false };
+    }
+  };
+
+  // Add an attachment to a task
+  const addAttachment = async (taskId: string, file: File) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to add attachments');
+        return { success: false };
+      }
+
+      // Upload file to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `task-attachments/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('attachments')
+        .getPublicUrl(filePath);
+
+      // Insert attachment record
+      const newAttachment = {
+        id: uuidv4(),
+        task_id: taskId,
+        name: file.name,
+        url: publicUrl,
+        type: file.type,
+        file_size: file.size,
+        uploaded_by: user.id,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('attachments')
+        .insert(newAttachment);
+
+      if (error) throw error;
+
+      toast.success('Attachment added successfully');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error adding attachment:', error);
+      toast.error('Failed to add attachment: ' + error.message);
+      return { success: false };
+    }
+  };
+
+  // Task Proposals (kept in memory for now, can migrate to DB later)
+  const proposeTaskChange = async (taskId: string, changes: Partial<Task>, reason?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to propose changes');
+        return { success: false };
+      }
+
+      const newProposal: TaskProposal = {
+        id: uuidv4(),
+        taskId,
+        proposedBy: user.id,
+        changes,
+        reason,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+
+      setTaskProposals(prev => [...prev, newProposal]);
+      toast.success('Proposal submitted successfully');
+      return { success: true, proposalId: newProposal.id };
+    } catch (error: any) {
+      console.error('Error proposing task change:', error);
+      toast.error('Failed to propose change: ' + error.message);
+      return { success: false };
+    }
+  };
+
+  const approveProposal = async (proposalId: string) => {
+    const proposal = taskProposals.find(p => p.id === proposalId);
+    if (!proposal) return { success: false };
+
+    const result = await updateTask(proposal.taskId, proposal.changes);
+    
+    if (result.success) {
+      setTaskProposals(prev =>
+        prev.map(p =>
+          p.id === proposalId ? { ...p, status: 'approved' as const } : p
+        )
+      );
+      toast.success('Proposal approved and applied');
+    }
+    
+    return result;
+  };
+
+  const rejectProposal = (proposalId: string) => {
+    setTaskProposals(prev =>
+      prev.map(p =>
+        p.id === proposalId ? { ...p, status: 'rejected' as const } : p
       )
     );
+    toast.success('Proposal rejected');
+    return { success: true };
   };
-
-  const handleProposeTask = (proposal: Omit<TaskProposal, 'id' | 'createdAt' | 'status'>) => {
-    const newProposal: TaskProposal = {
-      ...proposal,
-      id: Date.now().toString(),
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-    setTaskProposals([...taskProposals, newProposal]);
-    toast.success('Đề xuất nhiệm vụ đã được gửi');
-  };
-
-  const handleApproveProposal = (proposalId: string) => {
-    const proposal = taskProposals.find((p) => p.id === proposalId);
-    if (!proposal || !user) return;
-
-    // Create task from proposal
-    handleCreateTask({
-      projectId: proposal.projectId,
-      type: 'task',
-      title: proposal.title,
-      description: proposal.description,
-      priority: proposal.priority,
-      status: 'todo',
-      assignees: [proposal.proposedBy],
-      labels: [],
-      createdBy: user.id,
-    });
-
-    setTaskProposals(taskProposals.map((p) => (p.id === proposalId ? { ...p, status: 'approved' } : p)));
-    toast.success('Đã phê duyệt đề xuất');
-  };
-
-  const handleRejectProposal = (proposalId: string) => {
-    setTaskProposals(taskProposals.map((p) => (p.id === proposalId ? { ...p, status: 'rejected' } : p)));
-    toast.success('Đã từ chối đề xuất');
-  };
-
-  const getActiveTasks = () => tasks.filter((t) => !t.deletedAt);
-  const getDeletedTasks = () => tasks.filter((t) => t.deletedAt);
-  const getTasksByProject = (projectId: string) => tasks.filter((t) => t.projectId === projectId && !t.deletedAt);
 
   return {
     tasks,
-    setTasks,
     taskProposals,
-    handleCreateTask,
-    handleUpdateTask,
-    handleDeleteTask,
-    handleRestoreTask,
-    handlePermanentlyDeleteTask,
-    handleDeleteTasksByProject,
-    handleAddComment,
-    handleAddAttachment,
-    handleProposeTask,
-    handleApproveProposal,
-    handleRejectProposal,
-    getActiveTasks,
-    getDeletedTasks,
-    getTasksByProject,
+    loading,
+    createTask,
+    updateTask,
+    deleteTask,
+    restoreTask,
+    permanentlyDeleteTask,
+    addComment,
+    addAttachment,
+    proposeTaskChange,
+    approveProposal,
+    rejectProposal,
   };
-}
+};

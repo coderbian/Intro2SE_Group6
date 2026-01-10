@@ -9,9 +9,11 @@ export interface Notification {
   type: 'task_assigned' | 'task_completed' | 'member_added' | 'project_update' | 'task_mentioned' | 'project_invite' | 'invitation_rejected';
   title: string;
   content: string;
+  message?: string; // Alias for content
   entityType?: string;
   entityId?: string;
   isRead: boolean;
+  read?: boolean; // Alias for isRead
   readAt?: string;
   createdAt: string;
 }
