@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
-import { Lock, Mail, Github, Facebook } from "lucide-react"
+import { Lock, Mail, Github } from "lucide-react"
 import type { Settings } from "../../types"
 
 interface SettingsPageProps {
@@ -15,7 +15,7 @@ interface SettingsPageProps {
 export function SettingsPage({ settings, onUpdateSettings, onNavigate }: SettingsPageProps) {
   const [linkedAccounts, setLinkedAccounts] = useState(settings?.linkedAccounts || {})
 
-  const handleLinkAccount = (provider: "google" | "facebook" | "github", email: string) => {
+  const handleLinkAccount = (provider: "google" | "github", email: string) => {
     const updatedAccounts = {
       ...linkedAccounts,
       [provider]: {
@@ -30,7 +30,7 @@ export function SettingsPage({ settings, onUpdateSettings, onNavigate }: Setting
     })
   }
 
-  const handleUnlinkAccount = (provider: "google" | "facebook" | "github") => {
+  const handleUnlinkAccount = (provider: "google" | "github") => {
     const updatedAccounts = { ...linkedAccounts }
     delete updatedAccounts[provider]
     setLinkedAccounts(updatedAccounts)
@@ -80,34 +80,6 @@ export function SettingsPage({ settings, onUpdateSettings, onNavigate }: Setting
                 }}
               >
                 {linkedAccounts.google ? "Bỏ liên kết" : "Liên kết"}
-              </Button>
-            </div>
-
-            {/* Facebook */}
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-              <div className="flex items-center gap-3">
-                <Facebook className="w-5 h-5 text-blue-600" />
-                <div>
-                  <p className="font-medium">Facebook</p>
-                  {linkedAccounts.facebook ? (
-                    <p className="text-sm text-gray-600">{linkedAccounts.facebook.email}</p>
-                  ) : (
-                    <p className="text-sm text-gray-500">Chưa liên kết</p>
-                  )}
-                </div>
-              </div>
-              <Button
-                variant={linkedAccounts.facebook ? "destructive" : "outline"}
-                size="sm"
-                onClick={() => {
-                  if (linkedAccounts.facebook) {
-                    handleUnlinkAccount("facebook")
-                  } else {
-                    handleLinkAccount("facebook", "user@facebook.com")
-                  }
-                }}
-              >
-                {linkedAccounts.facebook ? "Bỏ liên kết" : "Liên kết"}
               </Button>
             </div>
 

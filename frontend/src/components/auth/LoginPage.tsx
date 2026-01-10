@@ -7,7 +7,7 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card"
-import { LayoutDashboard, Mail, Github, Facebook } from 'lucide-react'
+import { LayoutDashboard, Mail, Github } from 'lucide-react'
 import { Separator } from "../ui/separator"
 import { toast } from "sonner"
 import { getSupabaseClient } from "../../lib/supabase-client"
@@ -88,10 +88,6 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
       })
   }
 
-  const handleFacebookLogin = () => {
-    toast.info("Đăng nhập Facebook đang được phát triển")
-  }
-
   const handleGithubLogin = () => {
     if (typeof window === "undefined") return
 
@@ -136,11 +132,6 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
                   <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleGoogleLogin}>
                     <Mail className="w-4 h-4 mr-2 text-red-500" />
                     Đăng nhập với Google
-                  </Button>
-
-                  <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleFacebookLogin}>
-                    <Facebook className="w-4 h-4 mr-2 text-blue-600" />
-                    Đăng nhập với Facebook
                   </Button>
 
                   <Button type="button" variant="outline" className="w-full bg-transparent" onClick={handleGithubLogin}>
