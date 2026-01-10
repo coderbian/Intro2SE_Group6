@@ -116,8 +116,8 @@ export function LoginPage({ onLogin, onSwitchToRegister, onForgotPassword }: Log
       <Card className="w-full max-w-md shadow-2xl border-0 backdrop-blur-sm bg-white/90 relative z-10">
         <CardHeader className="space-y-4 text-center pb-2">
           <div className="flex items-center justify-center">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-transform">
-              <LayoutDashboard className="w-10 h-10 text-white" />
+            <div className="rounded-2xl shadow-lg transform hover:scale-105 transition-transform overflow-hidden">
+              <img src="/logo.png" alt="Planora Logo" className="w-20 h-20 object-cover" />
             </div>
           </div>
           <div>
