@@ -57,13 +57,50 @@ export function TaskDialog({
   const [isEstimatingDeadline, setIsEstimatingDeadline] = useState(false);
   const [localAttachments, setLocalAttachments] = useState(task.attachments);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedTempIds, setUploadedTempIds] = useState<Set<string>>(new Set());
 
   // Sync local attachments when task prop changes (e.g., after fetchTasks)
   useEffect(() => {
-    setLocalAttachments(task.attachments);
+    setLocalAttachments(prev => {
+      const tempAttachments = prev.filter(a => a.id.startsWith('temp-'));
+      const realAttachments = task.attachments || [];
+      
+      // Remove temp attachments that now have real counterparts (same name)
+      const realNames = new Set(realAttachments.map(a => a.name));
+      const remainingTempAttachments = tempAttachments.filter(temp => !realNames.has(temp.name));
+      
+      // Combine: real attachments + temp attachments that don't have real counterparts yet
+      return [...realAttachments, ...remainingTempAttachments];
+    });
   }, [task.attachments]);
 
   const subtasks = allTasks.filter(t => t.parentTaskId === task.id);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // Helper function to get file icon based on type
+  const getFileIcon = (type: string, url: string) => {
+    if (type === 'image' || type.startsWith('image/')) {
+      return <ImageIcon className="w-6 h-6 text-blue-600 flex-shrink-0" />;
+    } else if (type.includes('pdf')) {
+      return <FileText className="w-6 h-6 text-red-600 flex-shrink-0" />;
+    } else if (type.includes('word') || type.includes('document')) {
+      return <FileText className="w-6 h-6 text-blue-700 flex-shrink-0" />;
+    } else if (type.includes('sheet') || type.includes('excel')) {
+      return <FileText className="w-6 h-6 text-green-600 flex-shrink-0" />;
+    } else if (type === 'link' || url.startsWith('http')) {
+      return <LinkIcon className="w-6 h-6 text-purple-600 flex-shrink-0" />;
+    } else {
+      return <FileText className="w-6 h-6 text-gray-600 flex-shrink-0" />;
+    }
+  };
 
   const handleEnhanceDescription = async () => {
     if (!editedTask.description?.trim()) return;
@@ -202,12 +239,21 @@ export function TaskDialog({
     const file = e.target.files?.[0];
     if (!file || !onUploadFile) return;
 
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      toast.error('Kích thước file vượt quá 10MB. Vui lòng chọn file nhỏ hơn.');
+      e.target.value = '';
+      return;
+    }
+
     setIsUploading(true);
 
     // Optimistic update - show file immediately with temp ID
     const isImage = file.type.startsWith('image/');
+    const tempId = `temp-${Date.now()}`;
     const tempAttachment = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       taskId: task.id,
       name: file.name,
       url: URL.createObjectURL(file), // Temporary URL for preview
@@ -220,13 +266,21 @@ export function TaskDialog({
 
     try {
       const result = await onUploadFile(task.id, file);
-      if (!result.success) {
+      if (result.success) {
+        // Mark this temp as uploaded (no longer show loading)
+        setUploadedTempIds(prev => new Set(prev).add(tempId));
+        toast.success('Đã tải lên tệp tin thành công!');
+        // Keep temp attachment visible until useEffect detects the real one
+        // useEffect will automatically remove temp when it finds matching real attachment
+      } else {
         // Remove temp attachment if upload failed
-        setLocalAttachments(prev => prev.filter(a => a.id !== tempAttachment.id));
+        setLocalAttachments(prev => prev.filter(a => a.id !== tempId));
+        toast.error('Không thể tải lên tệp tin. Vui lòng thử lại.');
       }
     } catch (error) {
       console.error('File upload error:', error);
-      setLocalAttachments(prev => prev.filter(a => a.id !== tempAttachment.id));
+      setLocalAttachments(prev => prev.filter(a => a.id !== tempId));
+      toast.error('Lỗi khi tải lên tệp tin: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -501,24 +555,25 @@ export function TaskDialog({
 
                 {/* Attachments Tab */}
                 <TabsContent value="attachments" className="space-y-4 mt-4">
-                  <div className="flex gap-2 flex-wrap">
-                    <Input
-                      value={attachmentUrl}
-                      onChange={(e) => setAttachmentUrl(e.target.value)}
-                      placeholder="Nhập URL tài liệu (link hoặc hình ảnh)..."
-                      className="flex-1 min-w-[200px]"
-                    />
-                    <Button onClick={handleAddAttachment} className="gap-2 px-4">
-                      <Plus className="w-4 h-4" />
-                      <span className="hidden sm:inline">Thêm</span>
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="flex gap-2 flex-wrap">
+                      <Input
+                        value={attachmentUrl}
+                        onChange={(e) => setAttachmentUrl(e.target.value)}
+                        placeholder="Nhập URL tài liệu (link hoặc hình ảnh)..."
+                        className="flex-1 min-w-[200px]"
+                      />
+                      <Button onClick={handleAddAttachment} className="gap-2 px-4">
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline">Thêm URL</span>
+                      </Button>
                     {onUploadFile && (
-                      <label className="cursor-pointer">
+                      <label className="cursor-pointer" title="Tải lên tệp tin (tối đa 10MB)">
                         <input
                           type="file"
                           onChange={handleFileUpload}
                           className="hidden"
-                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar,.ppt,.pptx"
                           disabled={isUploading}
                         />
                         <Button
@@ -535,11 +590,17 @@ export function TaskDialog({
                               <Upload className="w-4 h-4" />
                             )}
                             <span className="hidden sm:inline">
-                              {isUploading ? 'Đang tải...' : 'Upload'}
+                              {isUploading ? 'Đang tải...' : 'Upload File'}
                             </span>
                           </span>
                         </Button>
                       </label>
+                    )}
+                    </div>
+                    {onUploadFile && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 Hỗ trợ: Ảnh, PDF, Word, Excel, PowerPoint, ZIP (tối đa 10MB)
+                      </p>
                     )}
                   </div>
 
@@ -555,38 +616,60 @@ export function TaskDialog({
                     </div>
                   ) : (
                     <div className="space-y-2.5">
-                      {localAttachments.map((attachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex items-center gap-3 p-4 bg-white border rounded-lg hover:shadow-sm transition-shadow"
-                        >
-                          {attachment.type === 'image' ? (
-                            <ImageIcon className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                          ) : (
-                            <FileText className="w-6 h-6 text-gray-600 flex-shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <a
-                              href={attachment.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm font-medium text-blue-600 hover:underline block truncate"
-                            >
-                              {attachment.name}
-                            </a>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {formatDateTime(attachment.uploadedAt)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteAttachment(attachment.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 transition-colors flex-shrink-0"
-                            title="Xóa tài liệu"
+                      {localAttachments.map((attachment) => {
+                        const fileSize = attachment.fileSize || 0;
+                        const isTemp = attachment.id.startsWith('temp-');
+                        const isUploaded = uploadedTempIds.has(attachment.id);
+                        const showLoading = isTemp && !isUploaded;
+                        
+                        return (
+                          <div
+                            key={attachment.id}
+                            className={`flex items-center gap-3 p-4 bg-white border rounded-lg hover:shadow-sm transition-shadow ${showLoading ? 'opacity-60' : ''}`}
                           >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                            {getFileIcon(attachment.type, attachment.url)}
+                            <div className="flex-1 min-w-0">
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-blue-600 hover:underline block truncate"
+                                title={attachment.name}
+                              >
+                                {attachment.name}
+                              </a>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <p className="text-xs text-gray-500">
+                                  {formatDateTime(attachment.uploadedAt)}
+                                </p>
+                                {fileSize > 0 && (
+                                  <>
+                                    <span className="text-xs text-gray-400">•</span>
+                                    <p className="text-xs text-gray-500">
+                                      {formatFileSize(fileSize)}
+                                    </p>
+                                  </>
+                                )}
+                                {showLoading && (
+                                  <>
+                                    <span className="text-xs text-gray-400">•</span>
+                                    <p className="text-xs text-orange-500">Đang tải...</p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            {!showLoading && (
+                              <button
+                                onClick={() => handleDeleteAttachment(attachment.id)}
+                                className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 transition-colors flex-shrink-0"
+                                title="Xóa tài liệu"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </TabsContent>

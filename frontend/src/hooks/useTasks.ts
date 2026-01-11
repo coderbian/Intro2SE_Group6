@@ -44,6 +44,7 @@ export interface Attachment {
   name: string;
   url: string;
   type: string;
+  fileSize?: number; // File size in bytes
   uploadedBy: string;
   createdAt: string;
   uploadedAt?: string; // Alias for createdAt
@@ -119,6 +120,7 @@ export const useTasks = () => {
             name,
             url,
             type,
+            file_size,
             uploaded_by,
             created_at
           )
@@ -157,6 +159,7 @@ export const useTasks = () => {
           name: a.name,
           url: a.url,
           type: a.type,
+          fileSize: a.file_size || 0,
           uploadedBy: a.uploaded_by,
           uploadedAt: a.created_at,
           createdAt: a.created_at,
@@ -608,24 +611,38 @@ export const useTasks = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('You must be logged in to add attachments');
+        toast.error('Bạn cần đăng nhập để tải lên tệp tin');
+        return { success: false };
+      }
+
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        toast.error('Kích thước file vượt quá 10MB');
         return { success: false };
       }
 
       // Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `task-attachments/${fileName}`;
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${uuidv4()}.${fileExt}`;
+      const filePath = fileName; // No subfolder, just filename
 
-      const { error: uploadError } = await supabase.storage
-        .from('attachments')
-        .upload(filePath, file);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('task-attachments')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Lỗi tải lên: ${uploadError.message}`);
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('attachments')
+        .from('task-attachments')
         .getPublicUrl(filePath);
 
       // Insert attachment record
@@ -640,18 +657,22 @@ export const useTasks = () => {
         created_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('attachments')
         .insert(newAttachment);
 
-      if (error) throw error;
+      if (dbError) {
+        // If database insert fails, delete the uploaded file
+        await supabase.storage.from('task-attachments').remove([filePath]);
+        throw new Error(`Lỗi lưu thông tin: ${dbError.message}`);
+      }
 
-      toast.success('Attachment added successfully');
+      toast.success('Đã tải lên tệp tin thành công!');
       await fetchTasks();
       return { success: true };
     } catch (error: any) {
       console.error('Error adding attachment:', error);
-      toast.error('Failed to add attachment: ' + error.message);
+      toast.error(error.message || 'Không thể tải lên tệp tin');
       return { success: false };
     }
   };
@@ -696,12 +717,39 @@ export const useTasks = () => {
   // Delete an attachment
   const deleteAttachment = async (attachmentId: string) => {
     try {
-      const { error } = await supabase
+      // First, get the attachment details to find the file path
+      const { data: attachment, error: fetchError } = await supabase
+        .from('attachments')
+        .select('url, type')
+        .eq('id', attachmentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete the database record
+      const { error: deleteError } = await supabase
         .from('attachments')
         .delete()
         .eq('id', attachmentId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
+
+      // If it's a file stored in Supabase Storage (not an external URL), delete it
+      if (attachment && attachment.url && attachment.url.includes('supabase')) {
+        try {
+          // Extract file path from URL
+          const urlParts = attachment.url.split('/storage/v1/object/public/attachments/');
+          if (urlParts.length > 1) {
+            const filePath = urlParts[1];
+            await supabase.storage
+              .from('task-attachments')
+              .remove([filePath]);
+          }
+        } catch (storageError) {
+          // Log but don't fail - the database record is already deleted
+          console.warn('Could not delete file from storage:', storageError);
+        }
+      }
 
       toast.success('Đã xóa tài liệu!');
       await fetchTasks();

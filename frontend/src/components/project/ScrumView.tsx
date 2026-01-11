@@ -558,6 +558,7 @@ export function ScrumView({
           onAddComment={onAddComment}
           onAddAttachment={onAddAttachment}
           onDeleteAttachment={onDeleteAttachment}
+          onUploadFile={onUploadFile}
         />
       )}
 

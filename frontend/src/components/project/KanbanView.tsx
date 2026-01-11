@@ -161,6 +161,7 @@ export function KanbanView({
           onAddComment={onAddComment}
           onAddAttachment={onAddAttachment}
           onDeleteAttachment={onDeleteAttachment}
+          onUploadFile={onUploadFile}
         />
       )}
 
