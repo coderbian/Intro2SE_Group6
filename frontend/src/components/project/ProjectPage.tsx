@@ -25,6 +25,8 @@ interface ProjectPageProps {
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void
+  onDeleteAttachment: (attachmentId: string) => void
+  onUploadFile?: (taskId: string, file: File) => Promise<{ success: boolean }>
   onCreateSprint?: (projectId: string, name: string, goal: string, taskIds: string[]) => void
   onEndSprint?: (sprintId: string) => void
 }
@@ -43,6 +45,8 @@ export function ProjectPage({
   onDeleteTask,
   onAddComment,
   onAddAttachment,
+  onDeleteAttachment,
+  onUploadFile,
   onCreateSprint,
   onEndSprint,
 }: ProjectPageProps) {
@@ -140,6 +144,8 @@ export function ProjectPage({
                 onDeleteTask={onDeleteTask}
                 onAddComment={onAddComment}
                 onAddAttachment={onAddAttachment}
+                onDeleteAttachment={onDeleteAttachment}
+                onUploadFile={onUploadFile}
               />
             ) : (
               <ScrumView
@@ -154,19 +160,25 @@ export function ProjectPage({
                 onDeleteTask={onDeleteTask}
                 onAddComment={onAddComment}
                 onAddAttachment={onAddAttachment}
+                onDeleteAttachment={onDeleteAttachment}
+                onUploadFile={onUploadFile}
                 onCreateSprint={onCreateSprint}
                 onEndSprint={onEndSprint}
               />
             )}
           </TabsContent>
 
-          <TabsContent value="members" className="m-0">
-            <ProjectMembers user={user} project={project} isManager={isManager} onUpdateProject={onUpdateProject} />
+          <TabsContent value="members" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+              <ProjectMembers user={user} project={project} isManager={isManager} onUpdateProject={onUpdateProject} />
+            </div>
           </TabsContent>
 
           {isManager && (
-            <TabsContent value="settings" className="m-0">
-              <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} onMoveToTrash={onMoveToTrash} />
+            <TabsContent value="settings" className="m-0 p-0 flex-1 overflow-auto">
+              <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+                <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} onMoveToTrash={onMoveToTrash} />
+              </div>
             </TabsContent>
           )}
         </div>

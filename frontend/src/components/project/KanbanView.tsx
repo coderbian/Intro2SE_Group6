@@ -5,7 +5,8 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "../ui/button"
 import { Badge } from "../ui/badge"
-import { Plus, CheckSquare } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import { Plus, CheckSquare, ListTodo, Clock, CheckCircle2 } from "lucide-react"
 import { TaskDialog } from "./TaskDialog"
 import { CreateTaskDialog } from "./CreateTaskDialog"
 import { TaskCard } from "./TaskCard"
@@ -22,6 +23,8 @@ interface KanbanViewProps {
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void
+  onDeleteAttachment: (attachmentId: string) => void
+  onUploadFile?: (taskId: string, file: File) => Promise<{ success: boolean }>
 }
 
 const columns = [
@@ -41,6 +44,8 @@ export function KanbanView({
   onDeleteTask,
   onAddComment,
   onAddAttachment,
+  onDeleteAttachment,
+  onUploadFile,
 }: KanbanViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -48,6 +53,13 @@ export function KanbanView({
 
   // Filter out subtasks (they're shown inside parent tasks)
   const mainTasks = tasks.filter((t) => !t.parentTaskId)
+
+  // Calculate statistics
+  const totalTasks = mainTasks.length
+  const todoTasks = mainTasks.filter(t => t.status === 'todo' || t.status === 'backlog').length
+  const inProgressTasks = mainTasks.filter(t => t.status === 'in-progress').length
+  const completedTasks = mainTasks.filter(t => t.status === 'done').length
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
   const handleOpenCreate = (status: Task["status"]) => {
     setCreateColumnStatus(status)
@@ -78,9 +90,72 @@ export function KanbanView({
   }
 
   return (
-    <div className="h-full p-6 lg:p-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 h-full">
-        {columns.map((column) => (
+    <div className="h-full flex flex-col">
+      {/* Kanban Stats */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b px-6 py-5">
+        <div className="grid md:grid-cols-3 gap-4 lg:gap-5">
+          <Card className="border border-blue-200 hover:shadow-lg transition-all bg-white">
+            <CardHeader className="pb-2 pt-3 px-4 bg-gradient-to-br from-blue-50 to-white">
+              <CardTitle className="flex items-center gap-2 text-sm font-bold text-blue-900">
+                <div className="p-1.5 bg-blue-100 rounded-lg">
+                  <ListTodo className="w-4 h-4 text-blue-600" />
+                </div>
+                Tổng nhiệm vụ
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2 pb-3 px-4">
+              <div className="text-2xl font-bold mb-1 text-gray-900">
+                {totalTasks}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">
+                {todoTasks} chờ • {inProgressTasks} đang làm
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-green-200 hover:shadow-lg transition-all bg-white">
+            <CardHeader className="pb-2 pt-3 px-4 bg-gradient-to-br from-green-50 to-white">
+              <CardTitle className="flex items-center gap-2 text-sm font-bold text-green-900">
+                <div className="p-1.5 bg-green-100 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                </div>
+                Hoàn thành
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2 pb-3 px-4">
+              <div className="text-2xl font-bold mb-1 text-gray-900">
+                {completedTasks}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">
+                {completionRate}% tiến độ
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-purple-200 hover:shadow-lg transition-all bg-white">
+            <CardHeader className="pb-2 pt-3 px-4 bg-gradient-to-br from-purple-50 to-white">
+              <CardTitle className="flex items-center gap-2 text-sm font-bold text-purple-900">
+                <div className="p-1.5 bg-purple-100 rounded-lg">
+                  <Clock className="w-4 h-4 text-purple-600" />
+                </div>
+                Đang xử lý
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2 pb-3 px-4">
+              <div className="text-2xl font-bold mb-1 text-gray-900">
+                {inProgressTasks}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">
+                Nhiệm vụ đang thực hiện
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Kanban Board */}
+      <div className="flex-1 p-6 lg:p-8 overflow-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 h-full">{columns.map((column) => (
           <div key={column.id} className="flex flex-col min-h-0 bg-white rounded-2xl shadow-lg border-2 hover:shadow-xl transition-shadow">
             <div className={`${column.color} px-6 py-5 rounded-t-2xl border-b-2`}>
               <div className="flex items-center justify-between">
@@ -142,6 +217,7 @@ export function KanbanView({
           </div>
         ))}
       </div>
+      </div>
 
       {selectedTask && (
         <TaskDialog
@@ -156,6 +232,8 @@ export function KanbanView({
           onCreateTask={onCreateTask}
           onAddComment={onAddComment}
           onAddAttachment={onAddAttachment}
+          onDeleteAttachment={onDeleteAttachment}
+          onUploadFile={onUploadFile}
         />
       )}
 
