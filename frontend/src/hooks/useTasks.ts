@@ -109,7 +109,7 @@ export const useTasks = () => {
             content,
             author_id,
             created_at,
-            users!comments_author_id_fkey (
+            users (
               id,
               name
             )
@@ -148,6 +148,7 @@ export const useTasks = () => {
           content: c.content,
           authorId: c.author_id,
           authorName: c.users?.name || 'Unknown',
+          userName: c.users?.name || 'Unknown',
           createdAt: c.created_at,
         })),
         attachments: (dbTask.attachments || []).map((a: any) => ({
@@ -160,6 +161,7 @@ export const useTasks = () => {
           createdAt: a.created_at,
         })),
         labels: dbTask.labels || [],
+        storyPoints: dbTask.story_points,
         timeEstimate: dbTask.time_estimate,
         timeSpent: dbTask.time_spent,
         createdAt: dbTask.created_at,
@@ -245,8 +247,8 @@ export const useTasks = () => {
 
       if (countError) throw countError;
 
-      const nextTaskNumber = existingTasks && existingTasks.length > 0 
-        ? existingTasks[0].task_number + 1 
+      const nextTaskNumber = existingTasks && existingTasks.length > 0
+        ? existingTasks[0].task_number + 1
         : 1;
 
       // Insert task
@@ -384,6 +386,7 @@ export const useTasks = () => {
       if (updates.sprintId !== undefined) dbUpdates.sprint_id = updates.sprintId;
       if (updates.timeEstimate !== undefined) dbUpdates.time_estimate = updates.timeEstimate;
       if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
+      if (updates.storyPoints !== undefined) dbUpdates.story_points = updates.storyPoints;
 
       const { error } = await supabase
         .from('tasks')
@@ -425,7 +428,7 @@ export const useTasks = () => {
         await updateParentTaskStatus(taskData.parent_id);
       }
 
-      toast.success('Task updated successfully!');
+      // Toast is shown by the caller (TaskDialog)
       await fetchTasks();
       return { success: true };
     } catch (error: any) {
@@ -686,7 +689,7 @@ export const useTasks = () => {
     if (!proposal) return { success: false };
 
     const result = await updateTask(proposal.taskId, proposal.changes);
-    
+
     if (result.success) {
       setTaskProposals(prev =>
         prev.map(p =>
@@ -695,7 +698,7 @@ export const useTasks = () => {
       );
       toast.success('Proposal approved and applied');
     }
-    
+
     return result;
   };
 

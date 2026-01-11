@@ -388,11 +388,11 @@ export function TaskDialog({
                           <div className="flex items-center gap-3 mb-2">
                             <Avatar className="w-8 h-8">
                               <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-700">
-                                {comment.userName[0]}
+                                {comment.userName?.[0] || '?'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <span className="text-sm font-semibold">{comment.userName}</span>
+                              <span className="text-sm font-semibold">{comment.userName || 'Ẩn danh'}</span>
                               <span className="text-xs text-gray-500 ml-2">
                                 {formatDateTime(comment.createdAt)}
                               </span>
@@ -596,14 +596,26 @@ export function TaskDialog({
                 )}
               </div>
 
-              {task.storyPoints && (
+              {(task.type === 'user-story' || task.storyPoints) && (
                 <>
                   <Separator className="bg-gray-300" />
                   <div className="space-y-3">
                     <Label className="text-sm lg:text-base font-bold text-gray-800">Story Points</Label>
-                    <Badge variant="secondary" className="text-sm lg:text-base px-4 py-2 w-full justify-center font-bold">
-                      {task.storyPoints} điểm
-                    </Badge>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={editedTask.storyPoints || ''}
+                        onChange={(e) => setEditedTask({ ...editedTask, storyPoints: parseInt(e.target.value) || undefined })}
+                        placeholder="Nhập story points..."
+                        className="w-full h-11 border-2"
+                      />
+                    ) : (
+                      <Badge variant="secondary" className="text-sm lg:text-base px-4 py-2 w-full justify-center font-bold">
+                        {editedTask.storyPoints ? `${editedTask.storyPoints} điểm` : 'Chưa đặt'}
+                      </Badge>
+                    )}
                   </div>
                 </>
               )}

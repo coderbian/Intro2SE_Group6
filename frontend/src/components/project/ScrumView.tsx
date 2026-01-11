@@ -97,18 +97,41 @@ export function ScrumView({
   // Tasks trong Sprint Board:
   // 1. Sub-tasks của User Stories trong Sprint
   // 2. Standalone tasks được đưa vào Sprint
-  const sprintTasks = tasks.filter(t =>
-    (t.type === 'task' && t.parentTaskId && sprintUserStories.some(us => us.id === t.parentTaskId)) ||
-    (t.type === 'task' && !t.parentTaskId && t.sprintId === currentSprint?.id)
+  // 3. User Stories không có child tasks (tính trực tiếp)
+  const childTasksOfUserStories = tasks.filter(t =>
+    t.type === 'task' && t.parentTaskId && sprintUserStories.some(us => us.id === t.parentTaskId)
+  );
+  const standaloneTasksInSprint = tasks.filter(t =>
+    t.type === 'task' && !t.parentTaskId && t.sprintId === currentSprint?.id
+  );
+  // User Stories without children should be counted as "tasks" for progress
+  const userStoriesWithoutChildren = sprintUserStories.filter(us =>
+    !tasks.some(t => t.parentTaskId === us.id)
   );
 
-  // Calculate sprint statistics from User Stories
+  const sprintTasks = [...childTasksOfUserStories, ...standaloneTasksInSprint, ...userStoriesWithoutChildren];
+
+  // Calculate sprint statistics
+  // Total story points from User Stories in sprint
   const totalPoints = sprintUserStories.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-  const completedPoints = sprintUserStories.filter(t => t.status === 'done').reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-  const sprintProgress = totalPoints > 0 ? (completedPoints / totalPoints) * 100 : 0;
+
+  // A User Story is considered complete when ALL its child tasks are done
+  const completedPoints = sprintUserStories.reduce((sum, story) => {
+    const childTasks = tasks.filter(t => t.parentTaskId === story.id);
+    const isComplete = childTasks.length === 0
+      ? story.status === 'done'
+      : childTasks.every(t => t.status === 'done');
+    return sum + (isComplete ? (story.storyPoints || 0) : 0);
+  }, 0);
+
+  // Calculate progress based on task completion (all sprint tasks including standalone)
+  const totalSprintTasks = sprintTasks.length;
+  const completedSprintTasks = sprintTasks.filter(t => t.status === 'done').length;
+  const sprintProgress = totalSprintTasks > 0 ? (completedSprintTasks / totalSprintTasks) * 100 : 0;
 
   const getDaysUntilDeadline = () => {
-    const days = Math.ceil((new Date(project.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    if (!currentSprint?.endDate) return 0;
+    const days = Math.ceil((new Date(currentSprint.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return days;
   };
 
@@ -136,18 +159,24 @@ export function ScrumView({
     setSprintGoal('');
   };
 
-  const handleDragStart = (task: Task) => {
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('taskId', task.id);
     setDraggedTask(task);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
   };
 
   const handleDrop = (e: React.DragEvent, newStatus: Task['status']) => {
     e.preventDefault();
-    if (draggedTask && draggedTask.status !== newStatus && canEditTask(user.id, draggedTask, project)) {
-      onUpdateTask(draggedTask.id, { status: newStatus });
+    const taskId = e.dataTransfer.getData('taskId');
+    const task = tasks.find(t => t.id === taskId);
+
+    if (task && task.status !== newStatus && canEditTask(user.id, task, project)) {
+      onUpdateTask(task.id, { status: newStatus });
     }
     setDraggedTask(null);
   };
@@ -273,7 +302,7 @@ export function ScrumView({
                           <div
                             key={task.id}
                             draggable={canDrag}
-                            onDragStart={() => canDrag && handleDragStart(task)}
+                            onDragStart={(e) => { if (canDrag) handleDragStart(e, task); }}
                             onClick={() => setSelectedTask(task)}
                             className={`cursor-pointer ${canDrag ? "cursor-move" : ""}`}
                           >
@@ -325,7 +354,11 @@ export function ScrumView({
                     const progress = storyTasks.length > 0 ? (doneTasks / storyTasks.length) * 100 : 0;
 
                     return (
-                      <div key={story.id} className="bg-white border-2 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div
+                        key={story.id}
+                        className="bg-white border-2 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => setSelectedTask(story)}
+                      >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
                             <h4 className="font-semibold text-gray-900">{story.title}</h4>
@@ -343,7 +376,7 @@ export function ScrumView({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleOpenCreate('todo', 'task', story.id)}
+                                onClick={(e) => { e.stopPropagation(); handleOpenCreate('todo', 'task', story.id); }}
                                 className="text-purple-600 border-purple-300 hover:bg-purple-50"
                               >
                                 <Plus className="w-4 h-4 mr-1" />
