@@ -115,7 +115,7 @@ export function TaskCard({ task, project, allTasks, user, onClick, showStoryPoin
           <h4 className="text-sm font-medium mb-1.5 break-words leading-relaxed group-hover:text-blue-600 transition-colors">
             {task.title}
           </h4>
-          {task.labels.length > 0 && (
+          {task.labels && task.labels.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {task.labels.map((label, idx) => (
                 <Badge key={idx} variant="outline" className="text-xs px-2 py-0.5">

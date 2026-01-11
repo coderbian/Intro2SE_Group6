@@ -1,82 +1,119 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent } from "../ui/card"
 import { toast } from "sonner"
 import { Check, X, Bell } from "lucide-react"
-import { getSupabaseClient } from "../../lib/supabase-client"
+import { supabase } from "../../lib/supabase-client"
+import { 
+  fetchPendingInvitations, 
+  acceptProjectInvitation, 
+  rejectProjectInvitation 
+} from "../../utils/invitationService"
+
+interface Invitation {
+  id: string;
+  projectId: string;
+  projectName: string;
+  inviterName: string;
+  createdAt: string;
+}
 
 export function InvitationsList() {
-  const supabase = useMemo(() => getSupabaseClient(), [])
-  const [invites, setInvites] = useState<any[]>([])
+  const [invites, setInvites] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
-  // 1. Lấy danh sách lời mời
-  const fetchInvites = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setCurrentUser({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.name || data.user.email
+        });
+      }
+    });
+  }, []);
 
-    // Lấy các lời mời có status = 'pending' của user hiện tại
-    const { data, error } = await supabase
-      .from('join_requests')
-      .select(`
-        id,
-        created_at,
-        project:projects (name) 
-      `)
-      .eq('user_id', user.id)
-      .eq('status', 'pending')
-
-    if (data) setInvites(data)
-  }
+  // Fetch invitations
+  const loadInvitations = async () => {
+    if (!currentUser) return;
+    const invitations = await fetchPendingInvitations(currentUser.id);
+    setInvites(invitations);
+  };
 
   useEffect(() => {
-    fetchInvites()
-  }, [])
+    loadInvitations();
+  }, [currentUser]);
 
-  // 2. Xử lý Chấp nhận
-  const handleAccept = async (requestId: string) => {
-    setLoading(true)
-    try {
-      const { error } = await supabase.rpc('accept_join_request_by_id' as any, {
-        p_request_id: requestId
-      })
+  // Setup realtime subscription
+  useEffect(() => {
+    if (!currentUser) return;
 
-      if (error) throw error
+    console.log('📡 Setting up invitations subscription');
+    
+    const channel = supabase
+      .channel(`invitations_${currentUser.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'join_requests',
+          filter: `user_id=eq.${currentUser.id}`,
+        },
+        (payload) => {
+          console.log('🔔 New invitation received:', payload);
+          toast.info('Bạn có lời mời tham gia dự án mới!');
+          loadInvitations();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Invitations subscription:', status);
+      });
 
-      toast.success("Đã tham gia dự án thành công!")
-      fetchInvites() // Load lại để ẩn lời mời đi
-      // Tùy chọn: Reload trang để cập nhật danh sách dự án bên sidebar
-      setTimeout(() => window.location.reload(), 1000) 
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser]);
 
-    } catch (error: any) {
-      toast.error(error.message || "Có lỗi xảy ra")
-    } finally {
-      setLoading(false)
+  // Handle Accept
+  const handleAccept = async (invitationId: string) => {
+    if (!currentUser) return;
+    
+    setLoading(true);
+    const result = await acceptProjectInvitation({
+      invitationId,
+      currentUser,
+    });
+    
+    if (result.success) {
+      await loadInvitations();
+      setTimeout(() => window.location.reload(), 1000);
     }
-  }
+    setLoading(false);
+  };
 
-  // 3. Xử lý Từ chối
-  const handleReject = async (requestId: string) => {
-    setLoading(true)
-    try {
-      const { error } = await supabase.rpc('reject_join_request_by_id' as any, { 
-        p_request_id: requestId 
-      })
-      
-      if (error) throw error
-
-      toast.info("Đã từ chối lời mời")
-      fetchInvites()
-    } catch (error: any) {
-      toast.error(error.message)
-    } finally {
-      setLoading(false)
+  // Handle Reject
+  const handleReject = async (invitationId: string) => {
+    if (!currentUser) return;
+    
+    setLoading(true);
+    const result = await rejectProjectInvitation({
+      invitationId,
+      currentUser,
+    });
+    
+    if (result.success) {
+      await loadInvitations();
     }
-  }
+    setLoading(false);
+  };
 
-  if (invites.length === 0) return null // Nếu không có lời mời thì ẩn luôn
+  if (invites.length === 0) return null;
 
   return (
     <div className="mb-6 animate-in slide-in-from-top-2">
@@ -91,10 +128,13 @@ export function InvitationsList() {
             <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <p className="font-medium">
-                  Bạn được mời tham gia: <span className="font-bold text-blue-700">{invite.project?.name}</span>
+                  Bạn được mời tham gia: <span className="font-bold text-blue-700">{invite.projectName}</span>
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Từ: {invite.inviterName}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Nhận ngày: {new Date(invite.created_at).toLocaleDateString('vi-VN')}
+                  Nhận ngày: {new Date(invite.createdAt).toLocaleDateString('vi-VN')}
                 </p>
               </div>
               <div className="flex gap-2">

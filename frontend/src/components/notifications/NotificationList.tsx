@@ -12,10 +12,20 @@ interface NotificationListProps {
   onMarkAsRead: (notificationId: string) => void
   onMarkAllAsRead: () => void
   onDelete: (notificationId: string) => void
+  onAcceptInvitation?: (invitationId: string) => void
+  onRejectInvitation?: (invitationId: string) => void
   theme?: string // Added theme prop
 }
 
-export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead, onDelete, theme }: NotificationListProps) {
+export function NotificationList({ 
+  notifications, 
+  onMarkAsRead, 
+  onMarkAllAsRead, 
+  onDelete, 
+  onAcceptInvitation,
+  onRejectInvitation,
+  theme 
+}: NotificationListProps) {
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const unreadCount = notifications.filter((n) => !n.read).length
 
@@ -33,6 +43,10 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
         return "📢"
       case "task_mentioned":
         return "💬"
+      case "project_invite":
+        return "✉️"
+      case "invitation_rejected":
+        return "❌"
       default:
         return "🔔"
     }
@@ -45,6 +59,8 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
       member_added: "Thành viên được thêm",
       project_update: "Cập nhật dự án",
       task_mentioned: "Được nhắc đến",
+      project_invite: "Lời mời tham gia dự án",
+      invitation_rejected: "Lời mời bị từ chối",
     }
     return labels[type] || "Thông báo"
   }
@@ -98,10 +114,12 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`px-4 py-3 border-b hover:bg-opacity-50 transition-colors cursor-pointer`}
+                  className={`px-4 py-3 border-b hover:bg-opacity-50 transition-colors cursor-pointer ${
+                    !notification.read ? 'font-semibold' : ''
+                  }`}
                   style={{
                     backgroundColor: !notification.read
-                      ? (isDark ? '#1f2937' : '#eff6ff')
+                      ? (isDark ? '#1e3a8a' : '#dbeafe')
                       : 'transparent',
                     borderColor: isDark ? '#374151' : '#e5e7eb'
                   }}
@@ -122,7 +140,9 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{getNotificationIcon(notification.type)}</span>
                         <h4
-                          className="text-sm font-medium truncate"
+                          className={`text-sm truncate ${
+                            notification.read ? 'font-medium' : 'font-bold'
+                          }`}
                         >
                           {notification.title}
                         </h4>
@@ -146,6 +166,38 @@ export function NotificationList({ notifications, onMarkAsRead, onMarkAllAsRead,
                         })}
                       </p>
                     </div>
+                    
+                    {/* Invitation Actions for project_invite */}
+                    {notification.type === 'project_invite' && notification.entityId && !notification.read && (
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation()
+                            onAcceptInvitation?.(notification.entityId!)
+                            onMarkAsRead(notification.id)
+                          }}
+                          className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                        >
+                          Đồng ý
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation()
+                            onRejectInvitation?.(notification.entityId!)
+                            onMarkAsRead(notification.id)
+                          }}
+                          className="h-7 text-xs"
+                        >
+                          Từ chối
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Standard Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {!notification.read && (
                         <Button

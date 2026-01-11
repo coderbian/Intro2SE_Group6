@@ -39,7 +39,7 @@ interface AppContextType {
 
     // Tasks
     tasks: Task[];
-    handleCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
+    handleCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'attachments'>) => void;
     handleUpdateTask: (taskId: string, updates: Partial<Task>) => void;
     handleDeleteTask: (taskId: string) => void;
     handleRestoreTask: (taskId: string) => void;

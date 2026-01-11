@@ -18,7 +18,6 @@ import {
 import { UserPlus, Trash2, Crown, Loader2 } from 'lucide-react'
 import { toast } from "sonner"
 import type { User, Project } from "../../types"
-import { checkUserExists, inviteMemberToProject } from "../../services/memberService"
 import { getSupabaseClient } from "../../lib/supabase-client"
 
 const supabase = getSupabaseClient()
@@ -28,9 +27,10 @@ interface ProjectMembersProps {
   project: Project
   isManager: boolean
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void
+  onSendInvitation: (projectId: string, email: string) => Promise<{ success: boolean; error?: string }>
 }
 
-export function ProjectMembers({ user, project, isManager, onUpdateProject }: ProjectMembersProps) {
+export function ProjectMembers({ user, project, isManager, onUpdateProject, onSendInvitation }: ProjectMembersProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [emailToAdd, setEmailToAdd] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -50,44 +50,25 @@ export function ProjectMembers({ user, project, isManager, onUpdateProject }: Pr
     setIsLoading(true)
 
     try {
-      // 1. Check email có tồn tại không
-      const checkResult = await checkUserExists(emailToAdd)
-      
-      if (!checkResult.success || !checkResult.user) {
-        toast.error(checkResult.error || "Email không hợp lệ")
+      // 1. Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(emailToAdd.trim())) {
+        toast.error("Email không hợp lệ")
         setIsLoading(false)
         return
       }
 
-      // 2. Invite member
-      const inviteResult = await inviteMemberToProject(
-        project.id,
-        project.name,
-        user.id,
-        user.name,
-        checkResult.user.id,
-        checkResult.user.email
-      )
+      // 2. Send invitation using useProjects hook (will check if user exists)
+      const inviteResult = await onSendInvitation(project.id, emailToAdd.trim())
 
       if (!inviteResult.success) {
-        toast.error(inviteResult.error || "Không thể thêm thành viên")
+        toast.error(inviteResult.error || "Không thể gửi lời mời")
         setIsLoading(false)
         return
       }
 
-      // 3. Update UI local (hoặc refetch data)
-      const newMember = {
-        userId: checkResult.user.id,
-        name: checkResult.user.name,
-        email: checkResult.user.email,
-        role: "member" as const,
-        joinedAt: new Date().toISOString(), // ✅ THÊM DÒNG NÀY
-      }
-
-      const updatedMembers = [...project.members, newMember]
-      onUpdateProject(project.id, { members: updatedMembers })
-
-      toast.success(`✅ Đã gửi lời mời đến ${checkResult.user.email}`)
+      // 3. Success toast is shown by handleSendInvitation
+      // Members will be updated when invitation is accepted
       setEmailToAdd("")
       setIsAddDialogOpen(false)
     } catch (err: any) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Session, User as SupabaseUser, AuthError } from '@supabase/supabase-js';
 import { createEphemeralSupabaseClient, getSupabaseClient } from '../lib/supabase-client';
 import { toast } from 'sonner';
@@ -45,11 +45,14 @@ function toAppUser(supabaseUser: SupabaseUser): User {
 
 export function useSupabaseAuth(): UseSupabaseAuthReturn {
     const supabase = getSupabaseClient();
-    const [user, setUser] = useState<User | null>(null);
+    const [userState, setUserState] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [adminEmail, setAdminEmail] = useState<string | null>(null);
     const [role, setRole] = useState<UserRole | null>(null);
+
+    // Memoize user to prevent cascading re-renders
+    const user = useMemo(() => userState, [userState?.id]);
 
     const fetchRoleFromUsersTable = useCallback(async (supabaseUser: SupabaseUser | null): Promise<UserRole> => {
         if (!supabaseUser) return 'user';
@@ -84,7 +87,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             .getSession()
             .then(({ data: { session } }) => {
                 setSession(session);
-                setUser(session?.user ? toAppUser(session.user) : null);
+                setUserState(session?.user ? toAppUser(session.user) : null);
                 refreshRbacState(session);
                 setIsLoading(false);
             })
@@ -92,7 +95,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 // Ensure loading state is cleared even if initialization fails
                 console.error('Failed to initialize auth session:', error);
                 setSession(null);
-                setUser(null);
+                setUserState(null);
                 setAdminEmail(null);
                 setRole(null);
                 setIsLoading(false);
@@ -102,7 +105,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 setSession(session);
-                setUser(session?.user ? toAppUser(session.user) : null);
+                setUserState(session?.user ? toAppUser(session.user) : null);
                 refreshRbacState(session);
                 setIsLoading(false);
 
@@ -206,7 +209,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 toast.error('Đã xảy ra lỗi khi đăng xuất');
                 return;
             }
-            setUser(null);
+            setUserState(null);
             setSession(null);
             setAdminEmail(null);
             setRole(null);
@@ -231,7 +234,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 return;
             }
 
-            setUser(updatedUser);
+            setUserState(updatedUser);
             toast.success('Cập nhật thông tin thành công!');
         } catch (error) {
             toast.error('Đã xảy ra lỗi khi cập nhật thông tin');

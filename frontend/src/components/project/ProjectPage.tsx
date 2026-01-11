@@ -20,7 +20,8 @@ interface ProjectPageProps {
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void
   onDeleteProject: (projectId: string) => void
   onMoveToTrash?: (projectId: string) => void
-  onCreateTask: (task: Omit<Task, "id" | "createdAt" | "comments" | "attachments">) => void
+  onSendInvitation: (projectId: string, email: string) => Promise<{ success: boolean; error?: string }>
+  onCreateTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt" | "comments" | "attachments">) => void
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void
@@ -38,6 +39,7 @@ export function ProjectPage({
   onUpdateProject,
   onDeleteProject,
   onMoveToTrash,
+  onSendInvitation,
   onCreateTask,
   onUpdateTask,
   onDeleteTask,
@@ -161,7 +163,13 @@ export function ProjectPage({
           </TabsContent>
 
           <TabsContent value="members" className="m-0">
-            <ProjectMembers user={user} project={project} isManager={isManager} onUpdateProject={onUpdateProject} />
+            <ProjectMembers 
+              user={user} 
+              project={project} 
+              isManager={isManager} 
+              onUpdateProject={onUpdateProject}
+              onSendInvitation={onSendInvitation}
+            />
           </TabsContent>
 
           {isManager && (

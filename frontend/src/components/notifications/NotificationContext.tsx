@@ -11,16 +11,30 @@ interface NotificationContextType {
   handleMarkNotificationAsRead: (id: string) => void;
   handleMarkAllNotificationsAsRead: () => void;
   handleDeleteNotification: (id: string) => void;
+  handleAcceptInvitation?: (invitationId: string) => void;
+  handleRejectInvitation?: (invitationId: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
-export function NotificationProvider({ children }: { children: ReactNode }) {
+export function NotificationProvider({ 
+  children, 
+  onAcceptInvitation,
+  onRejectInvitation 
+}: { 
+  children: ReactNode;
+  onAcceptInvitation?: (invitationId: string) => void;
+  onRejectInvitation?: (invitationId: string) => void;
+}) {
   const { user } = useSupabaseAuth();
   const notificationData = useNotifications({ user });
 
   return (
-    <NotificationContext.Provider value={notificationData}>
+    <NotificationContext.Provider value={{
+      ...notificationData,
+      handleAcceptInvitation: onAcceptInvitation,
+      handleRejectInvitation: onRejectInvitation
+    }}>
       {children}
     </NotificationContext.Provider>
   );

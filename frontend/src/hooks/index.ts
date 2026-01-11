@@ -1,5 +1,5 @@
 // Export all hooks
-export { useAuth } from './useAuth';
+export { useSupabaseAuth } from './useAuth';
 export type { User } from './useAuth';
 
 export { useProjects } from './useProjects';

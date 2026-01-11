@@ -1,0 +1,5 @@
+# Deno ignore file
+node_modules/
+.git/
+*.md
+README.md

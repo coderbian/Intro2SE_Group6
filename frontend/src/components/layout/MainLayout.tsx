@@ -41,13 +41,14 @@ interface MainLayoutProps {
   settings: any
   notifications: Notification[]
   invitations: ProjectInvitation[]
-  joinRequests: JoinRequest[]
+  joinRequests?: JoinRequest[]
   onAddNotification: (notification: any) => void
   onSendInvitation: (projectId: string, email: string) => void
   onAcceptInvitation: (invitationId: string) => void
-  onCreateJoinRequest: (projectId: string) => void
-  onApproveJoinRequest: (requestId: string) => void
-  onRejectJoinRequest: (requestId: string) => void
+  onRejectInvitation?: (invitationId: string) => void
+  onCreateJoinRequest?: (projectId: string) => void
+  onApproveJoinRequest?: (requestId: string) => void
+  onRejectJoinRequest?: (requestId: string) => void
   onSelectProject: (projectId: string) => void
   onLogout: () => void
   onUpdateSettings: (settings: any) => void

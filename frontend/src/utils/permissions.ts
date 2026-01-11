@@ -1,4 +1,4 @@
-import type { Project } from "../App"
+import type { Project } from "../types"
 
 export type Permission =
   | "create_task"
@@ -31,7 +31,7 @@ export const ROLE_PERMISSIONS: RolePermissions = {
 }
 
 export function getUserRole(userId: string, project: Project): "manager" | "member" | null {
-  const member = project.members.find((m) => m.userId === userId)
+  const member = project.members.find((m: { userId: string }) => m.userId === userId)
   if (!member) return null
   return member.role
 }

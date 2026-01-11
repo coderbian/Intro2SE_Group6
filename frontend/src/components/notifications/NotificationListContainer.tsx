@@ -11,6 +11,8 @@ export function NotificationListContainer({ theme }: { theme?: string }) {
     handleMarkNotificationAsRead,
     handleMarkAllNotificationsAsRead,
     handleDeleteNotification,
+    handleAcceptInvitation,
+    handleRejectInvitation,
   } = useNotificationContext();
 
   if (loading) {
@@ -33,6 +35,8 @@ export function NotificationListContainer({ theme }: { theme?: string }) {
       onMarkAsRead={handleMarkNotificationAsRead}
       onMarkAllAsRead={handleMarkAllNotificationsAsRead}
       onDelete={handleDeleteNotification}
+      onAcceptInvitation={handleAcceptInvitation}
+      onRejectInvitation={handleRejectInvitation}
       theme={theme}
     />
   );

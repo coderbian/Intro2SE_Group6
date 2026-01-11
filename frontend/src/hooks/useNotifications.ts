@@ -54,9 +54,11 @@ export function useNotifications({ user }: UseNotificationsProps) {
         type: n.type,
         title: n.title,
         content: n.content,
+        message: n.content, // Alias for NotificationList
         entityType: n.entity_type,
         entityId: n.entity_id,
         isRead: n.is_read,
+        read: n.is_read, // Alias for NotificationList
         readAt: n.read_at,
         createdAt: n.created_at,
       }));
@@ -84,26 +86,39 @@ export function useNotifications({ user }: UseNotificationsProps) {
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel(`notifications:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
+    console.log('📡 Setting up notification subscription for user:', user.id);
+
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    let channel: any = null;
+
+    const setupSubscription = () => {
+      // DON'T use removeAllChannels() - it closes active WebSocket
+      // Just create new channel with unique name
+      channel = supabase
+        .channel(`notifications_${user.id}_${Date.now()}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log('🔔 New notification received:', payload);
+          
           const newNotification: Notification = {
             id: payload.new.id,
             userId: payload.new.user_id,
             type: payload.new.type,
             title: payload.new.title,
             content: payload.new.content,
+            message: payload.new.content, // Alias
             entityType: payload.new.entity_type,
             entityId: payload.new.entity_id,
             isRead: payload.new.is_read,
+            read: payload.new.is_read, // Alias
             readAt: payload.new.read_at,
             createdAt: payload.new.created_at,
           };
@@ -111,6 +126,7 @@ export function useNotifications({ user }: UseNotificationsProps) {
           setNotifications((prev) => [newNotification, ...prev]);
           setUnreadCount((prev) => prev + 1);
 
+          console.log('✅ Notification added to state, showing toast');
           toast.info(newNotification.title, {
             description: newNotification.content,
           });
@@ -125,6 +141,8 @@ export function useNotifications({ user }: UseNotificationsProps) {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          console.log('🔄 Notification updated:', payload);
+          
           setNotifications((prev) =>
             prev.map((n) =>
               n.id === payload.new.id
@@ -142,10 +160,32 @@ export function useNotifications({ user }: UseNotificationsProps) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Notification subscription status:', status);
+        
+        if (status === 'TIMED_OUT' && retryCount < MAX_RETRIES) {
+          retryCount++;
+          console.log(`⚠️ Subscription timed out, retrying (${retryCount}/${MAX_RETRIES})...`);
+          setTimeout(() => {
+            if (channel) {
+              supabase.removeChannel(channel);
+            }
+            setupSubscription();
+          }, 1000 * retryCount); // Exponential backoff
+        } else if (status === 'SUBSCRIBED') {
+          console.log('✅ Notification subscription active');
+          retryCount = 0;
+        }
+      });
+    };
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      console.log('🔌 Cleaning up notification subscription');
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [user]);
 

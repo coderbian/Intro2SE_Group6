@@ -70,11 +70,23 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
 export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   return (
     <AuthProvider>
-      <NotificationProvider> {/* ✅ THÊM DÒNG NÀY */}
-        <AppProvider onEnterAdmin={onEnterAdmin}>
-          <AppContent onEnterAdmin={onEnterAdmin} />
-        </AppProvider>
-      </NotificationProvider> {/* ✅ THÊM DÒNG NÀY */}
+      <AppProvider onEnterAdmin={onEnterAdmin}>
+        <NotificationProviderWrapper onEnterAdmin={onEnterAdmin} />
+      </AppProvider>
     </AuthProvider>
+  );
+}
+
+// Wrapper to access AppContext for NotificationProvider
+function NotificationProviderWrapper({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
+  const { handleAcceptInvitation, handleRejectInvitation } = useApp();
+  
+  return (
+    <NotificationProvider 
+      onAcceptInvitation={handleAcceptInvitation}
+      onRejectInvitation={handleRejectInvitation}
+    >
+      <AppContent onEnterAdmin={onEnterAdmin} />
+    </NotificationProvider>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { User } from './useAuth';
 import { supabase } from '../lib/supabase-client';
+import { sendProjectInvitation, fetchPendingInvitations, acceptProjectInvitation, rejectProjectInvitation } from '../utils/invitationService';
 
 export interface ProjectMember {
   userId: string;
@@ -154,7 +155,7 @@ export function useProjects({ user }: UseProjectsProps) {
   }, [user]);
 
   // ========================================
-  // 2. FETCH INVITATIONS
+  // 2. FETCH INVITATIONS (NEW SIMPLE VERSION)
   // ========================================
   const fetchInvitations = useCallback(async () => {
     if (!user) {
@@ -162,55 +163,21 @@ export function useProjects({ user }: UseProjectsProps) {
       return;
     }
 
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('join_requests')
-        .select(`
-          id,
-          project_id,
-          user_id,
-          email,
-          status,
-          created_at,
-          invited_by,
-          projects (
-            id,
-            name
-          ),
-          inviter:users!join_requests_invited_by_fkey (
-            id,
-            name,
-            email
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+    const invitationsData = await fetchPendingInvitations(user.id);
+    
+    // Transform to match ProjectInvitation type
+    const transformedInvitations: ProjectInvitation[] = invitationsData.map((inv: any) => ({
+      id: inv.id,
+      projectId: inv.projectId,
+      projectName: inv.projectName,
+      invitedEmail: user.email,
+      invitedBy: inv.inviterId || '',
+      inviterName: inv.inviterName,
+      status: 'pending',
+      createdAt: inv.createdAt,
+    }));
 
-      if (fetchError) {
-        console.error('Error fetching invitations:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('Fetched invitations:', data); // Debug log
-
-      const transformedInvitations: ProjectInvitation[] = (data || []).map((inv: any) => ({
-        id: inv.id,
-        projectId: inv.project_id,
-        projectName: inv.projects?.name || '',
-        invitedEmail: inv.email || user.email,
-        invitedBy: inv.invited_by,
-        inviterName: inv.inviter?.name || '',
-        status: inv.status,
-        createdAt: inv.created_at,
-      }));
-
-      setInvitations(transformedInvitations);
-      console.log('Transformed invitations:', transformedInvitations); // Debug log
-    } catch (err: any) {
-      console.error('Error fetching invitations:', err);
-      toast.error('Không thể tải lời mời: ' + err.message);
-    }
+    setInvitations(transformedInvitations);
   }, [user]);
 
   // ========================================
@@ -226,7 +193,7 @@ export function useProjects({ user }: UseProjectsProps) {
       fetchProjects(),
       fetchInvitations(),
     ]);
-  }, [user, fetchProjects, fetchInvitations]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ========================================
   // 4. REALTIME SUBSCRIPTIONS
@@ -234,9 +201,14 @@ export function useProjects({ user }: UseProjectsProps) {
   useEffect(() => {
     if (!user) return;
 
+    console.log('📡 Setting up projects and invitations subscriptions for user:', user.id);
+
+    // Use unique channel names to avoid conflicts
+    const channelId = `${user.id}_${Date.now()}`;
+    
     // Subscribe to projects changes
     const projectsChannel = supabase
-      .channel('projects_changes')
+      .channel(`projects_changes_${channelId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'projects' },
@@ -251,20 +223,23 @@ export function useProjects({ user }: UseProjectsProps) {
           fetchProjects();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Projects subscription status:', status);
+      });
 
     // Subscribe to invitations
     const invitationsChannel = supabase
-      .channel('invitations_changes')
+      .channel(`invitations_changes_${channelId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'join_requests',
-          filter: `email=eq.${user.email}`,
+          filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('🔔 New invitation received:', payload);
           toast.info('Bạn có lời mời tham gia dự án mới!');
           fetchInvitations();
         }
@@ -275,12 +250,16 @@ export function useProjects({ user }: UseProjectsProps) {
           event: 'UPDATE',
           schema: 'public',
           table: 'join_requests',
+          filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('🔄 Invitation updated:', payload);
           fetchInvitations();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Invitations subscription status:', status);
+      });
 
     channelsRef.current = [projectsChannel, invitationsChannel];
 
@@ -500,19 +479,12 @@ export function useProjects({ user }: UseProjectsProps) {
   // ========================================
   // 10. SEND INVITATION
   // ========================================
+  // 10. SEND INVITATION (NEW SIMPLE VERSION)
+  // ========================================
   const handleSendInvitation = async (projectId: string, email: string) => {
     if (!user) {
       toast.error('Vui lòng đăng nhập');
       return { success: false, error: 'NOT_AUTHENTICATED' };
-    }
-
-    const trimmedEmail = email.toLowerCase().trim();
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      toast.error('Email không hợp lệ');
-      return { success: false, error: 'INVALID_EMAIL' };
     }
 
     const project = projects.find((p) => p.id === projectId);
@@ -521,100 +493,22 @@ export function useProjects({ user }: UseProjectsProps) {
       return { success: false, error: 'PROJECT_NOT_FOUND' };
     }
 
-    try {
-      // 1. Check if email exists in system
-      const { data: existingUser, error: userError } = await supabase
-        .from('users')
-        .select('id, name, email')
-        .eq('email', trimmedEmail)
-        .maybeSingle();
+    const result = await sendProjectInvitation({
+      projectId,
+      projectName: project.name,
+      inviteeEmail: email.toLowerCase().trim(),
+      currentUser: user,
+    });
 
-      if (userError) {
-        console.error('Error checking user:', userError);
-        toast.error('Lỗi kiểm tra email');
-        return { success: false, error: 'CHECK_FAILED' };
-      }
-
-      if (!existingUser) {
-        toast.error('Email này chưa đăng ký tài khoản trong hệ thống');
-        return { success: false, error: 'USER_NOT_FOUND' };
-      }
-
-      // 2. Check if user is already a member
-      const isMember = project.members.some((m) => m.userId === existingUser.id);
-      if (isMember) {
-        toast.error('Người dùng đã là thành viên của dự án');
-        return { success: false, error: 'ALREADY_MEMBER' };
-      }
-
-      // 3. Check if invitation already exists
-      const { data: existingInvite } = await supabase
-        .from('join_requests')
-        .select('id, status')
-        .eq('project_id', projectId)
-        .eq('user_id', existingUser.id)
-        .maybeSingle();
-
-      if (existingInvite) {
-        if (existingInvite.status === 'pending') {
-          toast.error('Đã gửi lời mời cho người này rồi (đang chờ phản hồi)');
-          return { success: false, error: 'INVITE_PENDING' };
-        } else if (existingInvite.status === 'rejected') {
-          toast.error('Người này đã từ chối lời mời trước đó');
-          return { success: false, error: 'INVITE_REJECTED_BEFORE' };
-        }
-      }
-
-      // 4. Create invitation in join_requests table
-      const { data: invitation, error: insertError } = await supabase
-        .from('join_requests')
-        .insert({
-          project_id: projectId,
-          user_id: existingUser.id,
-          email: existingUser.email,
-          invited_by: user.id,
-          status: 'pending',
-          request_type: 'invitation',
-        })
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      console.log('Created invitation:', invitation); // Debug log
-
-      // 5. Create notification
-      const { error: notificationError } = await supabase.from('notifications').insert({
-        user_id: existingUser.id,
-        type: 'project_invite',
-        title: 'Lời mời tham gia dự án',
-        content: `${user.name} đã mời bạn tham gia dự án "${project.name}"`,
-        entity_type: 'project',
-        entity_id: projectId,
-        is_read: false,
-      });
-
-      if (notificationError) {
-        console.error('Error creating notification:', notificationError);
-        // Don't throw - invitation was created successfully
-      } else {
-        console.log('Notification created successfully');
-      }
-
-      // 6. Refresh invitations
+    if (result.success) {
       await fetchInvitations();
-
-      toast.success(`Đã gửi lời mời đến ${existingUser.name} (${existingUser.email})`);
-      return { success: true, invitation, invitedUser: existingUser };
-    } catch (err: any) {
-      console.error('Error sending invitation:', err);
-      toast.error('Không thể gửi lời mời: ' + err.message);
-      return { success: false, error: 'UNKNOWN_ERROR' };
     }
+
+    return result;
   };
 
   // ========================================
-  // 11. ACCEPT INVITATION
+  // 11. ACCEPT INVITATION (NEW SIMPLE VERSION)
   // ========================================
   const handleAcceptInvitation = async (invitationId: string) => {
     if (!user) {
@@ -622,134 +516,32 @@ export function useProjects({ user }: UseProjectsProps) {
       return;
     }
 
-    try {
-      // 1. Get invitation info
-      const { data: invitation, error: fetchError } = await supabase
-        .from('join_requests')
-        .select(`
-          id,
-          project_id,
-          user_id,
-          status,
-          invited_by,
-          projects (id, name)
-        `)
-        .eq('id', invitationId)
-        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
-        .single();
+    const result = await acceptProjectInvitation({
+      invitationId,
+      currentUser: user,
+    });
 
-      if (fetchError || !invitation) {
-        toast.error('Không tìm thấy lời mời');
-        return;
-      }
-
-      if (invitation.status !== 'pending') {
-        toast.error('Lời mời này đã được xử lý rồi');
-        return;
-      }
-
-      // 2. Update invitation status
-      const { error: updateError } = await supabase
-        .from('join_requests')
-        .update({ status: 'accepted' })
-        .eq('id', invitationId);
-
-      if (updateError) throw updateError;
-
-      // 3. Add to project_members
-      if (!invitation.project_id) {
-        throw new Error('Project ID is missing from invitation');
-      }
-
-      const { error: memberError } = await supabase
-        .from('project_members')
-        .insert({
-          project_id: invitation.project_id,
-          user_id: user.id,
-          role: 'member',
-        });
-
-      if (memberError) {
-        // Rollback invitation status
-        await supabase
-          .from('join_requests')
-          .update({ status: 'pending' })
-          .eq('id', invitationId);
-
-        if (memberError.code === '23505') {
-          toast.error('Bạn đã là thành viên của dự án này rồi');
-        } else {
-          toast.error('Không thể tham gia dự án');
-        }
-        return;
-      }
-
-      // 4. Notify inviter
-      await supabase.from('notifications').insert({
-        user_id: invitation.invited_by,
-        type: 'member_added',
-        title: 'Thành viên mới tham gia',
-        content: `${user.name} đã chấp nhận lời mời và tham gia dự án "${invitation.projects?.name}"`,
-        entity_type: 'project',
-        entity_id: invitation.project_id,
-        is_read: false,
-      });
-
-      // 5. Refresh data
+    if (result.success) {
       await Promise.all([fetchProjects(), fetchInvitations()]);
-
-      // 6. Select project
-      setSelectedProjectId(invitation.project_id);
-
-      toast.success(`Đã tham gia dự án: ${invitation.projects?.name}`);
-    } catch (err: any) {
-      console.error('Error accepting invitation:', err);
-      toast.error('Đã xảy ra lỗi');
+      if (result.projectId) {
+        setSelectedProjectId(result.projectId);
+      }
     }
   };
 
   // ========================================
-  // 12. REJECT INVITATION
+  // 12. REJECT INVITATION (NEW SIMPLE VERSION)
   // ========================================
   const handleRejectInvitation = async (invitationId: string) => {
     if (!user) return;
 
-    try {
-      const { data: invitation } = await supabase
-        .from('join_requests')
-        .select('id, project_id, status, invited_by')
-        .eq('id', invitationId)
-        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
-        .single();
+    const result = await rejectProjectInvitation({
+      invitationId,
+      currentUser: user,
+    });
 
-      if (!invitation || invitation.status !== 'pending') {
-        toast.error('Lời mời không hợp lệ');
-        return;
-      }
-
-      const { error } = await supabase
-        .from('join_requests')
-        .update({ status: 'rejected' })
-        .eq('id', invitationId);
-
-      if (error) throw error;
-
-      // Notify inviter
-      await supabase.from('notifications').insert({
-        user_id: invitation.invited_by,
-        type: 'invitation_rejected',
-        title: 'Lời mời bị từ chối',
-        content: `${user.name} đã từ chối lời mời tham gia dự án`,
-        entity_type: 'project',
-        entity_id: invitation.project_id,
-        is_read: false,
-      });
-
+    if (result.success) {
       await fetchInvitations();
-      toast.success('Đã từ chối lời mời');
-    } catch (err: any) {
-      console.error('Error rejecting invitation:', err);
-      toast.error('Đã xảy ra lỗi');
     }
   };
 

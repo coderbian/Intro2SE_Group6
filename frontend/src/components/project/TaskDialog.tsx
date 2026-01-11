@@ -388,7 +388,7 @@ export function TaskDialog({
                           <div className="flex items-center gap-3 mb-2">
                             <Avatar className="w-8 h-8">
                               <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-700">
-                                {comment.userName[0]}
+                                {comment.userName?.[0] || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
@@ -452,7 +452,7 @@ export function TaskDialog({
                               {attachment.name}
                             </a>
                             <p className="text-xs text-gray-500 mt-0.5">
-                              {formatDateTime(attachment.uploadedAt)}
+                              {attachment.uploadedAt && formatDateTime(attachment.uploadedAt)}
                             </p>
                           </div>
                         </div>
@@ -608,7 +608,7 @@ export function TaskDialog({
                 </>
               )}
 
-              {task.labels.length > 0 && (
+              {task.labels && task.labels.length > 0 && (
                 <>
                   <Separator className="bg-gray-300" />
                   <div className="space-y-3">
