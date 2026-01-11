@@ -17,7 +17,7 @@ interface KanbanViewProps {
   project: Project
   tasks: Task[]
   isManager: boolean
-  onCreateTask: (task: Omit<Task, "id" | "createdAt" | "comments" | "attachments">) => void
+  onCreateTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt" | "comments" | "attachments">) => void
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void

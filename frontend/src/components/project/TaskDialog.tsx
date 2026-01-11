@@ -26,7 +26,7 @@ interface TaskDialogProps {
   onClose: () => void;
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
   onDeleteTask: (taskId: string) => void;
-  onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
+  onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'attachments'>) => void;
   onAddComment: (taskId: string, content: string) => void;
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void;
 }

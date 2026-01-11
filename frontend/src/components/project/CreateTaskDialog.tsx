@@ -19,7 +19,7 @@ interface CreateTaskDialogProps {
   sprintId?: string;
   currentUserId?: string;
   onClose: () => void;
-  onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
+  onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' |  'comments' | 'attachments'>) => void;
 }
 
 export function CreateTaskDialog({
