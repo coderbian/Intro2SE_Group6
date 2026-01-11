@@ -10,6 +10,7 @@ import { AppProvider, useApp } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminRoutes } from './routes/AdminRoutes';
 import { ProtectedRoutes } from './routes/ProtectedRoutes';
+import { NotificationProvider } from "./components/notifications/NotificationContext"
 
 // Inner component that uses context
 function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
@@ -64,13 +65,16 @@ function AppContent({ onEnterAdmin }: { onEnterAdmin?: (email: string, password:
 }
 
 // Main App component with provider
+
+// Main App component with provider
 export default function App({ onEnterAdmin }: { onEnterAdmin?: (email: string, password: string) => void }) {
   return (
     <AuthProvider>
-      <AppProvider onEnterAdmin={onEnterAdmin}>
-        <AppContent onEnterAdmin={onEnterAdmin} />
-      </AppProvider>
+      <NotificationProvider> {/* ✅ THÊM DÒNG NÀY */}
+        <AppProvider onEnterAdmin={onEnterAdmin}>
+          <AppContent onEnterAdmin={onEnterAdmin} />
+        </AppProvider>
+      </NotificationProvider> {/* ✅ THÊM DÒNG NÀY */}
     </AuthProvider>
   );
 }
-

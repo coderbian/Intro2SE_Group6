@@ -29,6 +29,10 @@ import { Alert, AlertDescription } from "../ui/alert"
 import type { User as UserType, Project, Notification, ProjectInvitation, JoinRequest } from "../../types"
 import { SettingsModal } from "../settings/SettingsModal"
 import { NotificationList } from "../notifications/NotificationList"
+import { NotificationListContainer } from "../notifications/NotificationListContainer"
+import { supabase } from "@/lib/supabase-client"
+import { useNotifications } from "@/hooks/useNotifications"
+import { useNotificationContext } from "../notifications/NotificationContext"
 
 interface MainLayoutProps {
   user: UserType
@@ -72,6 +76,7 @@ export function MainLayout({
   onDeleteNotification,
   children,
 }: MainLayoutProps) {
+  const { unreadCount } = useNotificationContext();
   const location = useLocation()
   const navigate = useNavigate()
   const currentPath = location.pathname
@@ -106,7 +111,6 @@ export function MainLayout({
     scrum: "Tiếp cận Agile với Sprint. Lý tưởng cho các dự án lặp lại với những khúc nước ngắn.",
   }
 
-  const unreadCount = (notifications || []).filter((n) => !n.read).length
 
   const handleCreateProject = () => {
     if (newProject.name && newProject.deadline) {
@@ -478,13 +482,7 @@ export function MainLayout({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-96 p-0">
-              <NotificationList
-                notifications={notifications || []}
-                onMarkAsRead={onMarkNotificationAsRead}
-                onMarkAllAsRead={onMarkAllNotificationsAsRead}
-                onDelete={onDeleteNotification}
-                theme={settings.theme}
-              />
+              <NotificationListContainer theme={settings.theme} />
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -510,6 +508,28 @@ export function MainLayout({
         settings={settings}
         onUpdateSettings={onUpdateSettings}
       />
+      {/* Thêm nút test này ngay sau nút Settings */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={async () => {
+          // Test tạo notification
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from('notifications').insert({
+              user_id: user.id,
+              type: 'task_assigned',
+              title: 'Test Notification',
+              content: `Test lúc ${new Date().toLocaleTimeString()}`,
+              is_read: false,
+            });
+          }
+        }}
+        title="Test Notification"
+        className="hover:bg-green-50 rounded-lg p-1.5 border border-green-300"
+      >
+        🧪 Test
+      </Button>
     </div>
   )
 }
