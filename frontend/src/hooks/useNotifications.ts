@@ -86,8 +86,6 @@ export function useNotifications({ user }: UseNotificationsProps) {
   useEffect(() => {
     if (!user) return;
 
-    console.log('📡 Setting up notification subscription for user:', user.id);
-
     let retryCount = 0;
     const MAX_RETRIES = 3;
     let channel: any = null;
@@ -106,8 +104,6 @@ export function useNotifications({ user }: UseNotificationsProps) {
             filter: `user_id=eq.${user.id}`,
           },
           (payload) => {
-            console.log('🔔 New notification received:', payload);
-          
           const newNotification: Notification = {
             id: payload.new.id,
             userId: payload.new.user_id,
@@ -126,10 +122,12 @@ export function useNotifications({ user }: UseNotificationsProps) {
           setNotifications((prev) => [newNotification, ...prev]);
           setUnreadCount((prev) => prev + 1);
 
-          console.log('✅ Notification added to state, showing toast');
-          toast.info(newNotification.title, {
-            description: newNotification.content,
-          });
+          // Only show toast for non-invitation notifications (invitations shown in bell)
+          if (newNotification.type !== 'project_invite') {
+            toast.info(newNotification.title, {
+              description: newNotification.content,
+            });
+          }
         }
       )
       .on(
@@ -141,8 +139,6 @@ export function useNotifications({ user }: UseNotificationsProps) {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('🔄 Notification updated:', payload);
-          
           setNotifications((prev) =>
             prev.map((n) =>
               n.id === payload.new.id
@@ -161,11 +157,8 @@ export function useNotifications({ user }: UseNotificationsProps) {
         }
       )
       .subscribe((status) => {
-        console.log('📡 Notification subscription status:', status);
-        
         if (status === 'TIMED_OUT' && retryCount < MAX_RETRIES) {
           retryCount++;
-          console.log(`⚠️ Subscription timed out, retrying (${retryCount}/${MAX_RETRIES})...`);
           setTimeout(() => {
             if (channel) {
               supabase.removeChannel(channel);
@@ -173,7 +166,6 @@ export function useNotifications({ user }: UseNotificationsProps) {
             setupSubscription();
           }, 1000 * retryCount); // Exponential backoff
         } else if (status === 'SUBSCRIBED') {
-          console.log('✅ Notification subscription active');
           retryCount = 0;
         }
       });

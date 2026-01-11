@@ -106,8 +106,8 @@ export async function sendProjectInvitation(params: {
       // Continue - notification is optional
     }
 
-    toast.success(`Đã gửi lời mời đến ${inviteeUser.name}`);
-    return { success: true, invitationId: invitation.id };
+    // Toast will be shown by realtime notification subscription
+    return { success: true, invitationId: invitation.id, message: `Đã gửi lời mời đến ${inviteeUser.name}` };
 
   } catch (error: any) {
     toast.error(error.message || 'Không thể gửi lời mời');
@@ -192,8 +192,8 @@ export async function acceptProjectInvitation(params: {
       is_read: false,
     });
 
-    toast.success(`Đã tham gia dự án: ${invitation.projects?.name}`);
-    return { success: true, projectId: invitation.project_id };
+    // Toast will be shown after projects reload
+    return { success: true, projectId: invitation.project_id, projectName: invitation.projects?.name };
 
   } catch (error: any) {
     toast.error(error.message || 'Không thể chấp nhận lời mời');

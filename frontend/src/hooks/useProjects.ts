@@ -522,10 +522,21 @@ export function useProjects({ user }: UseProjectsProps) {
     });
 
     if (result.success) {
+      // Show success toast
+      toast.success(`Đã tham gia dự án: ${result.projectName || 'dự án'}`);
+      
+      // Reload projects and invitations
       await Promise.all([fetchProjects(), fetchInvitations()]);
+      
+      // Select the new project
       if (result.projectId) {
         setSelectedProjectId(result.projectId);
       }
+      
+      // Force reload to ensure UI is in sync
+      setTimeout(() => {
+        fetchProjects();
+      }, 500);
     }
   };
 
