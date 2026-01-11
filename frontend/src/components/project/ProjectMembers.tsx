@@ -15,9 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog"
-import { UserPlus, Trash2, Crown } from 'lucide-react'
+import { UserPlus, Trash2, Crown, Loader2 } from 'lucide-react'
 import { toast } from "sonner"
 import type { User, Project } from "../../types"
+import { checkUserExists, inviteMemberToProject } from "../../services/memberService"
+import { getSupabaseClient } from "../../lib/supabase-client"
+
+const supabase = getSupabaseClient()
 
 interface ProjectMembersProps {
   user: User
@@ -29,38 +33,98 @@ interface ProjectMembersProps {
 export function ProjectMembers({ user, project, isManager, onUpdateProject }: ProjectMembersProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [emailToAdd, setEmailToAdd] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     if (!emailToAdd.trim()) {
       toast.error("Vui lòng nhập email")
       return
     }
 
-    const mockUser = {
-      userId: Math.random().toString(36).substr(2, 9),
-      name: emailToAdd.split("@")[0],
-      email: emailToAdd,
-      role: "member" as const,
+    // Không thể mời chính mình
+    if (emailToAdd.trim().toLowerCase() === user.email.toLowerCase()) {
+      toast.error("Bạn đã là thành viên của dự án")
+      return
     }
 
-    const updatedMembers = [...project.members, mockUser]
-    onUpdateProject(project.id, { members: updatedMembers })
+    setIsLoading(true)
 
-    setEmailToAdd("")
-    setIsAddDialogOpen(false)
-    toast.success(`Đã thêm ${mockUser.name} vào dự án!`)
+    try {
+      // 1. Check email có tồn tại không
+      const checkResult = await checkUserExists(emailToAdd)
+      
+      if (!checkResult.success || !checkResult.user) {
+        toast.error(checkResult.error || "Email không hợp lệ")
+        setIsLoading(false)
+        return
+      }
+
+      // 2. Invite member
+      const inviteResult = await inviteMemberToProject(
+        project.id,
+        project.name,
+        user.id,
+        user.name,
+        checkResult.user.id,
+        checkResult.user.email
+      )
+
+      if (!inviteResult.success) {
+        toast.error(inviteResult.error || "Không thể thêm thành viên")
+        setIsLoading(false)
+        return
+      }
+
+      // 3. Update UI local (hoặc refetch data)
+      const newMember = {
+        userId: checkResult.user.id,
+        name: checkResult.user.name,
+        email: checkResult.user.email,
+        role: "member" as const,
+        joinedAt: new Date().toISOString(), // ✅ THÊM DÒNG NÀY
+      }
+
+      const updatedMembers = [...project.members, newMember]
+      onUpdateProject(project.id, { members: updatedMembers })
+
+      toast.success(`✅ Đã gửi lời mời đến ${checkResult.user.email}`)
+      setEmailToAdd("")
+      setIsAddDialogOpen(false)
+    } catch (err: any) {
+      console.error("Error adding member:", err)
+      toast.error("Có lỗi xảy ra: " + (err.message || "Unknown error"))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleRemoveMember = (userId: string) => {
+  const handleRemoveMember = async (userId: string) => {
     if (userId === project.ownerId) {
       toast.error("Không thể xóa chủ sở hữu dự án!")
       return
     }
 
-    if (confirm("Bạn có chắc muốn xóa thành viên này?")) {
+    if (!confirm("Bạn có chắc muốn xóa thành viên này?")) {
+      return
+    }
+
+    try {
+      // Xóa khỏi database
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('project_id', project.id)
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      // Update UI
       const updatedMembers = project.members.filter((m) => m.userId !== userId)
       onUpdateProject(project.id, { members: updatedMembers })
       toast.success("Đã xóa thành viên!")
+    } catch (err: any) {
+      console.error("Error removing member:", err)
+      toast.error("Không thể xóa thành viên: " + err.message)
     }
   }
 
@@ -102,15 +166,34 @@ export function ProjectMembers({ user, project, isManager, onUpdateProject }: Pr
                         placeholder="email@example.com"
                         value={emailToAdd}
                         onChange={(e) => setEmailToAdd(e.target.value)}
+                        disabled={isLoading}
                       />
-                      <p className="text-xs text-gray-500">Demo: Nhập bất kỳ email nào để mô phỏng thêm thành viên</p>
+                      <p className="text-xs text-gray-500">
+                        Nhập email của người dùng đã đăng ký trong hệ thống
+                      </p>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsAddDialogOpen(false)}
+                      disabled={isLoading}
+                    >
                       Hủy
                     </Button>
-                    <Button onClick={handleAddMember}>Thêm</Button>
+                    <Button 
+                      onClick={handleAddMember}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        "Thêm"
+                      )}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
