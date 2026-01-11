@@ -1,6 +1,6 @@
 import { Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import { AdminRoute } from '../components/routes/AdminRoute';
-import { AdminDashboard, RoleManagement, ProjectManagement, Dashboard } from '../components/admin';
+import { AdminDashboard, RoleManagement, ProjectManagement, Dashboard, AdminProfile } from '../components/admin';
 import { useApp } from '../contexts/AppContext';
 
 export function AdminRoutes() {
@@ -53,6 +53,16 @@ export function AdminRoutes() {
                     path="projects"
                     element={
                         <ProjectManagement
+                            adminEmail={adminEmail || undefined}
+                            onNavigate={handleAdminNavigate}
+                            onLogout={handleAdminLogout}
+                        />
+                    }
+                />
+                <Route
+                    path="profile"
+                    element={
+                        <AdminProfile
                             adminEmail={adminEmail || undefined}
                             onNavigate={handleAdminNavigate}
                             onLogout={handleAdminLogout}
