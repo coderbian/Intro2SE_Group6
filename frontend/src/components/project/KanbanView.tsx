@@ -22,6 +22,8 @@ interface KanbanViewProps {
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void
+  onDeleteAttachment: (attachmentId: string) => void
+  onUploadFile?: (taskId: string, file: File) => Promise<{ success: boolean }>
 }
 
 const columns = [
@@ -41,6 +43,8 @@ export function KanbanView({
   onDeleteTask,
   onAddComment,
   onAddAttachment,
+  onDeleteAttachment,
+  onUploadFile,
 }: KanbanViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -156,6 +160,7 @@ export function KanbanView({
           onCreateTask={onCreateTask}
           onAddComment={onAddComment}
           onAddAttachment={onAddAttachment}
+          onDeleteAttachment={onDeleteAttachment}
         />
       )}
 

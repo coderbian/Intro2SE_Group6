@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import {
   Clock, MessageSquare, Paperclip, Plus, X, Trash2, Edit,
   Check, CheckSquare, Link as LinkIcon, FileText, Image as ImageIcon,
-  AlertCircle, Sparkles
+  AlertCircle, Sparkles, Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User, Project, Task } from '../../types';
@@ -29,6 +29,8 @@ interface TaskDialogProps {
   onCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
   onAddComment: (taskId: string, content: string) => void;
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void;
+  onDeleteAttachment: (attachmentId: string) => void;
+  onUploadFile?: (taskId: string, file: File) => Promise<{ success: boolean }>;
 }
 
 export function TaskDialog({
@@ -43,6 +45,8 @@ export function TaskDialog({
   onCreateTask,
   onAddComment,
   onAddAttachment,
+  onDeleteAttachment,
+  onUploadFile,
 }: TaskDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
@@ -51,6 +55,13 @@ export function TaskDialog({
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [isEnhancingDescription, setIsEnhancingDescription] = useState(false);
   const [isEstimatingDeadline, setIsEstimatingDeadline] = useState(false);
+  const [localAttachments, setLocalAttachments] = useState(task.attachments);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Sync local attachments when task prop changes (e.g., after fetchTasks)
+  useEffect(() => {
+    setLocalAttachments(task.attachments);
+  }, [task.attachments]);
 
   const subtasks = allTasks.filter(t => t.parentTaskId === task.id);
 
@@ -135,15 +146,91 @@ export function TaskDialog({
   const handleAddAttachment = () => {
     if (attachmentUrl.trim()) {
       const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(attachmentUrl);
-      const fileName = attachmentUrl.split('/').pop() || 'file';
 
+      // For images, use filename; for links, use domain + shortened path
+      let fileName: string;
+      try {
+        const url = new URL(attachmentUrl);
+        if (isImage) {
+          // For images, get the filename
+          fileName = url.pathname.split('/').pop() || attachmentUrl;
+        } else {
+          // For links, show domain + start of path (more meaningful)
+          const pathPart = url.pathname.length > 20
+            ? url.pathname.substring(0, 20) + '...'
+            : url.pathname;
+          fileName = url.hostname + pathPart;
+        }
+      } catch {
+        // If URL parsing fails, use the full URL
+        fileName = attachmentUrl.length > 50
+          ? attachmentUrl.substring(0, 50) + '...'
+          : attachmentUrl;
+      }
+
+      // Optimistic update - show immediately in UI
+      const newAttachment = {
+        id: `temp-${Date.now()}`,
+        taskId: task.id,
+        name: fileName,
+        url: attachmentUrl,
+        type: isImage ? 'image' : 'link',
+        uploadedBy: user.id,
+        uploadedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+      setLocalAttachments(prev => [...prev, newAttachment]);
+
+      // Call API to persist
       onAddAttachment(task.id, {
         name: fileName,
         url: attachmentUrl,
         type: isImage ? 'image' : 'link',
       });
       setAttachmentUrl('');
-      toast.success('Đã thêm tài liệu đính kèm!');
+    }
+  };
+
+  const handleDeleteAttachment = (attachmentId: string) => {
+    // Optimistic update - remove from local state immediately
+    setLocalAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    // Call API to delete from database
+    onDeleteAttachment(attachmentId);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadFile) return;
+
+    setIsUploading(true);
+
+    // Optimistic update - show file immediately with temp ID
+    const isImage = file.type.startsWith('image/');
+    const tempAttachment = {
+      id: `temp-${Date.now()}`,
+      taskId: task.id,
+      name: file.name,
+      url: URL.createObjectURL(file), // Temporary URL for preview
+      type: isImage ? 'image' : file.type,
+      uploadedBy: user.id,
+      uploadedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+    setLocalAttachments(prev => [...prev, tempAttachment]);
+
+    try {
+      const result = await onUploadFile(task.id, file);
+      if (!result.success) {
+        // Remove temp attachment if upload failed
+        setLocalAttachments(prev => prev.filter(a => a.id !== tempAttachment.id));
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      setLocalAttachments(prev => prev.filter(a => a.id !== tempAttachment.id));
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      e.target.value = '';
     }
   };
 
@@ -298,7 +385,7 @@ export function TaskDialog({
                     <Paperclip className="w-4 h-4" />
                     <span className="text-sm font-medium">Tài liệu</span>
                     <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs font-bold bg-blue-100 text-blue-700">
-                      {task.attachments.length}
+                      {localAttachments.length}
                     </Badge>
                   </TabsTrigger>
                 </TabsList>
@@ -414,20 +501,49 @@ export function TaskDialog({
 
                 {/* Attachments Tab */}
                 <TabsContent value="attachments" className="space-y-4 mt-4">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Input
                       value={attachmentUrl}
                       onChange={(e) => setAttachmentUrl(e.target.value)}
                       placeholder="Nhập URL tài liệu (link hoặc hình ảnh)..."
-                      className="flex-1"
+                      className="flex-1 min-w-[200px]"
                     />
                     <Button onClick={handleAddAttachment} className="gap-2 px-4">
                       <Plus className="w-4 h-4" />
                       <span className="hidden sm:inline">Thêm</span>
                     </Button>
+                    {onUploadFile && (
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+                          disabled={isUploading}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2 px-4"
+                          disabled={isUploading}
+                          asChild
+                        >
+                          <span>
+                            {isUploading ? (
+                              <span className="animate-spin">⏳</span>
+                            ) : (
+                              <Upload className="w-4 h-4" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {isUploading ? 'Đang tải...' : 'Upload'}
+                            </span>
+                          </span>
+                        </Button>
+                      </label>
+                    )}
                   </div>
 
-                  {task.attachments.length === 0 ? (
+                  {localAttachments.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
                       <Paperclip className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                       <p className="text-sm text-gray-500 font-medium">
@@ -439,7 +555,7 @@ export function TaskDialog({
                     </div>
                   ) : (
                     <div className="space-y-2.5">
-                      {task.attachments.map((attachment) => (
+                      {localAttachments.map((attachment) => (
                         <div
                           key={attachment.id}
                           className="flex items-center gap-3 p-4 bg-white border rounded-lg hover:shadow-sm transition-shadow"
@@ -462,6 +578,13 @@ export function TaskDialog({
                               {formatDateTime(attachment.uploadedAt)}
                             </p>
                           </div>
+                          <button
+                            onClick={() => handleDeleteAttachment(attachment.id)}
+                            className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 transition-colors flex-shrink-0"
+                            title="Xóa tài liệu"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
                       ))}
                     </div>

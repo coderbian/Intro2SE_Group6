@@ -158,6 +158,7 @@ export const useTasks = () => {
           url: a.url,
           type: a.type,
           uploadedBy: a.uploaded_by,
+          uploadedAt: a.created_at,
           createdAt: a.created_at,
         })),
         labels: dbTask.labels || [],
@@ -655,6 +656,63 @@ export const useTasks = () => {
     }
   };
 
+  // Add an attachment by URL (for links/external images)
+  const addAttachmentByUrl = async (taskId: string, attachment: { name: string; url: string; type: string }) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Bạn cần đăng nhập để thêm tài liệu');
+        return { success: false };
+      }
+
+      // Insert attachment record
+      const newAttachment = {
+        id: uuidv4(),
+        task_id: taskId,
+        name: attachment.name,
+        url: attachment.url,
+        type: attachment.type,
+        file_size: 0, // URL-based attachments don't have file size
+        uploaded_by: user.id,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('attachments')
+        .insert(newAttachment);
+
+      if (error) throw error;
+
+      toast.success('Đã thêm tài liệu đính kèm!');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error adding attachment by URL:', error);
+      toast.error('Lỗi khi thêm tài liệu: ' + error.message);
+      return { success: false };
+    }
+  };
+
+  // Delete an attachment
+  const deleteAttachment = async (attachmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('attachments')
+        .delete()
+        .eq('id', attachmentId);
+
+      if (error) throw error;
+
+      toast.success('Đã xóa tài liệu!');
+      await fetchTasks();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting attachment:', error);
+      toast.error('Lỗi khi xóa tài liệu: ' + error.message);
+      return { success: false };
+    }
+  };
+
   // Task Proposals (kept in memory for now, can migrate to DB later)
   const proposeTaskChange = async (taskId: string, changes: Partial<Task>, reason?: string) => {
     try {
@@ -723,6 +781,8 @@ export const useTasks = () => {
     permanentlyDeleteTask,
     addComment,
     addAttachment,
+    addAttachmentByUrl,
+    deleteAttachment,
     proposeTaskChange,
     approveProposal,
     rejectProposal,

@@ -25,6 +25,8 @@ interface ProjectPageProps {
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void
+  onDeleteAttachment: (attachmentId: string) => void
+  onUploadFile?: (taskId: string, file: File) => Promise<{ success: boolean }>
   onCreateSprint?: (projectId: string, name: string, goal: string, taskIds: string[]) => void
   onEndSprint?: (sprintId: string) => void
 }
@@ -43,6 +45,8 @@ export function ProjectPage({
   onDeleteTask,
   onAddComment,
   onAddAttachment,
+  onDeleteAttachment,
+  onUploadFile,
   onCreateSprint,
   onEndSprint,
 }: ProjectPageProps) {
@@ -140,6 +144,8 @@ export function ProjectPage({
                 onDeleteTask={onDeleteTask}
                 onAddComment={onAddComment}
                 onAddAttachment={onAddAttachment}
+                onDeleteAttachment={onDeleteAttachment}
+                onUploadFile={onUploadFile}
               />
             ) : (
               <ScrumView
@@ -154,6 +160,8 @@ export function ProjectPage({
                 onDeleteTask={onDeleteTask}
                 onAddComment={onAddComment}
                 onAddAttachment={onAddAttachment}
+                onDeleteAttachment={onDeleteAttachment}
+                onUploadFile={onUploadFile}
                 onCreateSprint={onCreateSprint}
                 onEndSprint={onEndSprint}
               />
