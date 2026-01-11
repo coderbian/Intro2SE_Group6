@@ -100,39 +100,45 @@ export function ProjectSettings({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* General Settings */}
-      <Card>
-        <CardHeader>
+      <Card className="shadow-md border-2 border-blue-100 hover:shadow-xl transition-shadow">
+        <CardHeader className="border-b-2 border-blue-100 bg-gradient-to-r from-blue-50 via-white to-blue-50">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Thông tin dự án</CardTitle>
-              <CardDescription>
-                Quản lý thông tin cơ bản của dự án
-              </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold text-gray-900">Thông tin dự án</CardTitle>
+                <CardDescription className="text-sm mt-0.5 text-gray-600">
+                  Quản lý thông tin cơ bản của dự án
+                </CardDescription>
+              </div>
             </div>
             {!isEditing && (
-              <Button onClick={() => setIsEditing(true)}>Chỉnh sửa</Button>
+              <Button size="sm" onClick={() => setIsEditing(true)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">Chỉnh sửa</Button>
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-4">
           <div className="space-y-2">
-            <Label htmlFor="projectName">Tên dự án *</Label>
+            <Label htmlFor="projectName" className="text-sm font-semibold text-gray-700">Tên dự án *</Label>
             {isEditing ? (
               <Input
                 id="projectName"
                 value={editedProject.name}
                 onChange={(e) => setEditedProject({ ...editedProject, name: e.target.value })}
+                className="border-2 focus:border-blue-500"
               />
             ) : (
-              <div className="text-sm py-2">{project.name}</div>
+              <div className="text-sm py-1.5 px-2.5 bg-gray-50 rounded-lg border border-gray-200">{project.name}</div>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="description">Mô tả</Label>
+              <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Mô tả</Label>
               {isEditing && (
                 <Button
                   type="button"
@@ -140,9 +146,9 @@ export function ProjectSettings({
                   size="sm"
                   onClick={handleEnhanceDescription}
                   disabled={isEnhancingDescription || !editedProject.description}
-                  className="gap-1.5 h-7 text-xs"
+                  className="gap-1.5 h-7 text-xs border-purple-200 hover:bg-purple-50"
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="w-3 h-3 text-purple-600" />
                   {isEnhancingDescription ? 'Đang xử lý...' : 'AI Cải thiện'}
                 </Button>
               )}
@@ -153,10 +159,10 @@ export function ProjectSettings({
                 value={editedProject.description}
                 onChange={(e) => setEditedProject({ ...editedProject, description: e.target.value })}
                 rows={4}
-                className="max-h-40 overflow-y-auto resize-none"
+                className="max-h-32 overflow-y-auto resize-none border-2 focus:border-blue-500 text-sm"
               />
             ) : (
-              <div className="text-sm py-2 text-gray-700">
+              <div className="text-sm py-1.5 px-2.5 bg-gray-50 rounded-lg border border-gray-200 text-gray-700 min-h-[60px]">
                 {project.description || 'Không có mô tả'}
               </div>
             )}
@@ -164,7 +170,7 @@ export function ProjectSettings({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="deadline">Deadline *</Label>
+              <Label htmlFor="deadline" className="text-sm font-semibold text-gray-700">Deadline *</Label>
               {isEditing && (
                 <Button
                   type="button"
@@ -172,9 +178,9 @@ export function ProjectSettings({
                   size="sm"
                   onClick={handleEstimateDeadline}
                   disabled={isEstimatingDeadline || (!editedProject.name && !editedProject.description)}
-                  className="gap-1.5 h-7 text-xs"
+                  className="gap-1.5 h-7 text-xs border-purple-200 hover:bg-purple-50"
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="w-3 h-3 text-purple-600" />
                   {isEstimatingDeadline ? 'Đang ước tính...' : 'AI Ước tính'}
                 </Button>
               )}
@@ -185,9 +191,10 @@ export function ProjectSettings({
                 type="date"
                 value={editedProject.deadline}
                 onChange={(e) => setEditedProject({ ...editedProject, deadline: e.target.value })}
+                className="border-2 focus:border-blue-500"
               />
             ) : (
-              <div className="text-sm py-2">
+              <div className="text-sm py-1.5 px-2.5 bg-gray-50 rounded-lg border border-gray-200">
                 {new Date(project.deadline).toLocaleDateString('vi-VN', {
                   day: '2-digit',
                   month: '2-digit',
@@ -198,15 +205,15 @@ export function ProjectSettings({
           </div>
 
           <div className="space-y-2">
-            <Label>Template</Label>
-            <div className="text-sm py-2">
+            <Label className="text-sm font-semibold text-gray-700">Template</Label>
+            <div className="text-sm py-1.5 px-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 font-medium text-blue-700">
               {project.template === 'kanban' ? 'Kanban Board' : 'Scrum Board'}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Ngày tạo</Label>
-            <div className="text-sm py-2 text-gray-600">
+            <Label className="text-sm font-semibold text-gray-700">Ngày tạo</Label>
+            <div className="text-sm py-1.5 px-2.5 bg-gray-50 rounded-lg border border-gray-200 text-gray-600">
               {new Date(project.createdAt).toLocaleDateString('vi-VN', {
                 day: '2-digit',
                 month: '2-digit',
@@ -218,35 +225,44 @@ export function ProjectSettings({
           </div>
 
           {isEditing && (
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleSave}>Lưu thay đổi</Button>
-              <Button variant="outline" onClick={handleCancel}>Hủy</Button>
+            <div className="flex gap-2 pt-3 border-t border-gray-200">
+              <Button size="sm" onClick={handleSave} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg">Lưu thay đổi</Button>
+              <Button size="sm" variant="outline" onClick={handleCancel} className="border-2">Hủy</Button>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-red-600">Vùng nguy hiểm</CardTitle>
-          <CardDescription>
-            Hành động cần cân nhắc kỹ
-          </CardDescription>
+      <Card className="border-2 border-red-200 shadow-md hover:shadow-xl transition-shadow">
+        <CardHeader className="border-b-2 border-red-100 bg-gradient-to-r from-red-50 via-white to-red-50 py-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold text-red-600">Vùng nguy hiểm</CardTitle>
+              <CardDescription className="text-sm mt-0.5 text-gray-600">
+                Hành động cần cân nhắc kỹ
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+        <CardContent className="space-y-3 p-4">
+          <Alert className="border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 py-2">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-xs text-gray-700">
               Chuyển dự án vào thùng rác sẽ ẩn dự án khỏi danh sách. Bạn có thể khôi phục hoặc xóa vĩnh viễn trong Thùng rác.
             </AlertDescription>
           </Alert>
 
           <Button
+            size="sm"
             variant="destructive"
             onClick={handleMoveToTrash}
+            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg gap-2"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
+            <Trash2 className="w-4 h-4" />
             Chuyển vào thùng rác
           </Button>
         </CardContent>

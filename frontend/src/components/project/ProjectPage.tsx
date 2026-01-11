@@ -168,13 +168,17 @@ export function ProjectPage({
             )}
           </TabsContent>
 
-          <TabsContent value="members" className="m-0">
-            <ProjectMembers user={user} project={project} isManager={isManager} onUpdateProject={onUpdateProject} />
+          <TabsContent value="members" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+              <ProjectMembers user={user} project={project} isManager={isManager} onUpdateProject={onUpdateProject} />
+            </div>
           </TabsContent>
 
           {isManager && (
-            <TabsContent value="settings" className="m-0">
-              <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} onMoveToTrash={onMoveToTrash} />
+            <TabsContent value="settings" className="m-0 p-0 flex-1 overflow-auto">
+              <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+                <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} onMoveToTrash={onMoveToTrash} />
+              </div>
             </TabsContent>
           )}
         </div>
