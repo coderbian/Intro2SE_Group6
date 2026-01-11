@@ -292,21 +292,23 @@ export function Dashboard({ adminEmail, onNavigate, onLogout }: DashboardProps) 
                                 </Card>
                             </div>
 
-                            {/* Charts Row */}
-                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                {/* Tasks by Status */}
+                            {/* Charts Row 1 - Two charts side by side */}
+                            <div className="grid grid-cols-2 gap-6 mb-6">
+                                {/* Tasks by Status - Bar Chart */}
                                 <Card className="border shadow-sm">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-sm font-bold">Tasks theo trạng thái</CardTitle>
+                                    <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                                        <CardTitle className="text-base font-bold">Công việc theo trạng thái</CardTitle>
+                                        <CardDescription>Phân bổ các task theo tình trạng hiện tại</CardDescription>
                                     </CardHeader>
-                                    <CardContent>
-                                        <div className="h-[180px]">
+                                    <CardContent className="pt-4">
+                                        <div className="h-[220px]">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={taskStatusData} layout="vertical">
-                                                    <XAxis type="number" hide />
-                                                    <YAxis type="category" dataKey="name" width={70} tick={{ fontSize: 11 }} />
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                                    <XAxis type="number" />
+                                                    <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
                                                     <Tooltip />
-                                                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                                                    <Bar dataKey="value" name="Số lượng" radius={[0, 4, 4, 0]}>
                                                         {taskStatusData.map((entry, index) => (
                                                             <Cell key={`cell-${index}`} fill={entry.fill} />
                                                         ))}
@@ -317,60 +319,80 @@ export function Dashboard({ adminEmail, onNavigate, onLogout }: DashboardProps) 
                                     </CardContent>
                                 </Card>
 
-                                {/* User Roles */}
+                                {/* User Roles - Pie Chart */}
                                 <Card className="border shadow-sm">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-sm font-bold">Phân bổ vai trò</CardTitle>
+                                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+                                        <CardTitle className="text-base font-bold">Phân bổ vai trò người dùng</CardTitle>
+                                        <CardDescription>Tỷ lệ Admin và Thành viên trong hệ thống</CardDescription>
                                     </CardHeader>
-                                    <CardContent>
-                                        <div className="h-[180px]">
+                                    <CardContent className="pt-4">
+                                        <div className="h-[220px]">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
                                                     <Pie
                                                         data={userRoleData}
                                                         cx="50%"
                                                         cy="50%"
-                                                        innerRadius={40}
-                                                        outerRadius={65}
+                                                        innerRadius={50}
+                                                        outerRadius={80}
                                                         paddingAngle={5}
                                                         dataKey="value"
+                                                        label={({ name, value }) => `${name}: ${value}`}
                                                     >
                                                         {userRoleData.map((entry, index) => (
                                                             <Cell key={`cell-${index}`} fill={entry.fill} />
                                                         ))}
                                                     </Pie>
                                                     <Tooltip />
-                                                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                                                    <Legend wrapperStyle={{ fontSize: 12 }} />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </CardContent>
                                 </Card>
-
-                                {/* Monthly Trend */}
-                                <Card className="border shadow-sm">
-                                    <CardHeader className="pb-2">
-                                        <div className="flex items-center gap-2">
-                                            <TrendingUp className="w-4 h-4 text-green-600" />
-                                            <CardTitle className="text-sm font-bold">Xu hướng 6 tháng</CardTitle>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="h-[180px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={monthlyData}>
-                                                    <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                                                    <YAxis tick={{ fontSize: 10 }} />
-                                                    <Tooltip />
-                                                    <Line type="monotone" dataKey="projects" name="Dự án" stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} />
-                                                    <Line type="monotone" dataKey="users" name="Users" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </CardContent>
-                                </Card>
                             </div>
+
+                            {/* Charts Row 2 - Full width trend chart */}
+                            <Card className="border shadow-sm mb-6">
+                                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+                                    <div className="flex items-center gap-2">
+                                        <TrendingUp className="w-5 h-5 text-green-600" />
+                                        <div>
+                                            <CardTitle className="text-base font-bold">Xu hướng tăng trưởng 6 tháng gần nhất</CardTitle>
+                                            <CardDescription>Số lượng dự án và người dùng mới được tạo theo từng tháng</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="pt-4">
+                                    <div className="h-[280px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={monthlyData}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                                                <YAxis tick={{ fontSize: 12 }} />
+                                                <Tooltip />
+                                                <Legend wrapperStyle={{ fontSize: 12 }} />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="projects"
+                                                    name="Dự án mới"
+                                                    stroke="#f97316"
+                                                    strokeWidth={2}
+                                                    dot={{ fill: '#f97316', r: 4 }}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="users"
+                                                    name="Người dùng mới"
+                                                    stroke="#3b82f6"
+                                                    strokeWidth={2}
+                                                    dot={{ fill: '#3b82f6', r: 4 }}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
                             {/* Activity Logs */}
                             <Card className="border shadow-sm">

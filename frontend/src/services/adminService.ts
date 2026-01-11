@@ -251,33 +251,37 @@ export async function getAllProjects(): Promise<AdminProject[]> {
     const memberCounts = new Map<string, number>();
     const taskCounts = new Map<string, number>();
 
-    (membersResult.data || []).forEach((m: { project_id: string }) => {
-        memberCounts.set(m.project_id, (memberCounts.get(m.project_id) || 0) + 1);
+    (membersResult.data || []).forEach((m: { project_id: string | null }) => {
+        if (m.project_id) {
+            memberCounts.set(m.project_id, (memberCounts.get(m.project_id) || 0) + 1);
+        }
     });
 
-    (tasksResult.data || []).forEach((t: { project_id: string }) => {
-        taskCounts.set(t.project_id, (taskCounts.get(t.project_id) || 0) + 1);
+    (tasksResult.data || []).forEach((t: { project_id: string | null }) => {
+        if (t.project_id) {
+            taskCounts.set(t.project_id, (taskCounts.get(t.project_id) || 0) + 1);
+        }
     });
 
     return (projects || []).map((p: {
         id: string;
         name: string;
         description: string | null;
-        owner_id: string;
+        owner_id: string | null;
         owner?: { name: string; email: string } | null;
-        created_at: string;
-        updated_at: string;
+        created_at: string | null;
+        updated_at: string | null;
     }) => ({
         id: p.id,
         name: p.name,
         description: p.description,
-        owner_id: p.owner_id,
+        owner_id: p.owner_id || '',
         owner_name: p.owner?.name || null,
         owner_email: p.owner?.email || null,
         member_count: memberCounts.get(p.id) || 0,
         task_count: taskCounts.get(p.id) || 0,
-        created_at: p.created_at,
-        updated_at: p.updated_at,
+        created_at: p.created_at || new Date().toISOString(),
+        updated_at: p.updated_at || new Date().toISOString(),
     }));
 }
 
@@ -367,16 +371,20 @@ export async function getDetailedStats(): Promise<DetailedStats> {
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStr = date.toLocaleDateString('vi-VN', { month: 'short', year: '2-digit' });
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const monthStr = `${month}/${year}`;
         const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
         const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-        const projectCount = projects.filter((p: { created_at: string }) => {
+        const projectCount = projects.filter((p: { created_at: string | null }) => {
+            if (!p.created_at) return false;
             const d = new Date(p.created_at);
             return d >= startOfMonth && d <= endOfMonth;
         }).length;
 
-        const userCount = users.filter((u: { created_at: string }) => {
+        const userCount = users.filter((u: { created_at: string | null }) => {
+            if (!u.created_at) return false;
             const d = new Date(u.created_at);
             return d >= startOfMonth && d <= endOfMonth;
         }).length;
