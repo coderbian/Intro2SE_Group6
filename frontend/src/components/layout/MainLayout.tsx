@@ -509,28 +509,6 @@ export function MainLayout({
         settings={settings}
         onUpdateSettings={onUpdateSettings}
       />
-      {/* Thêm nút test này ngay sau nút Settings */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={async () => {
-          // Test tạo notification
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await supabase.from('notifications').insert({
-              user_id: user.id,
-              type: 'task_assigned',
-              title: 'Test Notification',
-              content: `Test lúc ${new Date().toLocaleTimeString()}`,
-              is_read: false,
-            });
-          }
-        }}
-        title="Test Notification"
-        className="hover:bg-green-50 rounded-lg p-1.5 border border-green-300"
-      >
-        🧪 Test
-      </Button>
     </div>
   )
 }
