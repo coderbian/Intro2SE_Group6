@@ -150,12 +150,12 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4 border-b">
-          <DialogTitle className="text-2xl font-semibold">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col backdrop-blur-sm bg-white/95 border-0 shadow-2xl">
+        <DialogHeader className="pb-4 border-b bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 -mx-6 -mt-6 px-6 pt-6 rounded-t-lg">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Tạo {isUserStory ? 'User Story' : 'Task'} mới
           </DialogTitle>
-          <DialogDescription className="text-base mt-2">
+          <DialogDescription className="text-base mt-2 text-gray-600">
             Nhập thông tin chi tiết cho {isUserStory ? 'user story' : 'task'}
           </DialogDescription>
         </DialogHeader>
@@ -183,7 +183,7 @@ export function CreateTaskDialog({
                 size="sm"
                 onClick={handleEnhanceDescription}
                 disabled={isEnhancing || !formData.description}
-                className="gap-2"
+                className="gap-2 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:from-purple-100 hover:to-pink-100 text-purple-700"
               >
                 <Sparkles className="w-4 h-4" />
                 {isEnhancing ? 'Đang xử lý...' : 'AI Cải thiện văn phong'}
@@ -251,7 +251,7 @@ export function CreateTaskDialog({
                 size="sm"
                 onClick={handleEstimateTime}
                 disabled={isEstimating || !formData.description}
-                className="gap-2"
+                className="gap-2 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:from-purple-100 hover:to-pink-100 text-purple-700"
               >
                 <Sparkles className="w-4 h-4" />
                 {isEstimating ? 'Đang ước tính...' : 'AI Ước tính thời gian'}
@@ -313,11 +313,11 @@ export function CreateTaskDialog({
           </div>
         </div>
 
-        <DialogFooter className="pt-4 border-t gap-2">
-          <Button variant="outline" onClick={onClose} className="px-6">
+        <DialogFooter className="pt-4 border-t gap-3">
+          <Button variant="outline" onClick={onClose} className="px-6 hover:bg-gray-100">
             Hủy
           </Button>
-          <Button onClick={handleSubmit} className="px-6">
+          <Button onClick={handleSubmit} className="px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg transition-all hover:shadow-xl font-semibold">
             Tạo nhiệm vụ
           </Button>
         </DialogFooter>
