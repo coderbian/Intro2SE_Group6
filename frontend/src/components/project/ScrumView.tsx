@@ -196,22 +196,22 @@ export function ScrumView({
   return (
     <div className="h-full flex flex-col">
       {/* Sprint Stats */}
-      <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 border-b-2 px-8 py-8">
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-          <Card className="border-2 border-blue-200 hover:shadow-2xl transition-all hover:scale-105 bg-white">
-            <CardHeader className="pb-4 bg-gradient-to-br from-blue-50 to-white">
-              <CardTitle className="flex items-center gap-3 text-lg font-bold text-blue-900">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Calendar className="w-6 h-6 text-blue-600" />
+      <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 border-b px-6 py-5">
+        <div className="grid md:grid-cols-3 gap-4 lg:gap-5">
+          <Card className="border border-blue-200 hover:shadow-lg transition-all bg-white">
+            <CardHeader className="pb-2 pt-3 px-4 bg-gradient-to-br from-blue-50 to-white">
+              <CardTitle className="flex items-center gap-2 text-sm font-bold text-blue-900">
+                <div className="p-1.5 bg-blue-100 rounded-lg">
+                  <Calendar className="w-4 h-4 text-blue-600" />
                 </div>
                 Sprint hiện tại
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-4">
-              <div className="text-4xl font-black mb-2 text-gray-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <CardContent className="pt-2 pb-3 px-4">
+              <div className="text-2xl font-bold mb-1 text-gray-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 {currentSprint?.name || 'Chưa có Sprint'}
               </div>
-              <div className="text-base text-gray-600 font-semibold mb-3">
+              <div className="text-sm text-gray-600 font-medium mb-2">
                 {currentSprint ? `${getDaysUntilDeadline()} ngày còn lại` : 'Tạo Sprint từ Backlog'}
               </div>
               {currentSprint && isManager && onEndSprint && (
@@ -228,32 +228,37 @@ export function ScrumView({
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-green-200 hover:shadow-2xl transition-all hover:scale-105 bg-white">
-            <CardHeader className="pb-4 bg-gradient-to-br from-green-50 to-white">
-              <CardTitle className="flex items-center gap-3 text-lg font-bold text-green-900">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
+          <Card className="border border-green-200 hover:shadow-lg transition-all bg-white">
+            <CardHeader className="pb-2 pt-3 px-4 bg-gradient-to-br from-green-50 to-white">
+              <CardTitle className="flex items-center gap-2 text-sm font-bold text-green-900">
+                <div className="p-1.5 bg-green-100 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
                 </div>
                 Tiến độ Sprint
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-4">
-              <div className="text-4xl font-black mb-4 text-gray-900">
+            <CardContent className="pt-2 pb-3 px-4">
+              <div className="text-2xl font-bold mb-2 text-gray-900">
                 {Math.round(sprintProgress)}%
               </div>
-              <Progress value={sprintProgress} className="h-4 bg-gray-200 shadow-inner" />
+              <Progress value={sprintProgress} className="h-2.5 bg-gray-200" />
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-purple-200 hover:shadow-2xl transition-all hover:scale-105 bg-white">
-            <CardHeader className="pb-4 bg-gradient-to-br from-purple-50 to-white">
-              <CardTitle className="text-lg font-bold text-purple-900">Story Points</CardTitle>
+          <Card className="border border-purple-200 hover:shadow-lg transition-all bg-white">
+            <CardHeader className="pb-2 pt-3 px-4 bg-gradient-to-br from-purple-50 to-white">
+              <CardTitle className="flex items-center gap-2 text-sm font-bold text-purple-900">
+                <div className="p-1.5 bg-purple-100 rounded-lg">
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                </div>
+                Story Points
+              </CardTitle>
             </CardHeader>
-            <CardContent className="pt-4">
-              <div className="text-4xl font-black mb-2 text-gray-900">
-                {completedPoints} <span className="text-2xl text-gray-400">/</span> {totalPoints}
+            <CardContent className="pt-2 pb-3 px-4">
+              <div className="text-2xl font-bold mb-1 text-gray-900">
+                {completedPoints} <span className="text-lg text-gray-400">/</span> {totalPoints}
               </div>
-              <div className="text-base text-gray-600 font-semibold">Điểm hoàn thành</div>
+              <div className="text-sm text-gray-600 font-medium">Điểm hoàn thành</div>
             </CardContent>
           </Card>
         </div>
@@ -261,17 +266,33 @@ export function ScrumView({
 
       {/* Tabs */}
       <div className="flex-1 overflow-auto">
-        <Tabs defaultValue="board" className="h-full">
-          <div className="bg-white border-b px-8">
-            <TabsList className="border-0">
-              <TabsTrigger value="board" className="text-base">Bảng Sprint</TabsTrigger>
-              <TabsTrigger value="backlog" className="text-base">
-                Backlog <Badge variant="secondary" className="ml-2">
+        <Tabs defaultValue="board" className="h-full flex flex-col">
+          <div className="bg-white border-b px-6 sticky top-0 z-10 shadow-sm">
+            <TabsList className="h-14 bg-transparent border-0 gap-2">
+              <TabsTrigger 
+                value="board" 
+                className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-t-lg px-6 py-3 font-semibold transition-all"
+              >
+                <Layers className="w-4 h-4 mr-2" />
+                Bảng Sprint
+              </TabsTrigger>
+              <TabsTrigger 
+                value="backlog" 
+                className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-t-lg px-6 py-3 font-semibold transition-all"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Backlog
+                <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700">
                   {backlogUserStories.length}
                 </Badge>
               </TabsTrigger>
-              <TabsTrigger value="history" className="text-base">
-                Lịch sử Sprint <Badge variant="secondary" className="ml-2">
+              <TabsTrigger 
+                value="history" 
+                className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-green-600 rounded-t-lg px-6 py-3 font-semibold transition-all"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Lịch sử Sprint
+                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">
                   {sprints?.filter(s => s.status === 'completed').length || 0}
                 </Badge>
               </TabsTrigger>
@@ -418,17 +439,23 @@ export function ScrumView({
             )}
           </TabsContent>
 
-          <TabsContent value="backlog" className="m-0 p-8">
-            <Card className="shadow-sm border-2">
-              <CardHeader className="border-b bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl font-bold">Product Backlog</CardTitle>
-                    <CardDescription className="text-base mt-1">
-                      Quản lý danh sách công việc cho các sprint tương lai
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-3">
+          <TabsContent value="backlog" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+              <Card className="shadow-md border-2 border-purple-100 hover:shadow-xl transition-shadow">
+                <CardHeader className="border-b-2 border-purple-100 bg-gradient-to-r from-purple-50 via-white to-purple-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-purple-100 rounded-xl">
+                        <FileText className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl font-bold text-gray-900">Product Backlog</CardTitle>
+                        <CardDescription className="text-base mt-1 text-gray-600">
+                          Quản lý danh sách công việc cho các sprint tương lai
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
                     {isManager && selectedBacklogTasks.length > 0 && (
                       <Button
                         onClick={() => setIsCreateSprintOpen(true)}
@@ -496,21 +523,33 @@ export function ScrumView({
                 )}
               </CardContent>
             </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="history" className="m-0 p-8">
-            <Card className="shadow-sm border-2">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-xl font-bold">Lịch sử Sprint</CardTitle>
-                <CardDescription className="text-base mt-1">
-                  Các Sprint đã hoàn thành trước đó
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {(!sprints || sprints.filter(s => s.status === 'completed').length === 0) ? (
-                  <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
-                    <p className="text-lg font-medium mb-2">Chưa có Sprint nào hoàn thành</p>
-                    <p className="text-sm">Các Sprint đã kết thúc sẽ xuất hiện ở đây</p>
+          <TabsContent value="history" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+              <Card className="shadow-md border-2 border-green-100 hover:shadow-xl transition-shadow">
+                <CardHeader className="border-b-2 border-green-100 bg-gradient-to-r from-green-50 via-white to-green-50">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-green-100 rounded-xl">
+                      <Calendar className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl font-bold text-gray-900">Lịch sử Sprint</CardTitle>
+                      <CardDescription className="text-base mt-1 text-gray-600">
+                        Các Sprint đã hoàn thành trước đó
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {(!sprints || sprints.filter(s => s.status === 'completed').length === 0) ? (
+                    <div className="text-center py-20 text-gray-500">
+                      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
+                        <Calendar className="w-10 h-10 text-gray-400" />
+                      </div>
+                      <p className="text-lg font-semibold mb-2 text-gray-700">Chưa có Sprint nào hoàn thành</p>
+                      <p className="text-sm text-gray-500">Các Sprint đã kết thúc sẽ xuất hiện ở đây</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -518,20 +557,35 @@ export function ScrumView({
                       .filter(s => s.status === 'completed')
                       .sort((a, b) => new Date(b.endDate || 0).getTime() - new Date(a.endDate || 0).getTime())
                       .map((sprint) => (
-                        <div key={sprint.id} className="bg-white border-2 rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-lg text-gray-900">{sprint.name}</h4>
-                            <Badge variant="secondary" className="bg-green-100 text-green-700">
-                              Hoàn thành
+                        <div key={sprint.id} className="bg-gradient-to-br from-white to-green-50 border-2 border-green-100 rounded-xl p-5 hover:shadow-lg transition-all hover:border-green-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-green-100 rounded-lg">
+                                <TrendingUp className="w-5 h-5 text-green-600" />
+                              </div>
+                              <h4 className="font-bold text-lg text-gray-900">{sprint.name}</h4>
+                            </div>
+                            <Badge className="bg-green-100 text-green-700 border-green-200 px-3 py-1 text-sm font-semibold">
+                              ✓ Hoàn thành
                             </Badge>
                           </div>
                           {sprint.goal && (
-                            <p className="text-gray-600 text-sm mb-3">{sprint.goal}</p>
+                            <div className="bg-white rounded-lg p-3 mb-3 border border-green-100">
+                              <p className="text-gray-700 text-sm leading-relaxed">{sprint.goal}</p>
+                            </div>
                           )}
-                          <div className="flex gap-4 text-xs text-gray-500">
-                            <span>Bắt đầu: {new Date(sprint.startDate).toLocaleDateString('vi-VN')}</span>
+                          <div className="flex gap-6 text-sm">
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Calendar className="w-4 h-4 text-green-600" />
+                              <span className="font-medium">Bắt đầu:</span>
+                              <span>{new Date(sprint.startDate).toLocaleDateString('vi-VN')}</span>
+                            </div>
                             {sprint.endDate && (
-                              <span>Kết thúc: {new Date(sprint.endDate).toLocaleDateString('vi-VN')}</span>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <StopCircle className="w-4 h-4 text-green-600" />
+                                <span className="font-medium">Kết thúc:</span>
+                                <span>{new Date(sprint.endDate).toLocaleDateString('vi-VN')}</span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -540,6 +594,7 @@ export function ScrumView({
                 )}
               </CardContent>
             </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
