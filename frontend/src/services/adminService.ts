@@ -340,6 +340,12 @@ export async function getDetailedStats(): Promise<DetailedStats> {
         supabase.from('tasks').select('id, status, created_at').is('deleted_at', null),
     ]);
 
+    // Debug logging - check for errors
+    if (tasksResult.error) {
+        console.error('Error fetching tasks:', tasksResult.error);
+    }
+    console.log('Tasks fetched:', tasksResult.data?.length || 0, 'tasks');
+
     const users = usersResult.data || [];
     const projects = projectsResult.data || [];
     const tasks = tasksResult.data || [];

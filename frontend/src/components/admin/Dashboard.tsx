@@ -25,6 +25,7 @@ interface DashboardProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
+    'backlog': '#6366f1',
     'todo': '#94a3b8',
     'in_progress': '#3b82f6',
     'in-progress': '#3b82f6',
@@ -35,6 +36,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 const STATUS_LABELS: Record<string, string> = {
+    'backlog': 'Backlog',
     'todo': 'Chờ làm',
     'in_progress': 'Đang làm',
     'in-progress': 'Đang làm',
@@ -98,12 +100,24 @@ export function Dashboard({ adminEmail, onNavigate, onLogout }: DashboardProps) 
         return labels[action.toLowerCase()] || action
     }
 
-    // Prepare chart data
-    const taskStatusData = detailedStats?.tasksByStatus.map(item => ({
+    // Define status order for proper sorting
+    const STATUS_ORDER: Record<string, number> = {
+        'backlog': 1,
+        'todo': 2,
+        'in_progress': 3,
+        'in-progress': 3,
+        'review': 4,
+        'done': 5,
+        'completed': 5,
+    }
+
+    // Prepare chart data - sorted by workflow order
+    const taskStatusData = (detailedStats?.tasksByStatus.map(item => ({
         name: STATUS_LABELS[item.status] || item.status,
         value: item.count,
         fill: STATUS_COLORS[item.status] || '#6b7280',
-    })) || []
+        order: STATUS_ORDER[item.status] || 99,
+    })) || []).sort((a, b) => a.order - b.order)
 
     const userRoleData = detailedStats?.usersByRole.map(item => ({
         name: item.role === 'admin' ? 'Quản trị viên' : 'Người dùng',
@@ -192,20 +206,29 @@ export function Dashboard({ adminEmail, onNavigate, onLogout }: DashboardProps) 
                                     <CardDescription>Phân bổ các công việc theo tình trạng hiện tại</CardDescription>
                                 </CardHeader>
                                 <CardContent className="pt-4">
-                                    <div className="h-[220px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={taskStatusData} layout="vertical">
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                                <XAxis type="number" />
-                                                <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
-                                                <Tooltip />
-                                                <Bar dataKey="value" name="Số lượng" radius={[0, 4, 4, 0]}>
-                                                    {taskStatusData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                                                    ))}
-                                                </Bar>
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                    <div className="h-[220px] flex items-center justify-center">
+                                        {taskStatusData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height={taskStatusData.length * 45 + 20}>
+                                                <BarChart data={taskStatusData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                                    <XAxis type="number" />
+                                                    <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
+                                                    <Tooltip />
+                                                    <Bar dataKey="value" name="Số lượng" radius={[0, 4, 4, 0]} barSize={30}>
+                                                        {taskStatusData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <div className="h-full flex items-center justify-center text-gray-500">
+                                                <div className="text-center">
+                                                    <p className="text-sm">Chưa có dữ liệu công việc</p>
+                                                    <p className="text-xs mt-1">Tổng số: {detailedStats?.totalStats.totalTasks || 0} tasks</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

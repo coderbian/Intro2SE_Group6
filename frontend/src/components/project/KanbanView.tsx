@@ -155,7 +155,7 @@ export function KanbanView({
 
       {/* Kanban Board */}
       <div className="flex-1 p-6 lg:p-8 overflow-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 h-full">{columns.map((column) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 h-full">{columns.map((column) => (
           <div key={column.id} className="flex flex-col min-h-0 bg-white rounded-2xl shadow-lg border-2 hover:shadow-xl transition-shadow">
             <div className={`${column.color} px-6 py-5 rounded-t-2xl border-b-2`}>
               <div className="flex items-center justify-between">
@@ -216,7 +216,7 @@ export function KanbanView({
             </div>
           </div>
         ))}
-      </div>
+        </div>
       </div>
 
       {selectedTask && (

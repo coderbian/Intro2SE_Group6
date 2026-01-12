@@ -69,6 +69,7 @@ export function CreateTaskDialog({
       parentTaskId: parentTaskId,
       sprintId: sprintId,
       createdBy: currentUserId || project.ownerId,
+      updatedAt: new Date().toISOString(),
     });
   };
 
