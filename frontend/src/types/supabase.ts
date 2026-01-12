@@ -460,7 +460,11 @@ export type Database = {
           entity_type: string | null
           id: string
           is_read: boolean | null
+          message: string | null
+          metadata: Json | null
+          project_id: string | null
           read_at: string | null
+          task_id: string | null
           title: string | null
           type: string | null
           user_id: string | null
@@ -472,7 +476,11 @@ export type Database = {
           entity_type?: string | null
           id?: string
           is_read?: boolean | null
+          message?: string | null
+          metadata?: Json | null
+          project_id?: string | null
           read_at?: string | null
+          task_id?: string | null
           title?: string | null
           type?: string | null
           user_id?: string | null
@@ -484,12 +492,23 @@ export type Database = {
           entity_type?: string | null
           id?: string
           is_read?: boolean | null
+          message?: string | null
+          metadata?: Json | null
+          project_id?: string | null
           read_at?: string | null
+          task_id?: string | null
           title?: string | null
           type?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
@@ -896,7 +915,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_project_member: { Args: { _project_id: string }; Returns: boolean }
+      accept_join_request_by_id: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      can_manage_project: {
+        Args: { p_project_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      get_discoverable_projects: {
+        Args: { search_text?: string }
+        Returns: {
+          deadline: string
+          description: string
+          has_requested: boolean
+          id: string
+          member_count: number
+          name: string
+        }[]
+      }
+      is_project_member:
+        | { Args: { _project_id: string }; Returns: boolean }
+        | {
+            Args: { p_project_id: string; p_user_id: string }
+            Returns: boolean
+          }
+      reject_join_request_by_id: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      send_project_invite: {
+        Args: { p_email: string; p_project_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

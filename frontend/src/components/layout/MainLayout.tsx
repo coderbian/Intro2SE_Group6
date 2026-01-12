@@ -212,12 +212,12 @@ export function MainLayout({
             </Button>
 
             <Button
-              variant={currentPath === "/projects" ? "default" : "ghost"}
-              className={`w-full justify-start h-9 text-sm font-semibold ${currentPath === "/projects"
+              variant={currentPath === "/discover" ? "default" : "ghost"}
+              className={`w-full justify-start h-9 text-sm font-semibold ${currentPath === "/discover"
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
                 : "hover:bg-blue-50"
                 }`}
-              onClick={() => navigate("/projects")}
+              onClick={() => navigate("/discover")}
             >
               <Globe className="w-4 h-4 mr-2.5" />
               Khám phá dự án
@@ -451,7 +451,7 @@ export function MainLayout({
             {currentPath === "/dashboard" && (
               <h2 className="text-lg font-bold text-gray-800">Bảng điều khiển</h2>
             )}
-            {currentPath === "/projects" && (
+            {currentPath === "/discover" && (
               <h2 className="text-lg font-bold text-gray-800">Khám phá dự án</h2>
             )}
             {currentPath.startsWith("/project/") && selectedProjectId && (

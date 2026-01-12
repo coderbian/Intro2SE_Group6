@@ -16,3 +16,6 @@ export type { Notification } from './useNotifications';
 
 export { useSettings } from './useSettings';
 export type { Settings } from './useSettings';
+
+export { useProjectDiscovery } from './useProjectDiscovery';
+export type { DiscoverableProject } from './useProjectDiscovery';

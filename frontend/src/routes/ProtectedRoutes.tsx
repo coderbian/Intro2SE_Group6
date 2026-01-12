@@ -6,6 +6,7 @@ import { ProfilePage } from '../components/profile/ProfilePage';
 import { SettingsPage } from '../components/settings/SettingsPage';
 import { TrashPage } from '../components/trash/TrashPage';
 import { AllProjectsPage } from '../components/projects/AllProjectsPage';
+import { ProjectDiscovery } from '../components/project/ProjectDiscovery';
 import { MemberRequestsPage } from '../components/member-requests/MemberRequestsPage';
 import { ProjectPage } from '../components/project/ProjectPage';
 import { ChatAssistant } from '../components/chat/ChatAssistant';
@@ -173,6 +174,10 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                                 onSelectProject={handleSelectProject}
                             />
                         }
+                    />
+                    <Route
+                        path="/discover"
+                        element={<ProjectDiscovery />}
                     />
                     {/* Member requests removed - invitation-only system */}
                     {/* <Route
