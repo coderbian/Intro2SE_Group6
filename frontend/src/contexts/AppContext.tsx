@@ -30,7 +30,7 @@ interface AppContextType {
     handleDeleteProject: (projectId: string) => void;
     handleRestoreProject: (projectId: string) => void;
     handlePermanentlyDeleteProject: (projectId: string) => void;
-    handleSendInvitation: (projectId: string, email: string) => void;
+    handleSendInvitation: (projectId: string, email: string) => Promise<{ success: boolean; error?: string }>;
     handleAcceptInvitation: (invitationId: string) => void;
     handleRejectInvitation: (invitationId: string) => void;
     handleRemoveMember: (projectId: string, userId: string) => Promise<{ success: boolean }>;
