@@ -59,16 +59,21 @@ export function TaskDialog({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedTempIds, setUploadedTempIds] = useState<Set<string>>(new Set());
 
+  // Sync editedTask when task prop changes (after fetchTasks)
+  useEffect(() => {
+    setEditedTask(task);
+  }, [task]);
+
   // Sync local attachments when task prop changes (e.g., after fetchTasks)
   useEffect(() => {
     setLocalAttachments(prev => {
       const tempAttachments = prev.filter(a => a.id.startsWith('temp-'));
       const realAttachments = task.attachments || [];
-      
+
       // Remove temp attachments that now have real counterparts (same name)
       const realNames = new Set(realAttachments.map(a => a.name));
       const remainingTempAttachments = tempAttachments.filter(temp => !realNames.has(temp.name));
-      
+
       // Combine: real attachments + temp attachments that don't have real counterparts yet
       return [...realAttachments, ...remainingTempAttachments];
     });
@@ -321,7 +326,7 @@ export function TaskDialog({
     return new Date(dateString).toLocaleString('vi-VN');
   };
 
-  const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'done';
+  const isOverdue = editedTask.deadline && new Date(editedTask.deadline) < new Date() && editedTask.status !== 'done';
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -568,35 +573,35 @@ export function TaskDialog({
                         <Plus className="w-4 h-4" />
                         <span className="hidden sm:inline">Thêm URL</span>
                       </Button>
-                    {onUploadFile && (
-                      <label className="cursor-pointer" title="Tải lên tệp tin (tối đa 10MB)">
-                        <input
-                          type="file"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar,.ppt,.pptx"
-                          disabled={isUploading}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="gap-2 px-4"
-                          disabled={isUploading}
-                          asChild
-                        >
-                          <span>
-                            {isUploading ? (
-                              <span className="animate-spin">⏳</span>
-                            ) : (
-                              <Upload className="w-4 h-4" />
-                            )}
-                            <span className="hidden sm:inline">
-                              {isUploading ? 'Đang tải...' : 'Upload File'}
+                      {onUploadFile && (
+                        <label className="cursor-pointer" title="Tải lên tệp tin (tối đa 10MB)">
+                          <input
+                            type="file"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar,.ppt,.pptx"
+                            disabled={isUploading}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="gap-2 px-4"
+                            disabled={isUploading}
+                            asChild
+                          >
+                            <span>
+                              {isUploading ? (
+                                <span className="animate-spin">⏳</span>
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                              <span className="hidden sm:inline">
+                                {isUploading ? 'Đang tải...' : 'Upload File'}
+                              </span>
                             </span>
-                          </span>
-                        </Button>
-                      </label>
-                    )}
+                          </Button>
+                        </label>
+                      )}
                     </div>
                     {onUploadFile && (
                       <p className="text-xs text-gray-500 mt-1">
@@ -622,7 +627,7 @@ export function TaskDialog({
                         const isTemp = attachment.id.startsWith('temp-');
                         const isUploaded = uploadedTempIds.has(attachment.id);
                         const showLoading = isTemp && !isUploaded;
-                        
+
                         return (
                           <div
                             key={attachment.id}
@@ -760,10 +765,10 @@ export function TaskDialog({
                     onChange={(e) => setEditedTask({ ...editedTask, deadline: e.target.value })}
                     className="w-full h-9 border text-sm"
                   />
-                ) : task.deadline ? (
+                ) : editedTask.deadline ? (
                   <div className={`flex items-center justify-center gap-2 text-sm px-3 py-2 rounded font-semibold ${isOverdue ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-blue-100 text-blue-700 border border-blue-300'}`}>
                     <Clock className="w-4 h-4" />
-                    <span>{new Date(task.deadline).toLocaleDateString('vi-VN')}</span>
+                    <span>{new Date(editedTask.deadline).toLocaleDateString('vi-VN')}</span>
                     {isOverdue && <AlertCircle className="w-4 h-4" />}
                   </div>
                 ) : (

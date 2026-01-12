@@ -140,6 +140,7 @@ export const useTasks = () => {
         priority: dbTask.priority,
         type: dbTask.type,
         dueDate: dbTask.due_date,
+        deadline: dbTask.due_date,
         parentTaskId: dbTask.parent_id,
         sprintId: dbTask.sprint_id,
         projectId: dbTask.project_id,
@@ -193,9 +194,7 @@ export const useTasks = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tasks' },
-        () => {
-          fetchTasks();
-        }
+        () => fetchTasks()
       )
       .subscribe();
 
@@ -205,9 +204,7 @@ export const useTasks = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'comments' },
-        () => {
-          fetchTasks();
-        }
+        () => fetchTasks()
       )
       .subscribe();
 
@@ -217,9 +214,7 @@ export const useTasks = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'attachments' },
-        () => {
-          fetchTasks();
-        }
+        () => fetchTasks()
       )
       .subscribe();
 
@@ -399,6 +394,7 @@ export const useTasks = () => {
       if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
       if (updates.type !== undefined) dbUpdates.type = updates.type;
       if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+      if (updates.deadline !== undefined) dbUpdates.due_date = updates.deadline;
       if (updates.sprintId !== undefined) dbUpdates.sprint_id = updates.sprintId;
       if (updates.timeEstimate !== undefined) dbUpdates.time_estimate = updates.timeEstimate;
       if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
