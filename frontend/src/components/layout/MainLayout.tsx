@@ -29,6 +29,10 @@ import { Alert, AlertDescription } from "../ui/alert"
 import type { User as UserType, Project, Notification, ProjectInvitation, JoinRequest } from "../../types"
 import { SettingsModal } from "../settings/SettingsModal"
 import { NotificationList } from "../notifications/NotificationList"
+import { NotificationListContainer } from "../notifications/NotificationListContainer"
+import { supabase } from "@/lib/supabase-client"
+import { useNotifications } from "@/hooks/useNotifications"
+import { useNotificationContext } from "../notifications/NotificationContext"
 
 interface MainLayoutProps {
   user: UserType
@@ -37,13 +41,14 @@ interface MainLayoutProps {
   settings: any
   notifications: Notification[]
   invitations: ProjectInvitation[]
-  joinRequests: JoinRequest[]
+  joinRequests?: JoinRequest[]
   onAddNotification: (notification: any) => void
   onSendInvitation: (projectId: string, email: string) => void
   onAcceptInvitation: (invitationId: string) => void
-  onCreateJoinRequest: (projectId: string) => void
-  onApproveJoinRequest: (requestId: string) => void
-  onRejectJoinRequest: (requestId: string) => void
+  onRejectInvitation?: (invitationId: string) => void
+  onCreateJoinRequest?: (projectId: string) => void
+  onApproveJoinRequest?: (requestId: string) => void
+  onRejectJoinRequest?: (requestId: string) => void
   onSelectProject: (projectId: string) => void
   onLogout: () => void
   onUpdateSettings: (settings: any) => void
@@ -72,6 +77,7 @@ export function MainLayout({
   onDeleteNotification,
   children,
 }: MainLayoutProps) {
+  const { unreadCount } = useNotificationContext();
   const location = useLocation()
   const navigate = useNavigate()
   const currentPath = location.pathname
@@ -106,7 +112,6 @@ export function MainLayout({
     scrum: "Tiếp cận Agile với Sprint. Lý tưởng cho các dự án lặp lại với những khúc nước ngắn.",
   }
 
-  const unreadCount = (notifications || []).filter((n) => !n.read).length
 
   const handleCreateProject = () => {
     if (newProject.name && newProject.deadline) {
@@ -478,13 +483,7 @@ export function MainLayout({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-96 p-0">
-              <NotificationList
-                notifications={notifications || []}
-                onMarkAsRead={onMarkNotificationAsRead}
-                onMarkAllAsRead={onMarkAllNotificationsAsRead}
-                onDelete={onDeleteNotification}
-                theme={settings.theme}
-              />
+              <NotificationListContainer theme={settings.theme} />
             </DropdownMenuContent>
           </DropdownMenu>
 

@@ -23,6 +23,7 @@ function ProjectPageWrapper() {
         handleUpdateProject,
         handlePermanentlyDeleteProject,
         handleDeleteProject,
+        handleSendInvitation,
         handleCreateTask,
         handleUpdateTask,
         handleDeleteTask,
@@ -50,6 +51,7 @@ function ProjectPageWrapper() {
             onUpdateProject={handleUpdateProject}
             onDeleteProject={handlePermanentlyDeleteProject}
             onMoveToTrash={handleDeleteProject}
+            onSendInvitation={handleSendInvitation}
             onCreateTask={handleCreateTask}
             onUpdateTask={handleUpdateTask}
             onDeleteTask={handleDeleteTask}

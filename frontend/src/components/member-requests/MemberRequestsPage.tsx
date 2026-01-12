@@ -98,8 +98,8 @@ export function MemberRequestsPage({
                       <CardTitle className="text-base">{request.userName}</CardTitle>
                       <CardDescription>{request.userEmail}</CardDescription>
                     </div>
-                    <Badge variant={request.status === "approved" ? "default" : "destructive"}>
-                      {request.status === "approved" ? "Đã chấp nhận" : "Đã từ chối"}
+                    <Badge variant={request.status === "accepted" ? "default" : "destructive"}>
+                      {request.status === "accepted" ? "Đã chấp nhận" : "Đã từ chối"}
                     </Badge>
                   </div>
                 </CardHeader>

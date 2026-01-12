@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { Button } from "../ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Badge } from "../ui/badge"
@@ -9,6 +10,8 @@ import { Search, FolderKanban, Users, Calendar, LogIn } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
 import { toast } from "sonner"
 import type { Project, User } from "../../types"
+import { useApp } from "../../contexts/AppContext"
+import { InvitationsList } from "../project/InvitationsList"
 
 interface AllProjectsPageProps {
   user: User
@@ -19,6 +22,27 @@ interface AllProjectsPageProps {
 export function AllProjectsPage({ user, projects, onSelectProject }: AllProjectsPageProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { handleAcceptInvitation, handleRejectInvitation } = useApp()
+
+  // Handle email invitation actions
+  useEffect(() => {
+    const action = searchParams.get('action')
+    const invitationId = searchParams.get('invitationId')
+
+    if (action && invitationId) {
+      // Clear query params first
+      setSearchParams({})
+
+      if (action === 'accept') {
+        handleAcceptInvitation(invitationId)
+        toast.success('Đang xử lý lời mời...')
+      } else if (action === 'reject') {
+        handleRejectInvitation(invitationId)
+        toast.info('Đã từ chối lời mời')
+      }
+    }
+  }, [searchParams, setSearchParams, handleAcceptInvitation, handleRejectInvitation])
 
   // Show only user's projects (invitation-only system)
   const userProjects = projects.filter(
@@ -37,6 +61,9 @@ export function AllProjectsPage({ user, projects, onSelectProject }: AllProjects
         <h1 className="text-2xl font-bold mb-2">Dự án của tôi</h1>
         <p className="text-gray-600 text-sm">Xem tất cả các dự án bạn đang tham gia</p>
       </div>
+
+      {/* Hiển thị danh sách lời mời */}
+      <InvitationsList />
 
       <div className="mb-4">
         <div className="relative">

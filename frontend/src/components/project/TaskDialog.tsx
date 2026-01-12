@@ -174,6 +174,7 @@ export function TaskDialog({
         labels: [],
         parentTaskId: task.id,
         createdBy: user.id,
+        updatedAt: new Date().toISOString(),
       });
       setNewSubtask('');
       toast.success('Đã thêm nhiệm vụ con!');
@@ -640,7 +641,7 @@ export function TaskDialog({
                               </a>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <p className="text-xs text-gray-500">
-                                  {formatDateTime(attachment.uploadedAt)}
+                                  {formatDateTime(attachment.uploadedAt || '')}
                                 </p>
                                 {fileSize > 0 && (
                                   <>
@@ -833,7 +834,7 @@ export function TaskDialog({
                 </>
               )}
 
-              {task.labels.length > 0 && (
+              {task.labels && task.labels.length > 0 && (
                 <>
                   <Separator className="bg-gray-300" />
                   <div className="space-y-3">

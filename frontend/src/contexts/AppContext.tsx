@@ -30,7 +30,7 @@ interface AppContextType {
     handleDeleteProject: (projectId: string) => void;
     handleRestoreProject: (projectId: string) => void;
     handlePermanentlyDeleteProject: (projectId: string) => void;
-    handleSendInvitation: (projectId: string, email: string) => void;
+    handleSendInvitation: (projectId: string, email: string) => Promise<{ success: boolean; error?: string }>;
     handleAcceptInvitation: (invitationId: string) => void;
     handleRejectInvitation: (invitationId: string) => void;
     handleRemoveMember: (projectId: string, userId: string) => Promise<{ success: boolean }>;
@@ -39,7 +39,7 @@ interface AppContextType {
 
     // Tasks
     tasks: Task[];
-    handleCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'comments' | 'attachments'>) => void;
+    handleCreateTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'attachments'>) => void;
     handleUpdateTask: (taskId: string, updates: Partial<Task>) => void;
     handleDeleteTask: (taskId: string) => void;
     handleRestoreTask: (taskId: string) => void;

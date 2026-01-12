@@ -15,52 +15,97 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog"
-import { UserPlus, Trash2, Crown, AlertCircle } from 'lucide-react'
+import { UserPlus, Trash2, Crown, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from "sonner"
 import type { User, Project } from "../../types"
+import { getSupabaseClient } from "../../lib/supabase-client"
+
+const supabase = getSupabaseClient()
 
 interface ProjectMembersProps {
   user: User
   project: Project
   isManager: boolean
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void
+  onSendInvitation: (projectId: string, email: string) => Promise<{ success: boolean; error?: string }>
 }
 
-export function ProjectMembers({ user, project, isManager, onUpdateProject }: ProjectMembersProps) {
+export function ProjectMembers({ user, project, isManager, onUpdateProject, onSendInvitation }: ProjectMembersProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [emailToAdd, setEmailToAdd] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     if (!emailToAdd.trim()) {
       toast.error("Vui lòng nhập email")
       return
     }
 
-    const mockUser = {
-      userId: Math.random().toString(36).substr(2, 9),
-      name: emailToAdd.split("@")[0],
-      email: emailToAdd,
-      role: "member" as const,
+    // Không thể mời chính mình
+    if (emailToAdd.trim().toLowerCase() === user.email.toLowerCase()) {
+      toast.error("Bạn đã là thành viên của dự án")
+      return
     }
 
-    const updatedMembers = [...project.members, mockUser]
-    onUpdateProject(project.id, { members: updatedMembers })
+    setIsLoading(true)
 
-    setEmailToAdd("")
-    setIsAddDialogOpen(false)
-    toast.success(`Đã thêm ${mockUser.name} vào dự án!`)
+    try {
+      // 1. Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(emailToAdd.trim())) {
+        toast.error("Email không hợp lệ")
+        setIsLoading(false)
+        return
+      }
+
+      // 2. Send invitation using useProjects hook (will check if user exists)
+      const inviteResult = await onSendInvitation(project.id, emailToAdd.trim())
+
+      if (!inviteResult.success) {
+        toast.error(inviteResult.error || "Không thể gửi lời mời")
+        setIsLoading(false)
+        return
+      }
+
+      // 3. Success toast is shown by handleSendInvitation
+      // Members will be updated when invitation is accepted
+      setEmailToAdd("")
+      setIsAddDialogOpen(false)
+    } catch (err: any) {
+      console.error("Error adding member:", err)
+      toast.error("Có lỗi xảy ra: " + (err.message || "Unknown error"))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleRemoveMember = (userId: string) => {
+  const handleRemoveMember = async (userId: string) => {
     if (userId === project.ownerId) {
       toast.error("Không thể xóa chủ sở hữu dự án!")
       return
     }
 
-    if (confirm("Bạn có chắc muốn xóa thành viên này?")) {
+    if (!confirm("Bạn có chắc muốn xóa thành viên này?")) {
+      return
+    }
+
+    try {
+      // Xóa khỏi database
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('project_id', project.id)
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      // Update UI
       const updatedMembers = project.members.filter((m) => m.userId !== userId)
       onUpdateProject(project.id, { members: updatedMembers })
       toast.success("Đã xóa thành viên!")
+    } catch (err: any) {
+      console.error("Error removing member:", err)
+      toast.error("Không thể xóa thành viên: " + err.message)
     }
   }
 
@@ -107,15 +152,34 @@ export function ProjectMembers({ user, project, isManager, onUpdateProject }: Pr
                         placeholder="email@example.com"
                         value={emailToAdd}
                         onChange={(e) => setEmailToAdd(e.target.value)}
+                        disabled={isLoading}
                       />
-                      <p className="text-xs text-gray-500">Demo: Nhập bất kỳ email nào để mô phỏng thêm thành viên</p>
+                      <p className="text-xs text-gray-500">
+                        Nhập email của người dùng đã đăng ký trong hệ thống
+                      </p>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddDialogOpen(false)}
+                      disabled={isLoading}
+                    >
                       Hủy
                     </Button>
-                    <Button onClick={handleAddMember}>Thêm</Button>
+                    <Button
+                      onClick={handleAddMember}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        "Thêm"
+                      )}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
