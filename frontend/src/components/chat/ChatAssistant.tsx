@@ -4,6 +4,8 @@ import { Textarea } from '../ui/textarea';
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Project } from '../../types';
+import { MarkdownRenderer } from './MarkdownRenderer';
+
 
 interface ChatMessage {
     role: 'user' | 'assistant';
@@ -265,7 +267,11 @@ Số thành viên: ${project.members?.length || 0}`;
                                         : 'bg-white border shadow-sm rounded-bl-md'
                                         }`}
                                 >
-                                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                                    {msg.role === 'assistant' ? (
+                                        <MarkdownRenderer content={msg.content} />
+                                    ) : (
+                                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                                    )}
                                 </div>
                                 {msg.role === 'user' && (
                                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
