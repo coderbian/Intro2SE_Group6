@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase-client';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { logProjectActivity } from '../services/projectActivityService';
 
 export interface Task {
   id: string;
@@ -315,6 +316,17 @@ export const useTasks = () => {
         await updateParentTaskStatus(taskData.parentTaskId);
       }
 
+      // Log activity
+      await logProjectActivity({
+        projectId: taskData.projectId,
+        userId: user.id,
+        action: 'created',
+        entityType: 'task',
+        entityId: newTaskId,
+        taskId: newTaskId,
+        newValue: { title: taskData.title, status: taskData.status },
+      });
+
       toast.success('Task created successfully!');
       await fetchTasks();
       return { success: true, taskId: newTaskId };
@@ -432,6 +444,35 @@ export const useTasks = () => {
         await updateParentTaskStatus(taskData.parent_id);
       }
 
+      // Log activity - find the task to get projectId
+      const currentTask = tasks.find(t => t.id === taskId);
+      if (currentTask) {
+        // Check if status changed
+        if (updates.status && updates.status !== currentTask.status) {
+          await logProjectActivity({
+            projectId: currentTask.projectId,
+            userId: user.id,
+            action: 'status_changed',
+            entityType: 'task',
+            entityId: taskId,
+            taskId: taskId,
+            oldValue: currentTask.status,
+            newValue: updates.status,
+          });
+        } else {
+          // General update
+          await logProjectActivity({
+            projectId: currentTask.projectId,
+            userId: user.id,
+            action: 'updated',
+            entityType: 'task',
+            entityId: taskId,
+            taskId: taskId,
+            newValue: updates,
+          });
+        }
+      }
+
       // Toast is shown by the caller (TaskDialog)
       await fetchTasks();
       return { success: true };
@@ -472,6 +513,20 @@ export const useTasks = () => {
         .eq('id', taskId);
 
       if (error) throw error;
+
+      // Log activity
+      const deletedTask = tasks.find(t => t.id === taskId);
+      if (deletedTask) {
+        await logProjectActivity({
+          projectId: deletedTask.projectId,
+          userId: user.id,
+          action: 'deleted',
+          entityType: 'task',
+          entityId: taskId,
+          taskId: taskId,
+          oldValue: { title: deletedTask.title },
+        });
+      }
 
       toast.success('Task moved to trash');
       await fetchTasks();
@@ -595,6 +650,20 @@ export const useTasks = () => {
         .insert(newComment);
 
       if (error) throw error;
+
+      // Log activity
+      const commentedTask = tasks.find(t => t.id === taskId);
+      if (commentedTask) {
+        await logProjectActivity({
+          projectId: commentedTask.projectId,
+          userId: user.id,
+          action: 'comment_added',
+          entityType: 'task',
+          entityId: taskId,
+          taskId: taskId,
+          newValue: { content: content.substring(0, 100) },
+        });
+      }
 
       toast.success('Comment added successfully');
       await fetchTasks();

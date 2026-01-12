@@ -3,13 +3,14 @@
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
 import { Badge } from "../ui/badge"
-import { Settings, Users, AlertCircle, Clock, CheckSquare, BarChart2 } from 'lucide-react'
+import { Settings, Users, AlertCircle, Clock, CheckSquare, BarChart2, History } from 'lucide-react'
 import { KanbanView } from "./KanbanView"
 import { ScrumView } from "./ScrumView"
 import { ProjectSettings } from "./ProjectSettings"
 import { ProjectMembers } from "./ProjectMembers"
 import { Alert, AlertDescription } from "../ui/alert"
 import { ProjectCharts } from "./ProjectCharts"
+import { ActivityTimeline } from "./ActivityTimeline"
 import type { User, Project, Task, Sprint } from "../../types"
 
 interface ProjectPageProps {
@@ -127,6 +128,10 @@ export function ProjectPage({
               <BarChart2 className="w-4 h-4 mr-1.5" />
               Biểu đồ
             </TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm px-4 text-sm font-semibold">
+              <History className="w-4 h-4 mr-1.5" />
+              Lịch sử
+            </TabsTrigger>
             {isManager && (
               <TabsTrigger value="settings" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm px-4 text-sm font-semibold">
                 <Settings className="w-4 h-4 mr-1.5" />
@@ -182,6 +187,12 @@ export function ProjectPage({
           <TabsContent value="charts" className="m-0 p-0 flex-1 overflow-auto">
             <div className="bg-gray-50 min-h-full">
               <ProjectCharts project={project} tasks={tasks} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="bg-gray-50 min-h-full">
+              <ActivityTimeline project={project} />
             </div>
           </TabsContent>
 
