@@ -2,7 +2,7 @@
 
 ## Tổng quan
 
-Dự án Planora sử dụng **Vitest** làm testing framework kết hợp với **React Testing Library** cho component testing.
+Dự án Planora sử dụng **Vitest** làm testing framework kết hợp với **React Testing Library** cho component testing. Unit tests kiểm tra từng đơn vị code riêng lẻ (functions, hooks, services).
 
 ## Cài đặt
 
@@ -18,14 +18,16 @@ Dependencies đã được cài đặt:
 ```
 frontend/
 ├── vitest.config.ts          # Vitest configuration
-├── src/
-│   └── test/
-│       ├── setup.ts                    # Test setup & mocks
-│       ├── exportService.test.ts       # Export service tests
-│       ├── projectActivityService.test.ts  # Activity logging tests
-│       ├── routes.test.ts              # Route protection tests
-│       ├── taskUtils.test.ts           # Task utilities tests
-│       └── auth.test.ts                # Authentication tests
+├── src/test/
+│   ├── setup.ts                    # Test setup & mocks
+│   ├── exportService.test.ts       # Export service tests
+│   ├── projectActivityService.test.ts  # Activity logging tests
+│   ├── routes.test.ts              # Route protection tests
+│   ├── taskUtils.test.ts           # Task utilities tests
+│   ├── auth.test.ts                # Authentication tests
+│   ├── useTasks.test.ts            # useTasks hook tests
+│   ├── useSprintsAndProjects.test.ts   # Sprint & Project tests
+│   └── adminService.test.ts        # Admin service tests
 ```
 
 ## Chạy Tests
@@ -41,7 +43,7 @@ pnpm test run
 pnpm test:coverage
 ```
 
-## Test Files
+## Unit Test Files
 
 ### 1. exportService.test.ts (4 tests)
 | Test Case | Mô tả |
@@ -114,9 +116,8 @@ Tests cho email/password validation và role checking.
 ## Kết quả Test (12/01/2026)
 
 ```
-Test Files  8 passed (8)
-Tests       100 passed (100)
-Duration    6.99s
+Unit Test Files: 8 passed
+Unit Tests: 100 passed
 ```
 
 ## Mocking Strategy
@@ -177,3 +178,7 @@ describe('Feature Name', () => {
   })
 })
 ```
+
+## Xem thêm
+
+- [Integration Testing](./INTEGRATION_TESTING.md) - Tests cho component interactions
