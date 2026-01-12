@@ -8,7 +8,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  status: 'backlog' | 'todo' | 'in-progress' | 'done' | 'deleted';
+  status: 'backlog' | 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   type?: 'task' | 'user-story' | 'bug' | 'epic';
   dueDate?: string;
@@ -297,10 +297,11 @@ export const useTasks = () => {
             await supabase.from('notifications').insert({
               user_id: assigneeId,
               type: 'task_assigned',
-              title: 'New Task Assigned',
-              message: `You have been assigned to task: ${taskData.title}`,
-              related_id: newTaskId,
-              created_at: now,
+              title: `Nhiệm vụ mới: ${taskData.title}`,
+              content: `Bạn được giao nhiệm vụ mới`,
+              entity_type: 'task',
+              entity_id: newTaskId,
+              is_read: false,
             });
           }
         }
@@ -493,7 +494,7 @@ export const useTasks = () => {
       setTasks(prevTasks =>
         prevTasks.map(task =>
           task.id === taskId
-            ? { ...task, status: 'deleted' as const, deletedAt: new Date().toISOString() }
+            ? { ...task, deletedAt: new Date().toISOString() }
             : task
         )
       );
@@ -502,7 +503,6 @@ export const useTasks = () => {
       const { error } = await supabase
         .from('tasks')
         .update({
-          status: 'deleted',
           deleted_at: now,
           updated_at: now,
         })

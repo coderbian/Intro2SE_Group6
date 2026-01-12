@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 describe('Task Utilities', () => {
     describe('Task Status Validation', () => {
-        const validStatuses = ['backlog', 'todo', 'in-progress', 'done', 'deleted']
+        const validStatuses = ['backlog', 'todo', 'in-progress', 'done']
 
         it('should validate correct task statuses', () => {
             validStatuses.forEach(status => {
@@ -11,7 +11,7 @@ describe('Task Utilities', () => {
         })
 
         it('should reject invalid task statuses', () => {
-            const invalidStatuses = ['pending', 'in_review', 'archived']
+            const invalidStatuses = ['pending', 'in_review', 'archived', 'deleted']
             invalidStatuses.forEach(status => {
                 expect(validStatuses.includes(status)).toBe(false)
             })
