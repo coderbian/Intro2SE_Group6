@@ -29,6 +29,8 @@ function ProjectPageWrapper() {
         handleDeleteTask,
         handleAddComment,
         handleAddAttachment,
+        handleDeleteAttachment,
+        handleUploadFile,
         handleCreateSprint,
         handleEndSprint,
     } = useApp();
@@ -55,6 +57,8 @@ function ProjectPageWrapper() {
             onDeleteTask={handleDeleteTask}
             onAddComment={handleAddComment}
             onAddAttachment={handleAddAttachment}
+            onDeleteAttachment={handleDeleteAttachment}
+            onUploadFile={handleUploadFile}
             onCreateSprint={handleCreateSprint}
             onEndSprint={handleEndSprint}
         />

@@ -17,4 +17,4 @@ export type { Notification } from '../hooks/useNotifications';
 export type { Settings } from '../hooks/useSettings';
 
 // Admin page type
-export type AdminPage = "users" | "roles" | "monitoring" | "settings" | "backup";
+export type AdminPage = "dashboard" | "users" | "roles";

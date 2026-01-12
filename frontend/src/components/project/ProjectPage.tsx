@@ -3,12 +3,14 @@
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
 import { Badge } from "../ui/badge"
-import { Settings, Users, AlertCircle, Clock, CheckSquare } from 'lucide-react'
+import { Settings, Users, AlertCircle, Clock, CheckSquare, BarChart2, History } from 'lucide-react'
 import { KanbanView } from "./KanbanView"
 import { ScrumView } from "./ScrumView"
 import { ProjectSettings } from "./ProjectSettings"
 import { ProjectMembers } from "./ProjectMembers"
 import { Alert, AlertDescription } from "../ui/alert"
+import { ProjectCharts } from "./ProjectCharts"
+import { ActivityTimeline } from "./ActivityTimeline"
 import type { User, Project, Task, Sprint } from "../../types"
 
 interface ProjectPageProps {
@@ -26,6 +28,8 @@ interface ProjectPageProps {
   onDeleteTask: (taskId: string) => void
   onAddComment: (taskId: string, content: string) => void
   onAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void
+  onDeleteAttachment: (attachmentId: string) => void
+  onUploadFile?: (taskId: string, file: File) => Promise<{ success: boolean }>
   onCreateSprint?: (projectId: string, name: string, goal: string, taskIds: string[]) => void
   onEndSprint?: (sprintId: string) => void
 }
@@ -45,6 +49,8 @@ export function ProjectPage({
   onDeleteTask,
   onAddComment,
   onAddAttachment,
+  onDeleteAttachment,
+  onUploadFile,
   onCreateSprint,
   onEndSprint,
 }: ProjectPageProps) {
@@ -120,6 +126,14 @@ export function ProjectPage({
                 {project.members.length}
               </Badge>
             </TabsTrigger>
+            <TabsTrigger value="charts" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm px-4 text-sm font-semibold">
+              <BarChart2 className="w-4 h-4 mr-1.5" />
+              Biểu đồ
+            </TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm px-4 text-sm font-semibold">
+              <History className="w-4 h-4 mr-1.5" />
+              Lịch sử
+            </TabsTrigger>
             {isManager && (
               <TabsTrigger value="settings" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm px-4 text-sm font-semibold">
                 <Settings className="w-4 h-4 mr-1.5" />
@@ -142,6 +156,8 @@ export function ProjectPage({
                 onDeleteTask={onDeleteTask}
                 onAddComment={onAddComment}
                 onAddAttachment={onAddAttachment}
+                onDeleteAttachment={onDeleteAttachment}
+                onUploadFile={onUploadFile}
               />
             ) : (
               <ScrumView
@@ -156,25 +172,43 @@ export function ProjectPage({
                 onDeleteTask={onDeleteTask}
                 onAddComment={onAddComment}
                 onAddAttachment={onAddAttachment}
+                onDeleteAttachment={onDeleteAttachment}
+                onUploadFile={onUploadFile}
                 onCreateSprint={onCreateSprint}
                 onEndSprint={onEndSprint}
               />
             )}
           </TabsContent>
 
-          <TabsContent value="members" className="m-0">
-            <ProjectMembers 
-              user={user} 
-              project={project} 
-              isManager={isManager} 
-              onUpdateProject={onUpdateProject}
-              onSendInvitation={onSendInvitation}
-            />
+          <TabsContent value="members" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+              <ProjectMembers
+                user={user}
+                project={project}
+                isManager={isManager}
+                onUpdateProject={onUpdateProject}
+                onSendInvitation={onSendInvitation}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="charts" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="bg-gray-50 min-h-full">
+              <ProjectCharts project={project} tasks={tasks} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="m-0 p-0 flex-1 overflow-auto">
+            <div className="bg-gray-50 min-h-full">
+              <ActivityTimeline project={project} />
+            </div>
           </TabsContent>
 
           {isManager && (
-            <TabsContent value="settings" className="m-0">
-              <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} onMoveToTrash={onMoveToTrash} />
+            <TabsContent value="settings" className="m-0 p-0 flex-1 overflow-auto">
+              <div className="p-6 lg:p-8 bg-gray-50 min-h-full">
+                <ProjectSettings project={project} onUpdateProject={onUpdateProject} onDeleteProject={onDeleteProject} onMoveToTrash={onMoveToTrash} />
+              </div>
             </TabsContent>
           )}
         </div>

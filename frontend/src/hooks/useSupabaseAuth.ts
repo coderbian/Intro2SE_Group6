@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Session, User as SupabaseUser, AuthError } from '@supabase/supabase-js';
 import { createEphemeralSupabaseClient, getSupabaseClient } from '../lib/supabase-client';
 import { toast } from 'sonner';
@@ -45,40 +45,41 @@ function toAppUser(supabaseUser: SupabaseUser): User {
 
 export function useSupabaseAuth(): UseSupabaseAuthReturn {
     const supabase = getSupabaseClient();
-    const [userState, setUserState] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [adminEmail, setAdminEmail] = useState<string | null>(null);
     const [role, setRole] = useState<UserRole | null>(null);
 
-    // Memoize user to prevent cascading re-renders
-    const user = useMemo(() => userState, [userState?.id]);
-
-    const fetchRoleFromUsersTable = useCallback(async (supabaseUser: SupabaseUser | null): Promise<UserRole> => {
-        if (!supabaseUser) return 'user';
+    const fetchUserRoleAndStatus = useCallback(async (supabaseUser: SupabaseUser | null): Promise<{ role: UserRole; status: string }> => {
+        if (!supabaseUser) return { role: 'user', status: 'active' };
 
         // Strict RBAC: role is sourced from public.users.role only
         const { data, error } = await supabase
             .from('users')
-            .select('role')
+            .select('role, status')
             .eq('id', supabaseUser.id)
             .maybeSingle();
 
         if (error) {
             console.warn('Failed to fetch role from public.users:', error);
-            return 'user';
+            return { role: 'user', status: 'active' };
         }
 
         const dbRole = typeof data?.role === 'string' ? data.role.toLowerCase() : 'user';
-        return dbRole === 'admin' ? 'admin' : 'user';
+        const dbStatus = typeof data?.status === 'string' ? data.status : 'active';
+        return {
+            role: dbRole === 'admin' ? 'admin' : 'user',
+            status: dbStatus
+        };
     }, [supabase]);
 
     const refreshRbacState = useCallback(async (nextSession: Session | null) => {
         const email = nextSession?.user?.email ?? null;
-        const nextRole = await fetchRoleFromUsersTable(nextSession?.user ?? null);
+        const { role: nextRole } = await fetchUserRoleAndStatus(nextSession?.user ?? null);
         setRole(nextSession?.user ? nextRole : null);
         setAdminEmail(nextRole === 'admin' ? email : null);
-    }, [fetchRoleFromUsersTable]);
+    }, [fetchUserRoleAndStatus]);
 
     // Initialize auth state
     useEffect(() => {
@@ -87,7 +88,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             .getSession()
             .then(({ data: { session } }) => {
                 setSession(session);
-                setUserState(session?.user ? toAppUser(session.user) : null);
+                setUser(session?.user ? toAppUser(session.user) : null);
                 refreshRbacState(session);
                 setIsLoading(false);
             })
@@ -95,7 +96,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 // Ensure loading state is cleared even if initialization fails
                 console.error('Failed to initialize auth session:', error);
                 setSession(null);
-                setUserState(null);
+                setUser(null);
                 setAdminEmail(null);
                 setRole(null);
                 setIsLoading(false);
@@ -105,7 +106,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 setSession(session);
-                setUserState(session?.user ? toAppUser(session.user) : null);
+                setUser(session?.user ? toAppUser(session.user) : null);
                 refreshRbacState(session);
                 setIsLoading(false);
 
@@ -135,8 +136,17 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             }
 
             if (data.user) {
+                // Check user status - block suspended users
+                const { role: nextRole, status } = await fetchUserRoleAndStatus(data.user);
+
+                if (status === 'suspended') {
+                    // Sign out the user immediately
+                    await supabase.auth.signOut();
+                    toast.error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.');
+                    return null;
+                }
+
                 const appUser = toAppUser(data.user);
-                const nextRole = await fetchRoleFromUsersTable(data.user);
                 setRole(nextRole);
                 setAdminEmail(nextRole === 'admin' ? appUser.email : null);
                 // Note: setUser/session are handled by onAuthStateChange listener
@@ -149,7 +159,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             toast.error('Đã xảy ra lỗi khi đăng nhập');
             return null;
         }
-    }, [fetchRoleFromUsersTable, supabase.auth]);
+    }, [fetchUserRoleAndStatus, supabase.auth]);
 
     const handleRegister = useCallback(async (data: {
         email: string;
@@ -187,7 +197,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 }
 
                 const appUser = toAppUser(authData.user);
-                const nextRole = await fetchRoleFromUsersTable(authData.user);
+                const { role: nextRole } = await fetchUserRoleAndStatus(authData.user);
                 setRole(nextRole);
                 setAdminEmail(nextRole === 'admin' ? appUser.email : null);
                 // Note: setUser is handled by onAuthStateChange listener
@@ -200,7 +210,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
             toast.error('Đã xảy ra lỗi khi đăng ký');
             return null;
         }
-    }, [fetchRoleFromUsersTable, supabase.auth]);
+    }, [fetchUserRoleAndStatus, supabase.auth]);
 
     const handleLogout = useCallback(async () => {
         try {
@@ -209,7 +219,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 toast.error('Đã xảy ra lỗi khi đăng xuất');
                 return;
             }
-            setUserState(null);
+            setUser(null);
             setSession(null);
             setAdminEmail(null);
             setRole(null);
@@ -234,7 +244,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
                 return;
             }
 
-            setUserState(updatedUser);
+            setUser(updatedUser);
             toast.success('Cập nhật thông tin thành công!');
         } catch (error) {
             toast.error('Đã xảy ra lỗi khi cập nhật thông tin');

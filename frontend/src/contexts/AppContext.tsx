@@ -46,6 +46,8 @@ interface AppContextType {
     handlePermanentlyDeleteTask: (taskId: string) => void;
     handleAddComment: (taskId: string, content: string) => void;
     handleAddAttachment: (taskId: string, file: { name: string; url: string; type: string }) => void;
+    handleDeleteAttachment: (attachmentId: string) => void;
+    handleUploadFile: (taskId: string, file: File) => Promise<{ success: boolean }>;
     handleProposeTask: (projectId: string, task: { title: string; description: string; priority: 'low' | 'medium' | 'high' | 'urgent' }) => void;
     handleApproveTaskProposal: (proposalId: string) => void;
     handleRejectTaskProposal: (proposalId: string) => void;
@@ -157,9 +159,17 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
     // Attachment adapter
     const handleAddAttachment = (taskId: string, file: { name: string; url: string; type: string }) => {
         if (!auth.user) return;
-        // Note: useTasks.addAttachment expects a File object, not an object with url
-        // This may need adjustment based on actual usage
-        console.warn('handleAddAttachment: useTasks.addAttachment expects a File object');
+        tasksHook.addAttachmentByUrl(taskId, file);
+    };
+
+    const handleDeleteAttachment = (attachmentId: string) => {
+        if (!auth.user) return;
+        tasksHook.deleteAttachment(attachmentId);
+    };
+
+    const handleUploadFile = async (taskId: string, file: File) => {
+        if (!auth.user) return { success: false };
+        return await tasksHook.addAttachment(taskId, file);
     };
 
     // Propose task adapter
@@ -245,6 +255,8 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
         handlePermanentlyDeleteTask: tasksHook.permanentlyDeleteTask,
         handleAddComment,
         handleAddAttachment,
+        handleDeleteAttachment,
+        handleUploadFile,
         handleProposeTask,
         handleApproveTaskProposal,
         handleRejectTaskProposal,

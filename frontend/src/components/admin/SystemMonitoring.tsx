@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { LayoutDashboard, Users, Shield, Settings, Database, LogOut, Activity, AlertCircle, Cpu, HardDrive, User, ShieldCheck } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { LayoutDashboard, Users, Shield, FolderKanban, BarChart3, LogOut, Settings, Activity, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { getActivityLogs, getSystemStats, type ActivityLog, type SystemStats } from '@/services/adminService'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +17,7 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
+import { ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
 import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
@@ -27,65 +29,10 @@ import {
 import { SettingsModal } from "../settings/SettingsModal"
 
 interface SystemMonitoringProps {
-  adminEmail?: string // added adminEmail prop
-  onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'settings' | 'backup') => void
+  adminEmail?: string
+  onNavigate: (page: 'dashboard' | 'users' | 'roles' | 'projects' | 'statistics') => void
   onLogout?: () => void
 }
-
-const performanceData = [
-  { time: "00:00", cpu: 45, ram: 62 },
-  { time: "04:00", cpu: 32, ram: 58 },
-  { time: "08:00", cpu: 68, ram: 72 },
-  { time: "12:00", cpu: 75, ram: 78 },
-  { time: "16:00", cpu: 82, ram: 85 },
-  { time: "20:00", cpu: 58, ram: 70 },
-  { time: "24:00", cpu: 48, ram: 65 },
-]
-
-const roleDistributionData = [
-  { name: "Admin", value: 5, color: "#3b82f6" },
-  { name: "Project Manager", value: 12, color: "#8b5cf6" },
-  { name: "Developer", value: 28, color: "#10b981" },
-  { name: "Designer", value: 15, color: "#f59e0b" },
-]
-
-const activityLogs = [
-  {
-    id: 1,
-    time: "14:32:15",
-    user: "Nguyễn Văn An",
-    action: "Tạo dự án mới",
-    details: "Website Redesign 2024",
-  },
-  {
-    id: 2,
-    time: "14:28:42",
-    user: "Trần Thị Bích",
-    action: "Cập nhật nhiệm vụ",
-    details: "Task #234 - Hoàn thành UI Dashboard",
-  },
-  {
-    id: 3,
-    time: "14:15:20",
-    user: "Lê Minh Cường",
-    action: "Thêm thành viên",
-    details: "Thêm Phạm Thu Dung vào dự án Mobile App",
-  },
-  {
-    id: 4,
-    time: "13:58:07",
-    user: "Hoàng Văn Em",
-    action: "Đăng nhập",
-    details: "IP: 192.168.1.105",
-  },
-  {
-    id: 5,
-    time: "13:45:33",
-    user: "Admin System",
-    action: "Backup dữ liệu",
-    details: "Backup tự động hàng ngày",
-  },
-]
 
 export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMonitoringProps) {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
@@ -100,6 +47,55 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
     },
     linkedAccounts: {},
   })
+
+  // Real data states
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
+  const [stats, setStats] = useState<SystemStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch data from Supabase
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true)
+        setError(null)
+        const [logsData, statsData] = await Promise.all([
+          getActivityLogs(20),
+          getSystemStats()
+        ])
+        setActivityLogs(logsData)
+        setStats(statsData)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Đã xảy ra lỗi'
+        setError(message)
+        toast.error(message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  // Helper to format datetime
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  }
+
+  // Helper to get action label in Vietnamese
+  const getActionLabel = (action: string) => {
+    const labels: Record<string, string> = {
+      'created': 'Tạo mới',
+      'updated': 'Cập nhật',
+      'deleted': 'Xóa',
+      'moved': 'Di chuyển',
+      'assigned': 'Giao nhiệm vụ',
+      'login': 'Đăng nhập',
+      'logout': 'Đăng xuất',
+    }
+    return labels[action.toLowerCase()] || action
+  }
 
   const adminUsername = adminEmail ? adminEmail.split('@')[0] : 'Admin'
   const adminAvatarFallback = adminUsername.substring(0, 2).toUpperCase()
@@ -145,20 +141,20 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
             </li>
             <li>
               <button
-                onClick={() => onNavigate('settings')}
+                onClick={() => onNavigate('projects')}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Settings className="h-4 w-4" />
-                <span>Cấu hình hệ thống</span>
+                <FolderKanban className="h-4 w-4" />
+                <span>Quản lý dự án</span>
               </button>
             </li>
             <li>
               <button
-                onClick={() => onNavigate('backup')}
+                onClick={() => onNavigate('statistics')}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
-                <Database className="h-4 w-4" />
-                <span>Backup/Restore</span>
+                <BarChart3 className="h-4 w-4" />
+                <span>Thống kê</span>
               </button>
             </li>
           </ul>
@@ -223,163 +219,97 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    60
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.totalUsers ?? 0}
                   </div>
                   <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-md">
                     <Users className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <p className="text-xs text-blue-700 font-medium mt-2">
-                  +12% so với tháng trước
-                </p>
               </CardContent>
             </Card>
 
             <Card className="border border-green-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-white">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs text-green-700 font-semibold uppercase tracking-wide">
-                  Tổng số dự án
+                  Người dùng hoạt động
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    24
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.activeUsers ?? 0}
                   </div>
                   <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2.5 rounded-xl shadow-md">
                     <Activity className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <p className="text-xs text-green-700 font-medium mt-2">
-                  +3 dự án mới tuần này
-                </p>
               </CardContent>
             </Card>
 
-            <Card className="border border-yellow-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-yellow-50 to-white">
+            <Card className="border border-purple-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-white">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-yellow-700 font-semibold uppercase tracking-wide">
-                  Dự án đang hoạt động
+                <CardTitle className="text-xs text-purple-700 font-semibold uppercase tracking-wide">
+                  Quản trị viên
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                    18
+                  <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.adminUsers ?? 0}
                   </div>
-                  <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-2.5 rounded-xl shadow-md">
-                    <Cpu className="w-6 h-6 text-white" />
+                  <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-2.5 rounded-xl shadow-md">
+                    <Shield className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <p className="text-xs text-yellow-700 font-medium mt-2">
-                  75% tỷ lệ hoạt động
-                </p>
               </CardContent>
             </Card>
 
-            <Card className="border border-red-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-red-50 to-white">
+            <Card className="border border-amber-200 hover:shadow-lg transition-shadow bg-gradient-to-br from-amber-50 to-white">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs text-red-700 font-semibold uppercase tracking-wide">
-                  Lỗi hệ thống (24h)
+                <CardTitle className="text-xs text-amber-700 font-semibold uppercase tracking-wide">
+                  Tổng số dự án
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
-                    3
+                  <div className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.totalProjects ?? 0}
                   </div>
-                  <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2.5 rounded-xl shadow-md">
-                    <AlertCircle className="w-6 h-6 text-white" />
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2.5 rounded-xl shadow-md">
+                    <FolderKanban className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <p className="text-xs text-red-700 font-medium mt-2">
-                  -2 so với hôm qua
-                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Charts Row */}
+          {/* Role Distribution Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Performance Chart */}
-            <Card className="border shadow-md">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                <CardTitle className="text-lg font-bold text-gray-900">Hiệu năng hệ thống (CPU/RAM)</CardTitle>
-                <CardDescription className="text-sm mt-0.5">Sử dụng tài nguyên theo thời gian</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-4 pb-4 px-2">
-                <ChartContainer
-                  config={{
-                    cpu: {
-                      label: "CPU",
-                      color: "hsl(var(--chart-1))",
-                    },
-                    ram: {
-                      label: "RAM",
-                      color: "hsl(var(--chart-2))",
-                    },
-                  }}
-                  className="h-[280px] w-full"
-                >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={performanceData} margin={{ top: 10, right: 30, left: -15, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="time" className="text-xs" />
-                        <YAxis className="text-xs" />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="cpu" 
-                          stroke="hsl(var(--chart-1))" 
-                          strokeWidth={2}
-                          name="CPU %" 
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="ram" 
-                          stroke="hsl(var(--chart-2))" 
-                          strokeWidth={2}
-                          name="RAM %" 
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-
-            {/* Role Distribution Chart */}
             <Card className="border shadow-md">
               <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
                 <CardTitle className="text-lg font-bold text-gray-900">Phân bố vai trò</CardTitle>
-                <CardDescription className="text-sm">Người dùng theo vai trò</CardDescription>
+                <CardDescription className="text-sm">Người dùng theo vai trò trong hệ thống</CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
+                {loading ? (
+                  <div className="h-[280px] flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  </div>
+                ) : (
                   <ChartContainer
                     config={{
-                      admin: {
-                        label: "Admin",
-                        color: "#3b82f6",
-                      },
-                      projectManager: {
-                        label: "Project Manager",
-                        color: "#8b5cf6",
-                      },
-                      developer: {
-                        label: "Developer",
-                        color: "#10b981",
-                      },
-                      designer: {
-                        label: "Designer",
-                        color: "#f59e0b",
-                      },
+                      admin: { label: "Admin", color: "#8b5cf6" },
+                      user: { label: "Thành viên", color: "#3b82f6" },
                     }}
                     className="h-[280px]"
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={roleDistributionData}
+                          data={[
+                            { name: "Admin", value: stats?.adminUsers ?? 0, color: "#8b5cf6" },
+                            { name: "Thành viên", value: (stats?.totalUsers ?? 0) - (stats?.adminUsers ?? 0), color: "#3b82f6" },
+                          ]}
                           cx="50%"
                           cy="45%"
                           innerRadius={50}
@@ -387,21 +317,39 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                           paddingAngle={5}
                           dataKey="value"
                         >
-                          {roleDistributionData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
+                          <Cell key="cell-admin" fill="#8b5cf6" />
+                          <Cell key="cell-user" fill="#3b82f6" />
                         </Pie>
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Legend 
-                          verticalAlign="bottom" 
+                        <Legend
+                          verticalAlign="bottom"
                           height={36}
                           formatter={(value, entry: any) => `${entry.payload.name}: ${entry.payload.value}`}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                   </ChartContainer>
-                </CardContent>
-              </Card>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border shadow-md">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                <CardTitle className="text-lg font-bold text-gray-900">Tổng quan nhiệm vụ</CardTitle>
+                <CardDescription className="text-sm">Số lượng nhiệm vụ trong hệ thống</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center justify-center h-[250px]">
+                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-4 rounded-2xl shadow-lg mb-4">
+                    <Activity className="w-12 h-12 text-white" />
+                  </div>
+                  <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : stats?.totalTasks ?? 0}
+                  </div>
+                  <p className="text-gray-600 mt-2">Tổng số nhiệm vụ</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Activity Log Table */}
@@ -421,17 +369,36 @@ export function SystemMonitoring({ adminEmail, onNavigate, onLogout }: SystemMon
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {activityLogs.map((log) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                        <p className="text-muted-foreground mt-2">Đang tải...</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-destructive">
+                        {error}
+                      </TableCell>
+                    </TableRow>
+                  ) : activityLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                        Chưa có hoạt động nào
+                      </TableCell>
+                    </TableRow>
+                  ) : activityLogs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="font-mono text-sm text-muted-foreground">
-                        {log.time}
+                        {formatTime(log.created_at)}
                       </TableCell>
-                      <TableCell className="font-medium">{log.user}</TableCell>
+                      <TableCell className="font-medium">{log.user_name || log.user_email || 'System'}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{log.action}</Badge>
+                        <Badge variant="outline">{getActionLabel(log.action)} {log.entity_type}</Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {log.details}
+                        {log.entity_id ? `ID: ${log.entity_id.substring(0, 8)}...` : '-'}
                       </TableCell>
                     </TableRow>
                   ))}
