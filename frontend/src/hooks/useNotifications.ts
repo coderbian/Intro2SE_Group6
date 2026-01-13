@@ -6,7 +6,7 @@ import type { User } from './useAuth';
 export interface Notification {
   id: string;
   userId: string;
-  type: 'task_assigned' | 'task_completed' | 'member_added' | 'project_update' | 'task_mentioned' | 'project_invite' | 'invitation_rejected';
+  type: 'task_assigned' | 'task_completed' | 'member_added' | 'project_update' | 'task_mentioned' | 'project_invite' | 'invitation_rejected' | 'join_request_sent';
   title: string;
   content: string;
   message?: string; // Alias for content
@@ -53,8 +53,8 @@ export function useNotifications({ user }: UseNotificationsProps) {
         userId: n.user_id,
         type: n.type,
         title: n.title,
-        content: n.content,
-        message: n.content, // Alias for NotificationList
+        content: n.content || n.message || '',
+        message: n.message || n.content, // Use message field first, fallback to content
         entityType: n.entity_type,
         entityId: n.entity_id,
         isRead: n.is_read,
@@ -104,71 +104,71 @@ export function useNotifications({ user }: UseNotificationsProps) {
             filter: `user_id=eq.${user.id}`,
           },
           (payload) => {
-          const newNotification: Notification = {
-            id: payload.new.id,
-            userId: payload.new.user_id,
-            type: payload.new.type,
-            title: payload.new.title,
-            content: payload.new.content,
-            message: payload.new.content, // Alias
-            entityType: payload.new.entity_type,
-            entityId: payload.new.entity_id,
-            isRead: payload.new.is_read,
-            read: payload.new.is_read, // Alias
-            readAt: payload.new.read_at,
-            createdAt: payload.new.created_at,
-          };
+            const newNotification: Notification = {
+              id: payload.new.id,
+              userId: payload.new.user_id,
+              type: payload.new.type,
+              title: payload.new.title,
+              content: payload.new.content || payload.new.message || '',
+              message: payload.new.message || payload.new.content, // Use message field first
+              entityType: payload.new.entity_type,
+              entityId: payload.new.entity_id,
+              isRead: payload.new.is_read,
+              read: payload.new.is_read, // Alias
+              readAt: payload.new.read_at,
+              createdAt: payload.new.created_at,
+            };
 
-          setNotifications((prev) => [newNotification, ...prev]);
-          setUnreadCount((prev) => prev + 1);
+            setNotifications((prev) => [newNotification, ...prev]);
+            setUnreadCount((prev) => prev + 1);
 
-          // Only show toast for non-invitation notifications (invitations shown in bell)
-          if (newNotification.type !== 'project_invite') {
-            toast.info(newNotification.title, {
-              description: newNotification.content,
-            });
+            // Only show toast for non-invitation notifications (invitations shown in bell)
+            if (newNotification.type !== 'project_invite') {
+              toast.info(newNotification.title, {
+                description: newNotification.content,
+              });
+            }
           }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          setNotifications((prev) =>
-            prev.map((n) =>
-              n.id === payload.new.id
-                ? {
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            setNotifications((prev) =>
+              prev.map((n) =>
+                n.id === payload.new.id
+                  ? {
                     ...n,
                     isRead: payload.new.is_read,
                     readAt: payload.new.read_at,
                   }
-                : n
-            )
-          );
+                  : n
+              )
+            );
 
-          if (payload.new.is_read) {
-            setUnreadCount((prev) => Math.max(0, prev - 1));
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'TIMED_OUT' && retryCount < MAX_RETRIES) {
-          retryCount++;
-          setTimeout(() => {
-            if (channel) {
-              supabase.removeChannel(channel);
+            if (payload.new.is_read) {
+              setUnreadCount((prev) => Math.max(0, prev - 1));
             }
-            setupSubscription();
-          }, 1000 * retryCount); // Exponential backoff
-        } else if (status === 'SUBSCRIBED') {
-          retryCount = 0;
-        }
-      });
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'TIMED_OUT' && retryCount < MAX_RETRIES) {
+            retryCount++;
+            setTimeout(() => {
+              if (channel) {
+                supabase.removeChannel(channel);
+              }
+              setupSubscription();
+            }, 1000 * retryCount); // Exponential backoff
+          } else if (status === 'SUBSCRIBED') {
+            retryCount = 0;
+          }
+        });
     };
 
     setupSubscription();

@@ -115,9 +115,14 @@ export function useProjectDiscovery({ initialQuery = '' }: UseProjectDiscoveryPr
                 throw insertError;
             }
 
-            // Get project name for notification
-            const project = projects.find(p => p.id === projectId);
-            const projectName = project?.name || 'dự án';
+            // Fetch project name from database to ensure accuracy
+            const { data: projectData } = await supabase
+                .from('projects')
+                .select('name, owner_id')
+                .eq('id', projectId)
+                .single();
+
+            const projectName = projectData?.name || 'dự án';
 
             // Create notification for user
             await supabase.from('notifications').insert({
