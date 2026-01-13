@@ -7,7 +7,7 @@ import { Badge } from "../ui/badge"
 import { Input } from "../ui/input"
 import { Skeleton } from "../ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import { Search, FolderKanban, Users, Calendar, SendHorizontal, CheckCircle2 } from "lucide-react"
+import { Search, FolderKanban, Users, Calendar, SendHorizontal, CheckCircle2, Compass } from "lucide-react"
 import { useProjectDiscovery, type DiscoverableProject } from "../../hooks"
 
 export function ProjectDiscovery() {
@@ -138,7 +138,10 @@ export function ProjectDiscovery() {
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold mb-2">Khám phá dự án</h1>
+                <div className="flex items-center gap-2 mb-2">
+                    <Compass className="w-6 h-6 text-blue-600" />
+                    <h1 className="text-2xl font-bold">Khám phá dự án</h1>
+                </div>
                 <p className="text-gray-600 text-sm">
                     Tìm kiếm và tham gia các dự án công khai
                 </p>

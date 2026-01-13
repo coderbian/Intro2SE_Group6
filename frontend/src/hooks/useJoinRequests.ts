@@ -72,7 +72,9 @@ export function useJoinRequests({ userId, managedProjectIds }: UseJoinRequestsPr
     // Initial fetch
     useEffect(() => {
         fetchJoinRequests();
-    }, [fetchJoinRequests]);
+        // fetchJoinRequests is memoized, safe to omit from deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId, managedProjectIds.join(',')]);
 
     // Realtime subscription
     useEffect(() => {
@@ -98,7 +100,9 @@ export function useJoinRequests({ userId, managedProjectIds }: UseJoinRequestsPr
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId, managedProjectIds, fetchJoinRequests]);
+        // fetchJoinRequests is stable, safe to omit
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId, managedProjectIds.join(',')]);
 
     // Approve join request
     const handleApproveJoinRequest = useCallback(async (requestId: string) => {

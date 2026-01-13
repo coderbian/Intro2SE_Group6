@@ -64,16 +64,25 @@ export function useProjectDiscovery({ initialQuery = '' }: UseProjectDiscoveryPr
         }
     }, [currentUserId]);
 
-    // Debounced fetch on query change
+    // Fetch discoverable projects ONCE on mount
     useEffect(() => {
         if (!currentUserId) return;
 
-        const timeoutId = setTimeout(() => {
-            fetchDiscoverableProjects(searchQuery);
-        }, 300);
+        console.log('🔍 Fetching projects on mount');
+        fetchDiscoverableProjects(''); // Fetch all projects
+        // Only run once when currentUserId is available
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUserId]);
 
-        return () => clearTimeout(timeoutId);
-    }, [searchQuery, currentUserId, fetchDiscoverableProjects]);
+    // Filter projects on client side based on search query
+    const filteredProjects = projects.filter((project) => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            project.name.toLowerCase().includes(query) ||
+            (project.description && project.description.toLowerCase().includes(query))
+        );
+    });
 
     // Request to join a project with optimistic UI
     const requestToJoin = useCallback(async (projectId: string): Promise<boolean> => {
@@ -141,11 +150,11 @@ export function useProjectDiscovery({ initialQuery = '' }: UseProjectDiscoveryPr
 
     // Manual refetch function
     const refetch = useCallback(async () => {
-        await fetchDiscoverableProjects(searchQuery);
-    }, [fetchDiscoverableProjects, searchQuery]);
+        await fetchDiscoverableProjects('');
+    }, [fetchDiscoverableProjects]);
 
     return {
-        projects,
+        projects: filteredProjects, // Return filtered projects
         loading,
         error,
         searchQuery,
