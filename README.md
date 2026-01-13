@@ -17,25 +17,36 @@ Intro2SE_Group6/
 │   │   │   ├── dashboard/ # User dashboard
 │   │   │   ├── kanban/    # Kanban board
 │   │   │   ├── layout/    # Main layout
+│   │   │   ├── notifications/ # Notification system
 │   │   │   ├── project/   # Project details
 │   │   │   ├── scrum/     # Scrum board
+│   │   │   ├── settings/  # User settings
+│   │   │   ├── trash/     # Trash management
 │   │   │   ├── ui/        # shadcn/ui components
-│   │   │   └── ...
+│   │   │   └── routes/    # Route guards
 │   │   ├── contexts/      # React Context (Auth, App)
-│   │   ├── hooks/         # Custom React hooks
+│   │   ├── hooks/         # Custom React hooks (13 hooks)
 │   │   ├── lib/           # Supabase client, utilities
+│   │   ├── services/      # Business logic services
+│   │   │   ├── adminService.ts
+│   │   │   ├── exportService.ts
+│   │   │   └── projectActivityService.ts
 │   │   ├── routes/        # Route definitions
+│   │   ├── test/          # Unit & Integration tests
 │   │   ├── types/         # TypeScript types
 │   │   └── utils/         # Helper functions
 │   ├── .env               # Environment variables
 │   ├── package.json
+│   ├── vitest.config.ts   # Vitest configuration
 │   └── vite.config.ts
 │
-├── supabase/              # Supabase Edge Functions (AI services)
-│   └── functions/
-│       ├── chat/              # AI chat assistant
-│       ├── enhance-description/ # Task description enhancement
-│       └── estimate-time/     # Time estimation
+├── supabase/              # Supabase Backend
+│   ├── functions/         # Edge Functions (AI services)
+│   │   ├── chat/                  # AI chat assistant
+│   │   ├── enhance-description/   # Task description enhancement
+│   │   ├── estimate-time/         # Time estimation
+│   │   └── send-invitation-email/ # Email invitations
+│   └── migrations/        # Database migrations
 │
 ├── docs/                  # Documentation
 │   ├── analysis-and-design/
@@ -43,6 +54,7 @@ Intro2SE_Group6/
 │   ├── requirements/
 │   └── test/
 │
+├── vercel.json            # Vercel deployment configuration
 └── pa/                    # Project assignments
 ```
 
@@ -84,18 +96,24 @@ Intro2SE_Group6/
 - **Recharts** - Data visualization and charts
 - **Embla Carousel** - Touch-friendly carousels
 - **React Resizable Panels** - Draggable panel layouts
+- **React Markdown** - Markdown rendering in AI chat
 - **Vaul** - Drawer components
 
 ### Form Handling
 - **React Hook Form 7.55.0** - Performant form validation
 - **Input OTP** - One-time password input
 
+### Testing
+- **Vitest** - Fast unit testing framework
+- **@testing-library/react** - React component testing
+- **@testing-library/jest-dom** - Custom Jest matchers
+- **jsdom** - DOM environment for tests
+
 ### Development Tools
 - **@vitejs/plugin-react-swc** - Fast React refresh with SWC compiler
 - **PostCSS & Autoprefixer** - CSS processing
 - **ESLint & Prettier** - Code quality and formatting
 - **tsx** - TypeScript execution for Node.js
-- **Jest** - Testing framework
 
 ## 🚀 Quick Start
 
@@ -134,7 +152,55 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 |---------|-------------|
 | `pnpm dev` | Start development server |
 | `pnpm build` | Build for production |
-| `pnpm preview` | Preview production build |
+| `pnpm test` | Run unit tests with Vitest |
+| `pnpm test:coverage` | Run tests with coverage report |
+| `pnpm test:ui` | Run tests with Vitest UI |
+
+## 🧪 Testing
+
+The project uses **Vitest** for testing. Tests are located in `frontend/src/test/`.
+
+```bash
+# Run all tests
+cd frontend
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Run tests with interactive UI
+pnpm test:ui
+```
+
+### Test Categories
+- **Unit Tests**: Service functions, utilities, hooks
+- **Integration Tests**: Component interactions, form submissions
+- **Test Files**: `*.test.ts` or `*.test.tsx`
+
+## 🚀 Deployment
+
+### Deploy to Vercel
+
+1. **Push code to GitHub**
+
+2. **Import to Vercel:**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Add New Project"
+   - Import your GitHub repository
+
+3. **Configure Project:**
+   - **Root Directory**: `frontend`
+   - **Framework Preset**: Vite (auto-detected)
+   - **Build Command**: `pnpm run build`
+   - **Output Directory**: `build`
+
+4. **Add Environment Variables:**
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+
+5. Click **Deploy**
+
+> **Note**: The `vercel.json` file is already configured with SPA routing support.
 
 ## ✨ Features
 
@@ -144,8 +210,12 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 - 📋 Kanban board for visual task management
 - 🏃 Scrum board with sprint planning
 - 👥 Project member management and invitations
+- 💬 AI-powered chat assistant
+- 🤖 AI task description enhancement
+- ⏱️ AI time estimation for tasks
 - 🗑️ Trash system for deleted projects/tasks
 - 🔔 Real-time notifications
+- 📤 Export data to PDF/Excel
 - ⚙️ User settings and profile customization
 - 🌙 Dark mode support
 
@@ -153,14 +223,28 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 - 👨‍💼 User management dashboard
 - 🛡️ Role-based access control
 - 📈 System monitoring and analytics
+- 📊 Activity timeline and logs
 - ⚙️ System settings configuration
-- 💾 Backup and restore functionality
+
+### AI Features (Supabase Edge Functions)
+- **Chat Assistant**: Interactive AI helper for project management
+- **Description Enhancement**: AI-powered task description improvement
+- **Time Estimation**: Intelligent task duration prediction
+
+### Other Backend Features
+- **Email Invitations**: Automated project invitation emails via Edge Function
 
 ## 📚 Documentation
 
-- [Developer Guide](DEVELOPER.md)
-- [Supabase Migration](SUPABASE_MIGRATION.md)
-- [Project Documentation](docs/)
+### Getting Started
+- [Quick Start Guide](docs/analysis-and-design/QUICK_START.md)
+- [Developer Guide](docs/analysis-and-design/DEVELOPER.md)
+- [Supabase Setup Guide](supabase/SETUP_GUIDE.md)
+- [Supabase Setup Checklist](supabase/SETUP_CHECKLIST.md)
+
+### Testing
+- [Unit Testing Guide](docs/test/UNIT_TESTING.md)
+- [Integration Testing Guide](docs/test/INTEGRATION_TESTING.md)
 
 ## 📄 License
 
