@@ -19,3 +19,5 @@ export type { Settings } from './useSettings';
 
 export { useProjectDiscovery } from './useProjectDiscovery';
 export type { DiscoverableProject } from './useProjectDiscovery';
+
+export { useJoinRequests } from './useJoinRequests';

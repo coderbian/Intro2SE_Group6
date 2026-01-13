@@ -48,7 +48,7 @@ export function MemberRequestsPage({
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-base">{request.userName}</CardTitle>
+                      <CardTitle className="text-base">{request.userName || request.userEmail}</CardTitle>
                       <CardDescription>{request.userEmail}</CardDescription>
                     </div>
                     <Badge>Chờ xử lý</Badge>
@@ -95,7 +95,7 @@ export function MemberRequestsPage({
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-base">{request.userName}</CardTitle>
+                      <CardTitle className="text-base">{request.userName || request.userEmail}</CardTitle>
                       <CardDescription>{request.userEmail}</CardDescription>
                     </div>
                     <Badge variant={request.status === "accepted" ? "default" : "destructive"}>

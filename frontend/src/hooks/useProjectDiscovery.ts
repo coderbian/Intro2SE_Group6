@@ -106,6 +106,22 @@ export function useProjectDiscovery({ initialQuery = '' }: UseProjectDiscoveryPr
                 throw insertError;
             }
 
+            // Get project name for notification
+            const project = projects.find(p => p.id === projectId);
+            const projectName = project?.name || 'dự án';
+
+            // Create notification for user
+            await supabase.from('notifications').insert({
+                user_id: currentUserId,
+                type: 'join_request_sent',
+                title: 'Đã gửi yêu cầu tham gia',
+                message: `Bạn đã gửi yêu cầu tham gia dự án "${projectName}". Chủ dự án sẽ xem xét yêu cầu của bạn.`,
+                entity_type: 'project',
+                entity_id: projectId,
+                project_id: projectId,
+                is_read: false,
+            });
+
             toast.success('Đã gửi yêu cầu tham gia dự án');
             return true;
         } catch (err: any) {
