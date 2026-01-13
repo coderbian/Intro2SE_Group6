@@ -111,14 +111,14 @@ export function AppProvider({ children, onEnterAdmin }: AppProviderProps) {
     const handleLogin = async (email: string, password: string) => {
         const result = await auth.handleLogin(email, password);
         if (result) {
-            navigate(result.role === 'admin' ? '/admin/dashboard' : '/projects');
+            navigate(result.role === 'admin' ? '/admin/dashboard' : '/dashboard');
         }
     };
 
     const handleRegister = async (data: { email: string; password: string; name: string; phone?: string }) => {
         const result = await auth.handleRegister(data);
         if (result) {
-            navigate(result.role === 'admin' ? '/admin/dashboard' : '/projects');
+            navigate(result.role === 'admin' ? '/admin/dashboard' : '/dashboard');
         }
     };
 
