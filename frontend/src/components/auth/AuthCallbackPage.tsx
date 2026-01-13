@@ -23,7 +23,7 @@ export function AuthCallbackPage() {
         if (role === "admin") {
           navigate("/admin/dashboard", { replace: true });
         } else {
-          navigate("/projects", { replace: true });
+          navigate("/dashboard", { replace: true });
         }
         return;
       }
@@ -41,7 +41,7 @@ export function AuthCallbackPage() {
 
           if (error) {
             console.warn('Failed to fetch role:', error);
-            navigate("/projects", { replace: true });
+            navigate("/dashboard", { replace: true });
             return;
           }
 
@@ -49,11 +49,11 @@ export function AuthCallbackPage() {
           if (dbRole === 'admin') {
             navigate("/admin/dashboard", { replace: true });
           } else {
-            navigate("/projects", { replace: true });
+            navigate("/dashboard", { replace: true });
           }
         } catch (error) {
           console.error('Error checking role:', error);
-          navigate("/projects", { replace: true });
+          navigate("/dashboard", { replace: true });
         }
       }
     };
