@@ -60,7 +60,7 @@ export function useProjects({ user }: UseProjectsProps) {
   const [invitations, setInvitations] = useState<ProjectInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const eventListenerAttached = useRef(false);
   const channelsRef = useRef<any[]>([]);
 
@@ -76,7 +76,7 @@ export function useProjects({ user }: UseProjectsProps) {
 
     try {
       setError(null);
-      
+
       // First, get all project IDs where user is a member
       const { data: memberProjects, error: memberError } = await supabase
         .from('project_members')
@@ -164,7 +164,7 @@ export function useProjects({ user }: UseProjectsProps) {
     }
 
     const invitationsData = await fetchPendingInvitations(user.id);
-    
+
     // Transform to match ProjectInvitation type
     const transformedInvitations: ProjectInvitation[] = invitationsData.map((inv: any) => ({
       id: inv.id,
@@ -205,7 +205,7 @@ export function useProjects({ user }: UseProjectsProps) {
 
     // Use unique channel names to avoid conflicts
     const channelId = `${user.id}_${Date.now()}`;
-    
+
     // Subscribe to projects changes
     const projectsChannel = supabase
       .channel(`projects_changes_${channelId}`)
@@ -239,8 +239,14 @@ export function useProjects({ user }: UseProjectsProps) {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('🔔 New invitation received:', payload);
-          toast.info('Bạn có lời mời tham gia dự án mới!');
+          console.log('🔔 New join_request INSERT:', payload);
+
+          // Only notify if this is an INVITATION (not a request sent by user)
+          const newRecord = payload.new as any;
+          if (newRecord.request_type === 'invitation') {
+            toast.info('Bạn có lời mời tham gia dự án mới!');
+          }
+
           fetchInvitations();
         }
       )
@@ -524,15 +530,15 @@ export function useProjects({ user }: UseProjectsProps) {
     if (result.success) {
       // Show success toast
       toast.success(`Đã tham gia dự án: ${result.projectName || 'dự án'}`);
-      
+
       // Reload projects and invitations
       await Promise.all([fetchProjects(), fetchInvitations()]);
-      
+
       // Select the new project
       if (result.projectId) {
         setSelectedProjectId(result.projectId);
       }
-      
+
       // Force reload to ensure UI is in sync
       setTimeout(() => {
         fetchProjects();
@@ -628,9 +634,9 @@ export function useProjects({ user }: UseProjectsProps) {
         prev.map((p) =>
           p.id === projectId
             ? {
-                ...p,
-                members: p.members.filter((m) => m.userId !== userId),
-              }
+              ...p,
+              members: p.members.filter((m) => m.userId !== userId),
+            }
             : p
         )
       );
@@ -756,9 +762,8 @@ export function useProjects({ user }: UseProjectsProps) {
         user_id: userId,
         type: 'member_added',
         title: 'Vai trò đã thay đổi',
-        content: `${user.name} đã thay đổi vai trò của bạn thành "${
-          newRole === 'manager' ? 'Quản lý' : 'Thành viên'
-        }" trong dự án "${project.name}"`,
+        content: `${user.name} đã thay đổi vai trò của bạn thành "${newRole === 'manager' ? 'Quản lý' : 'Thành viên'
+          }" trong dự án "${project.name}"`,
         entity_type: 'project',
         entity_id: projectId,
         is_read: false,
@@ -769,18 +774,17 @@ export function useProjects({ user }: UseProjectsProps) {
         prev.map((p) =>
           p.id === projectId
             ? {
-                ...p,
-                members: p.members.map((m) =>
-                  m.userId === userId ? { ...m, role: newRole } : m
-                ),
-              }
+              ...p,
+              members: p.members.map((m) =>
+                m.userId === userId ? { ...m, role: newRole } : m
+              ),
+            }
             : p
         )
       );
 
       toast.success(
-        `Đã thay đổi vai trò của ${member?.name || 'thành viên'} thành ${
-          newRole === 'manager' ? 'Quản lý' : 'Thành viên'
+        `Đã thay đổi vai trò của ${member?.name || 'thành viên'} thành ${newRole === 'manager' ? 'Quản lý' : 'Thành viên'
         }`
       );
       return { success: true };

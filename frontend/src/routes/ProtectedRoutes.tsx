@@ -6,11 +6,13 @@ import { ProfilePage } from '../components/profile/ProfilePage';
 import { SettingsPage } from '../components/settings/SettingsPage';
 import { TrashPage } from '../components/trash/TrashPage';
 import { AllProjectsPage } from '../components/projects/AllProjectsPage';
+import { ProjectDiscovery } from '../components/project/ProjectDiscovery';
 import { MemberRequestsPage } from '../components/member-requests/MemberRequestsPage';
 import { ProjectPage } from '../components/project/ProjectPage';
 import { ChatAssistant } from '../components/chat/ChatAssistant';
 import { useApp } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useJoinRequests } from '../hooks/useJoinRequests';
 
 // Wrapper component to use URL params for ProjectPage
 function ProjectPageWrapper() {
@@ -102,6 +104,26 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
     const userNotifications = notifications.filter((n) => n.userId === user?.id);
     const userInvitations = invitations.filter((i) => i.invitedEmail === user?.email);
 
+    // Get projects where user is owner or manager
+    const managedProjectIds = projects
+        .filter((p) => {
+            const isOwner = p.ownerId === user?.id;
+            const isManager = p.members.some((m) => m.userId === user?.id && m.role === 'manager');
+            return isOwner || isManager;
+        })
+        .map((p) => p.id);
+
+    // Use join requests hook
+    const {
+        joinRequests,
+        loading: joinRequestsLoading,
+        handleApproveJoinRequest,
+        handleRejectJoinRequest,
+    } = useJoinRequests({
+        userId: user?.id || null,
+        managedProjectIds,
+    });
+
     return (
         <ProtectedRoute user={user}>
             <MainLayout
@@ -174,8 +196,11 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                             />
                         }
                     />
-                    {/* Member requests removed - invitation-only system */}
-                    {/* <Route
+                    <Route
+                        path="/discover"
+                        element={<ProjectDiscovery />}
+                    />
+                    <Route
                         path="/member-requests"
                         element={
                             <MemberRequestsPage
@@ -184,7 +209,7 @@ export function ProtectedRoutes({ onEnterAdmin }: ProtectedRoutesProps) {
                                 onRejectJoinRequest={handleRejectJoinRequest}
                             />
                         }
-                    /> */}
+                    />
                     <Route path="/project/:projectId" element={<ProjectPageWrapper />} />
                 </Routes>
             </MainLayout>
